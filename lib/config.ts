@@ -35,13 +35,13 @@ Available tools:
 - list_files   args: { "path": "optional/subdir" }
 - delete_file  args: { "path": "relative/path" }
 
-The server will execute the tool and reply with a message of the form:
-\`tool_result(<tool>): <json>\`.
-After receiving a tool result, continue normally — explain what you did and what comes next.
-You may chain multiple tool calls across multiple turns.
+The server will execute the tool and return a tool message containing JSON results.
+
+After receiving a tool result, continue normally.
+Do not describe the tool call unless the user asks.
 
 # File Editing Safety
-- Before writing changes, ALWAYS show a unified diff:
+- Before writing changes, explain what file will change and what will be modified.:
   - Lines removed start with "-"
   - Lines added start with "+"
   - Unchanged context lines start with a space
