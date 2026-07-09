@@ -1,4 +1,3 @@
-Here you go, Alexandria — fully formatted, GitHub‑ready, copy‑paste‑clean, inside a single code block exactly as you asked.
 # Codexia  
 A local, privacy‑first AI coding agent that behaves like a real engineer — predictable, project‑aware, and fully under your control.
 
@@ -37,27 +36,42 @@ Codexia runs entirely on your machine, understands your project structure, and e
 ```bash
 git clone <your-repo-url>
 cd codexia
+```
 
-2. Install dependencies
+### 2. Install dependencies
+```bash
 npm install
+```
 
-3. Start the development server
+### 3. Start the development server
+```bash
 npm run dev
+```
 
-4. Open Codexia
+### 4. Open Codexia
+```
 http://localhost:3000
+```
 
 ---
-🧠 Architecture Overview
+
+## 🧠 Architecture Overview
+
 Codexia is built on:
-Next.js — UI and local API routes
-Custom system prompt — defines identity, safety rules, and editing behaviour
-Local tool‑calling layer — handles file diffs, edits, and project navigation
-Workspace root — your chosen directory (e.g., /Users/<you>/Projects)
-Codexia interacts with your files through controlled, explicit operations.
+
+- **Next.js** — UI and local API routes  
+- **Custom system prompt** — defines identity, safety rules, and editing behaviour  
+- **Local tool‑calling layer** — handles file diffs, edits, and project navigation  
+- **Workspace root** — your chosen directory (e.g., `/Users/<you>/Projects`)
+
+Codexia interacts with your files through controlled, explicit operations.  
 It never performs hidden actions.
+
 ---
-📁 Example Project Structure
+
+## 📁 Example Project Structure
+
+```
 codexia/
   ├── app/
   │   ├── api/
@@ -69,45 +83,63 @@ codexia/
   ├── public/
   ├── package.json
   └── README.md
+```
 
 ---
-🔧 Scripts
+
+## 🔧 Scripts
+
+```bash
 npm run dev      # Start development server
 npm run build    # Build for production
 npm start        # Run production build
+```
 
 ---
-🛡️ Privacy
+
+## 🛡️ Privacy
+
 Codexia is fully local:
-No external API calls
-No telemetry
-No cloud inference
-Your code never leaves your machine
----
-🧩 Customization
-Codexia’s behaviour is controlled by its system prompt. You can customize:
-personality (pragmatic, warm, hybrid)
-editing rules
-tool‑calling logic
-project navigation
-safety constraints
-output formatting style
-This lets you evolve Codexia into the exact coding partner you want.
----
-📣 Roadmap
-Local image generation
-Multi‑project memory
-Workspace visualizer
-Plugin system
-Offline model switching
-Custom tool registry
----
-❤️ Built for builders
-Codexia is designed for developers who want:
-privacy
-control
-predictable behaviour
-safe file editing
-and an AI agent that feels like a real collaborator
 
-If you want badges, a logo header, a TL;DR section, or a more opinionated tone (technical, warm, chaotic, or hybrid), tell me and I’ll shape it.
+- No external API calls  
+- No telemetry  
+- No cloud inference  
+- Your code never leaves your machine
+
+---
+
+## 🧩 Customization
+
+Codexia’s behaviour is controlled by its system prompt. You can customize:
+
+- personality (pragmatic, warm, hybrid)  
+- editing rules  
+- tool‑calling logic  
+- project navigation  
+- safety constraints  
+- output formatting style  
+
+This lets you evolve Codexia into the exact coding partner you want.
+
+---
+
+## 📣 Roadmap
+
+- Local image generation  
+- Multi‑project memory  
+- Workspace visualizer  
+- Plugin system  
+- Offline model switching  
+- Custom tool registry  
+
+---
+
+## ❤️ Built for builders
+
+Codexia is designed for developers who want:
+
+- privacy  
+- control  
+- predictable behaviour  
+- safe file editing  
+- and an AI agent that feels like a real collaborator
