@@ -1,15 +1,8 @@
-import type {
-  AgentMessage
-} from "./types";
+import type { AgentMessage, AgentObservation } from "./types";
 
-
-import type {
-  PlanStep
-} from "./planner";
-
+import type { PlanStep } from "./planner";
 
 export interface AgentState {
-
   messages: AgentMessage[];
 
   workspace: string;
@@ -22,10 +15,13 @@ export interface AgentState {
 
   plan?: PlanStep[];
 
-  status:
-    | "planning"
-    | "executing"
-    | "complete"
-    | "error";
+  currentStep?: number;
 
+  completedSteps: number[];
+
+  observations: AgentObservation[];
+
+  errors: string[];
+
+  status: "planning" | "executing" | "complete" | "error";
 }

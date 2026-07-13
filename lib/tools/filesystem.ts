@@ -2,60 +2,87 @@ import { safeReadFile, safeWriteFile, safeResolve, listTree } from "../fs-safe";
 
 import fs from "node:fs/promises";
 
-export const readFileTool = {
-  name: "read_file",
+import type { Tool } from "./types";
+
+export const readFileTool: Tool = {
+    name: "read_file",
 
   description: "Reads a file from the workspace",
 
-  async execute(args: any) {
-    const content = await safeReadFile(args.path);
+  category: "filesystem",
+
+  requiresConfirmation: false,
+
+  async execute(args: Record<string, unknown>) {
+    const path = typeof args.path === "string" ? args.path : "";
+
+    const content = await safeReadFile(path);
 
     return {
-      path: args.path,
+      path,
+
       content,
     };
   },
 };
 
-export const writeFileTool = {
+export const writeFileTool: Tool = {
   name: "write_file",
 
   description: "Writes content to a workspace file",
 
-  async execute(args: any) {
-    await safeWriteFile(args.path, args.content);
+  category: "filesystem",
+
+  requiresConfirmation: true,
+
+  async execute(args: Record<string, unknown>) {
+    const path = typeof args.path === "string" ? args.path : "";
+
+    const content = typeof args.content === "string" ? args.content : "";
+
+    await safeWriteFile(path, content);
 
     return {
       ok: true,
-      path: args.path,
+
+      path,
     };
   },
 };
 
-export const listFilesTool = {
+export const listFilesTool: Tool = {
   name: "list_files",
 
   description: "Lists files and directories in the workspace",
 
-  async execute(args: any) {
-    const path = args?.path ?? "";
+  category: "filesystem",
 
-    const files = await listTree(path);
+  requiresConfirmation: false,
+
+  async execute(args: Record<string, unknown>) {
+    const path = typeof args.path === "string" ? args.path : "";
 
     return {
       path: path || ".",
-      files,
+
+      files: await listTree(path),
     };
   },
 };
 
-export const deleteFileTool = {
+export const deleteFileTool: Tool = {
   name: "delete_file",
 
-  description: "Deletes a file or directory",
+  description: "Deletes a workspace file or directory",
 
-  async execute(args: any) {
-    const abs = safeResolve(args.path);
+  category: "filesystem",
+
+  requiresConfirmation: true,
+
+  async execute(args: Record<string, unknown>) {
+    const path = typeof args.path === "string" ? args.path : "";
+
+    const abs = safeResolve(path);
 
     await fs.rm(abs, {
       recursive: true,
@@ -64,7 +91,8 @@ export const deleteFileTool = {
 
     return {
       ok: true,
-      path: args.path,
+
+      path,
     };
   },
 };

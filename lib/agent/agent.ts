@@ -1,208 +1,86 @@
-import type {
-  AgentContext,
-  AgentResponse
-} from "./types";
+import type { AgentContext, AgentResponse } from "./types";
 
-import type {
-  AgentState
-} from "./state";
+import type { AgentState } from "./state";
 
-import {
-  createPlan
-} from "./planner";
+import { createPlan } from "./planner";
 
-import {
-  executePlan
-} from "./executor";
+import { executePlan } from "./executor";
 
-import {
-  bootstrapAgent
-} from "./bootstrap";
+import { bootstrapAgent } from "./bootstrap";
 
-import {
-  chatWithOllama
-} from "@/lib/models/ollama";
+import { chatWithOllama } from "@/lib/models/ollama";
 
-
-
-export async function runAgent(
-  context: AgentContext
-): Promise<AgentResponse> {
-
-
-  console.log("AGENT START");
-
-
-
+export async function runAgent(context: AgentContext): Promise<AgentResponse> {
   bootstrapAgent();
 
-
-
   const state: AgentState = {
+    messages: context.messages,
 
-    messages:
-      context.messages,
+    workspace: context.workspace,
 
+    filesRead: context.filesRead,
 
-    workspace:
-      context.workspace,
+    filesModified: context.filesModified,
 
+    currentTask: context.currentTask,
 
-    filesRead:
-      context.filesRead,
+    completedSteps: [],
 
+    observations: [],
 
-    filesModified:
-      context.filesModified,
+    errors: [],
 
-
-    currentTask:
-      context.currentTask,
-
-
-    status:
-      "planning",
-
+    status: "planning",
   };
 
+  const plan = await createPlan(context);
 
+  state.plan = plan.steps;
 
-  console.log("CREATING PLAN");
+  state.status = "executing";
 
+  const execution = await executePlan(plan, context);
 
+  state.observations = execution.context.observations;
 
-  const plan =
-    await createPlan(context);
+  state.status = execution.success ? "complete" : "error";
 
-
-
-  console.log(
-    "PLAN CREATED",
-    plan
-  );
-
-
-
-  state.plan =
-    plan.steps;
-
-
-
-  state.status =
-    "executing";
-
-
-
-  console.log(
-    "EXECUTING PLAN"
-  );
-
-
-
-  const result =
-    await executePlan(
-      plan,
-      context
-    );
-
-
-
-  console.log(
-    "EXECUTOR RESULT",
-    result
-  );
-
-
-
-  state.status =
-    result.success
-      ? "complete"
-      : "error";
-
-
-
-
-  const ollamaMessages = [
-
+  const response = await chatWithOllama([
     {
-      role:
-        "system" as const,
+      role: "system",
 
-      content:
-        `
+      content: `
 You are Codexia, a local AI coding assistant.
 
-Answer the user's message directly.
+Respond naturally.
 
-Do not mention:
-- internal plans
-- execution steps
-- agent state
+Do not reveal:
+- plans
+- internal state
 - tool orchestration
-
-Only explain relevant results naturally.
         `.trim(),
-
     },
-
 
     ...context.messages,
 
-
-
     {
-      role:
-        "user" as const,
+      role: "user",
 
-
-      content:
-        `
-Internal agent information:
-
+      content: `
 Task:
 ${plan.goal}
 
 
-Execution summary:
-${result.output}
+Agent results:
+${execution.output}
 
 
-Use this information only to help answer the user.
-Do not expose the internal execution process.
-        `.trim(),
-
+Use these results to answer the user.
+          `.trim(),
     },
-
-  ];
-
-
-
-  console.log(
-    "CALLING OLLAMA",
-    ollamaMessages
-  );
-
-
-
-  const finalResponse =
-    await chatWithOllama(
-      ollamaMessages
-    );
-
-
-
-  console.log(
-    "OLLAMA RESPONSE",
-    finalResponse
-  );
-
-
+  ]);
 
   return {
-
-    content:
-      finalResponse,
-
+    content: response,
   };
-
 }

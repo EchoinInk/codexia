@@ -1,5 +1,8 @@
 import { execFile } from "node:child_process";
+
 import { promisify } from "node:util";
+
+import type { Tool } from "./types";
 
 const execFileAsync = promisify(execFile);
 
@@ -9,37 +12,49 @@ async function runGit(args: string[]): Promise<string> {
   return stdout.trim();
 }
 
-export const gitStatusTool = {
+export const gitStatusTool: Tool = {
   name: "git_status",
 
-  description: "Shows the current git repository status",
+  description: "Shows current git repository status",
+
+  category: "git",
+
+  requiresConfirmation: false,
 
   async execute() {
-    return await runGit(["status", "--short"]);
+    return runGit(["status", "--short"]);
   },
 };
 
-export const gitDiffTool = {
+export const gitDiffTool: Tool = {
   name: "git_diff",
 
   description: "Shows current git changes",
 
+  category: "git",
+
+  requiresConfirmation: false,
+
   async execute() {
-    return await runGit(["diff"]);
+    return runGit(["diff"]);
   },
 };
 
-export const gitCommitTool = {
+export const gitCommitTool: Tool = {
   name: "git_commit",
 
-  description: "Creates a git commit with a provided message",
+  description: "Creates a git commit",
+
+  category: "git",
+
+  requiresConfirmation: true,
 
   async execute(args: Record<string, unknown>) {
     const message =
       typeof args.message === "string" ? args.message : "Codexia change";
 
-    return await runGit(["add", "."]).then(async () =>
-      runGit(["commit", "-m", message])
-    );
+    await runGit(["add", "."]);
+
+    return runGit(["commit", "-m", message]);
   },
 };

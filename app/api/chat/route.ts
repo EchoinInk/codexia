@@ -17,8 +17,13 @@ export async function POST(req: Request) {
     filesRead: [],
 
     filesModified: [],
+
+    observations: [],
+
+    toolResults: [],
   });
 
   return Response.json({
-  content: result.content
-});}
+    content: result.content,
+  });
+}

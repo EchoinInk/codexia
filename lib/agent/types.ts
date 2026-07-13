@@ -6,6 +6,30 @@ export interface AgentMessage {
   name?: string;
 }
 
+export type TaskType =
+  | "question"
+  | "analysis"
+  | "modify"
+  | "create"
+  | "debug"
+  | "unknown";
+
+export interface AgentObservation {
+  type: "file_read" | "file_write" | "tool_result" | "error";
+
+  summary: string;
+
+  data?: unknown;
+}
+
+export interface ToolResult {
+  tool: string;
+
+  success: boolean;
+
+  output: unknown;
+}
+
 export interface AgentContext {
   messages: AgentMessage[];
 
@@ -15,7 +39,13 @@ export interface AgentContext {
 
   filesModified: string[];
 
+  observations: AgentObservation[];
+
+  toolResults: ToolResult[];
+
   currentTask?: string;
+
+  taskType?: TaskType;
 }
 
 export interface AgentResponse {
