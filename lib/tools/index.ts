@@ -1,44 +1,7 @@
-import {
-  toolRegistry
-} from "./registry";
+export * from "./types";
 
+export * from "./registry";
 
-import {
-  readFileTool,
-  writeFileTool,
-  listFilesTool,
-  deleteFileTool
-} from "./filesystem";
+export * from "./filesystem";
 
-
-import {
-  extractToolCall
-} from "./tools-parser";
-
-
-
-toolRegistry.register(
-  readFileTool
-);
-
-
-toolRegistry.register(
-  writeFileTool
-);
-
-
-toolRegistry.register(
-  listFilesTool
-);
-
-
-toolRegistry.register(
-  deleteFileTool
-);
-
-
-
-export {
-  toolRegistry,
-  extractToolCall
-};
+export * from "./register";

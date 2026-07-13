@@ -1,15 +1,14 @@
 export interface AgentMessage {
   role:
+    | "system"
     | "user"
     | "assistant"
-    | "system"
     | "tool";
 
   content: string;
 
   name?: string;
 }
-
 
 
 export interface AgentContext {
@@ -22,8 +21,9 @@ export interface AgentContext {
 
   filesModified: string[];
 
-}
+  currentTask?: string;
 
+}
 
 
 export interface AgentResponse {
@@ -33,7 +33,6 @@ export interface AgentResponse {
   toolUsed?: string;
 
 }
-
 
 
 export type Msg = AgentMessage;

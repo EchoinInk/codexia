@@ -1,25 +1,115 @@
-import {
-AgentContext
-}
-from "./types";
+import type {
+  AgentContext,
+  AgentMessage
+} from "./types";
 
 
 export function createContext(
-messages:any[],
-workspace:string
-):AgentContext{
+  messages: AgentMessage[],
+  workspace: string
+): AgentContext {
+
+  return {
+
+    messages,
+
+    workspace,
+
+    filesRead: [],
+
+    filesModified: []
+
+  };
+
+}
 
 
-return {
 
-messages,
+export function addMessage(
+  context: AgentContext,
+  message: AgentMessage
+): AgentContext {
 
-workspace,
+  return {
 
-filesRead:[],
+    ...context,
 
-filesModified:[]
+    messages: [
+      ...context.messages,
+      message
+    ]
 
-};
+  };
+
+}
+
+
+
+export function trackFileRead(
+  context: AgentContext,
+  filePath: string
+): AgentContext {
+
+  if(
+    context.filesRead.includes(filePath)
+  ){
+    return context;
+  }
+
+
+  return {
+
+    ...context,
+
+    filesRead: [
+      ...context.filesRead,
+      filePath
+    ]
+
+  };
+
+}
+
+
+
+export function trackFileModified(
+  context: AgentContext,
+  filePath: string
+): AgentContext {
+
+  if(
+    context.filesModified.includes(filePath)
+  ){
+    return context;
+  }
+
+
+  return {
+
+    ...context,
+
+    filesModified: [
+      ...context.filesModified,
+      filePath
+    ]
+
+  };
+
+}
+
+
+
+export function setCurrentTask(
+  context: AgentContext,
+  task: string
+): AgentContext {
+
+  return {
+
+    ...context,
+
+    currentTask: task
+
+  };
 
 }

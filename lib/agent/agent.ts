@@ -1,187 +1,97 @@
-import {
+import type {
   AgentContext,
-  AgentResponse,
-  AgentMessage
+  AgentResponse
 } from "./types";
 
-import {
-  SYSTEM_PROMPT
-} from "@/lib/config";
 
-import {
-  ollamaStream,
-  iterOllamaTokens
-} from "@/lib/models/ollama";
-
-import {
-  extractToolCall
-} from "@/lib/tools";
-
-import {
-  toolRegistry
-} from "@/lib/tools";
-
-import {
-createPlan
-}
-from "./planner";
+import type {
+  AgentState
+} from "./state";
 
 
 import {
-executePlan
-}
-from "./executor";
+  createPlan
+} from "./planner";
+
+
+import {
+  executePlan
+} from "./executor";
+
+
+import {
+  bootstrapAgent
+} from "./bootstrap";
+
+
 
 export async function runAgent(
   context: AgentContext
 ): Promise<AgentResponse> {
 
 
-  const messages: AgentMessage[] = [
+  bootstrapAgent();
 
-    {
-      role: "system",
-      content: SYSTEM_PROMPT
-    },
 
-    ...context.messages
+  const state: AgentState = {
 
-  ];
+    messages:
+      context.messages,
 
+    workspace:
+      context.workspace,
 
+    filesRead:
+      context.filesRead,
 
-  let finalContent = "";
+    filesModified:
+      context.filesModified,
 
-  let usedTool:string | undefined;
+    currentTask:
+      context.currentTask,
 
+    status:
+      "planning"
 
+  };
 
-  /**
-   * Agent reasoning loop
-   */
-  for (
-    let turn = 0;
-    turn < 6;
-    turn++
-  ) {
 
 
-    const stream =
-      await ollamaStream(
-        messages
-      );
+  const plan =
+    await createPlan(
+      context
+    );
 
 
+  state.plan =
+    plan.steps;
 
-    let response = "";
 
 
+  state.status =
+    "executing";
 
-    for await (
-      const token
-      of iterOllamaTokens(stream)
-    ) {
 
-      response += token;
 
-    }
+  const result =
+    await executePlan(
+      plan,
+      context
+    );
 
 
 
-    finalContent = response;
-
-
-
-    const toolCall =
-      extractToolCall(
-        response
-      );
-
-
-
-    if (!toolCall) {
-
-      break;
-
-    }
-
-
-
-    usedTool =
-      toolCall.tool;
-
-
-
-    const tool =
-      toolRegistry.get(
-        toolCall.tool
-      );
-
-
-
-    if (!tool) {
-
-      messages.push({
-
-        role:"assistant",
-
-        content:
-          `Unknown tool: ${toolCall.tool}`
-
-      });
-
-
-      break;
-
-    }
-
-
-
-    const result =
-      await tool.execute(
-        toolCall.args ?? {}
-      );
-
-
-
-    messages.push({
-
-      role:"assistant",
-
-      content:
-        response
-
-    });
-
-
-
-    messages.push({
-
-      role:"tool",
-
-      content:
-        JSON.stringify({
-          tool:
-            toolCall.tool,
-
-          result
-
-        })
-
-    });
-
-
-  }
+  state.status =
+    result.success
+      ? "complete"
+      : "error";
 
 
 
   return {
 
     content:
-      finalContent,
-
-    toolUsed:
-      usedTool
+      result.output
 
   };
 

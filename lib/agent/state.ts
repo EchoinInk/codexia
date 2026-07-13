@@ -1,20 +1,32 @@
-import type { AgentMessage } from "./types";
+import type {
+  AgentMessage
+} from "./types";
+
 
 export interface AgentState {
 
   messages: AgentMessage[];
 
-  workspace:string;
+
+  workspace: string;
 
 
-  filesRead:string[];
-
-  filesModified:string[];
+  filesRead: string[];
 
 
-  currentTask?:string;
+  filesModified: string[];
 
 
-  plan?:string[];
+  currentTask?: string;
+
+
+  plan?: string[];
+
+
+  status:
+    | "planning"
+    | "executing"
+    | "complete"
+    | "error";
 
 }

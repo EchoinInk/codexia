@@ -1,9 +1,13 @@
 export interface Tool {
-  name:string;
 
-  description:string;
+  name: string;
+
+
+  description: string;
+
 
   execute(
-    args:any
-  ):Promise<any>;
+    args: Record<string, unknown>
+  ): Promise<unknown>;
+
 }

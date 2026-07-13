@@ -1,44 +1,59 @@
-import {
-AgentContext
-}
-from "./types";
+import type {
+  AgentContext
+} from "./types";
 
 
 export interface Plan {
 
-goal:string;
+  goal: string;
 
-steps:string[];
+  steps: string[];
 
-files:string[];
+  files: string[];
 
 }
 
 
+
 export async function createPlan(
-context:AgentContext
-):Promise<Plan>{
+  context: AgentContext
+): Promise<Plan> {
 
 
-return {
-
-goal:
-context.messages[
-context.messages.length-1
-].content,
+  const lastMessage =
+    context.messages[
+      context.messages.length - 1
+    ];
 
 
-steps:[
-"Analyze request",
-"Find required files",
-"Make changes",
-"Verify"
-],
+  const goal =
+    context.currentTask ??
+    lastMessage?.content ??
+    "No task provided";
 
 
-files:[]
+  return {
 
-};
+    goal,
 
+
+    steps: [
+
+      "Analyze request",
+
+      "Inspect relevant files",
+
+      "Determine required changes",
+
+      "Apply changes",
+
+      "Verify result"
+
+    ],
+
+
+    files: []
+
+  };
 
 }

@@ -1,7 +1,7 @@
-export type ToolCall = {
+export interface ToolCall {
 
   tool: string;
 
-  args: any;
+  args: Record<string, unknown>;
 
-};
+}

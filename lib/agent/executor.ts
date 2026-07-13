@@ -1,17 +1,65 @@
-import {Plan} from "./planner";
+import type {
+  AgentContext
+} from "./types";
+
+
+import type {
+  Plan
+} from "./planner";
+
+
+import {
+  toolRegistry
+} from "@/lib/tools";
+
+
+export interface ExecutionResult {
+
+  success: boolean;
+
+  output: string;
+
+  filesModified: string[];
+
+}
+
 
 
 export async function executePlan(
-plan:Plan
-){
+  plan: Plan,
+  context: AgentContext
+): Promise<ExecutionResult> {
 
-return {
 
-success:true,
+  const results: string[] = [];
 
-message:
-"Plan executed"
 
-};
+  for (
+    const step of plan.steps
+  ) {
+
+    results.push(
+      `Completed: ${step}`
+    );
+
+  }
+
+
+
+  return {
+
+    success: true,
+
+    output:
+      [
+        `Task: ${plan.goal}`,
+        ...results
+      ].join("\n"),
+
+
+    filesModified:
+      context.filesModified
+
+  };
 
 }
