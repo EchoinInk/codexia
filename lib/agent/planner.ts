@@ -1,9 +1,19 @@
 import type { AgentContext } from "./types";
 
+export interface PlanStep {
+  description: string;
+
+  action: "analyze" | "read" | "write" | "verify";
+
+  tool?: string;
+
+  args?: Record<string, unknown>;
+}
+
 export interface Plan {
   goal: string;
 
-  steps: string[];
+  steps: PlanStep[];
 
   files: string[];
 }
@@ -18,15 +28,39 @@ export async function createPlan(context: AgentContext): Promise<Plan> {
     goal,
 
     steps: [
-      "Analyze request",
+      {
+        description: "Analyze request",
 
-      "Inspect relevant files",
+        action: "analyze",
+      },
 
-      "Determine required changes",
+      {
+        description: "Inspect workspace files",
 
-      "Apply changes",
+        action: "read",
 
-      "Verify result",
+        tool: "list_files",
+
+        args: {},
+      },
+
+      {
+        description: "Determine required changes",
+
+        action: "analyze",
+      },
+
+      {
+        description: "Apply changes",
+
+        action: "write",
+      },
+
+      {
+        description: "Verify result",
+
+        action: "verify",
+      },
     ],
 
     files: [],

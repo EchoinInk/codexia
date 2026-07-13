@@ -1,6 +1,8 @@
 import type { AgentContext } from "./types";
 
-import type { Plan } from "./planner";
+import type { Plan, PlanStep } from "./planner";
+
+import { toolRegistry } from "@/lib/tools";
 
 export interface ExecutionResult {
   success: boolean;
@@ -17,7 +19,9 @@ export async function executePlan(
   const results: string[] = [];
 
   for (const step of plan.steps) {
-    results.push(`Completed: ${step}`);
+    const result = await executeStep(step);
+
+    results.push(result);
   }
 
   return {
@@ -27,4 +31,20 @@ export async function executePlan(
 
     filesModified: context.filesModified,
   };
+}
+
+async function executeStep(step: PlanStep): Promise<string> {
+  if (!step.tool) {
+    return `Completed: ${step.description}`;
+  }
+
+  const tool = toolRegistry.get(step.tool);
+
+  if (!tool) {
+    return `Skipped ${step.description}: ` + `Tool "${step.tool}" not found`;
+  }
+
+  const result = await tool.execute(step.args ?? {});
+
+  return `${step.description}: ` + JSON.stringify(result);
 }

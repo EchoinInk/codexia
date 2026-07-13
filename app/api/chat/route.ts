@@ -1,52 +1,24 @@
-import {
-  runAgent
-} from "@/lib/agent/agent";
+import { runAgent } from "@/lib/agent/agent";
 
-import type {
-  AgentMessage
-} from "@/lib/agent/types";
+import type { AgentMessage } from "@/lib/agent/types";
 
+export const runtime = "nodejs";
 
-export const runtime =
-  "nodejs";
+export async function POST(req: Request) {
+  const body = await req.json();
 
+  const messages = body.messages as AgentMessage[];
 
+  const result = await runAgent({
+    messages,
 
-export async function POST(
-  req:Request
-) {
+    workspace: body.workspace ?? "",
 
+    filesRead: [],
 
-  const body =
-    await req.json();
+    filesModified: [],
+  });
 
-
-
-  const messages =
-    body.messages as AgentMessage[];
-
-
-
-  const result =
-    await runAgent({
-
-      messages,
-
-      workspace:
-        body.workspace ?? "",
-
-      filesRead:
-        [],
-
-      filesModified:
-        []
-
-    });
-
-
-
-  return Response.json(
-    result
-  );
-
-}
+  return Response.json({
+  content: result.content
+});}
