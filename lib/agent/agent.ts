@@ -1,98 +1,41 @@
-import type {
-  AgentContext,
-  AgentResponse
-} from "./types";
+import type { AgentContext, AgentResponse } from "./types";
 
+import type { AgentState } from "./state";
 
-import type {
-  AgentState
-} from "./state";
+import { createPlan } from "./planner";
 
+import { executePlan } from "./executor";
 
-import {
-  createPlan
-} from "./planner";
+import { bootstrapAgent } from "./bootstrap";
 
-
-import {
-  executePlan
-} from "./executor";
-
-
-import {
-  bootstrapAgent
-} from "./bootstrap";
-
-
-
-export async function runAgent(
-  context: AgentContext
-): Promise<AgentResponse> {
-
-
+export async function runAgent(context: AgentContext): Promise<AgentResponse> {
   bootstrapAgent();
 
-
   const state: AgentState = {
+    messages: context.messages,
 
-    messages:
-      context.messages,
+    workspace: context.workspace,
 
-    workspace:
-      context.workspace,
+    filesRead: context.filesRead,
 
-    filesRead:
-      context.filesRead,
+    filesModified: context.filesModified,
 
-    filesModified:
-      context.filesModified,
+    currentTask: context.currentTask,
 
-    currentTask:
-      context.currentTask,
-
-    status:
-      "planning"
-
+    status: "planning",
   };
 
+  const plan = await createPlan(context);
 
+  state.plan = plan.steps;
 
-  const plan =
-    await createPlan(
-      context
-    );
+  state.status = "executing";
 
+  const result = await executePlan(plan, context);
 
-  state.plan =
-    plan.steps;
-
-
-
-  state.status =
-    "executing";
-
-
-
-  const result =
-    await executePlan(
-      plan,
-      context
-    );
-
-
-
-  state.status =
-    result.success
-      ? "complete"
-      : "error";
-
-
+  state.status = result.success ? "complete" : "error";
 
   return {
-
-    content:
-      result.output
-
+    content: result.output,
   };
-
 }

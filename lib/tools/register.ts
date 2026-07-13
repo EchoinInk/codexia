@@ -1,54 +1,26 @@
-import {
-  toolRegistry
-} from "./registry";
-
+import { toolRegistry } from "./registry";
 
 import {
   readFileTool,
   writeFileTool,
   listFilesTool,
-  deleteFileTool
+  deleteFileTool,
 } from "./filesystem";
 
-import {
-  gitStatusTool,
-  gitDiffTool,
-  gitCommitTool
-} from "./git";
+import { gitStatusTool, gitDiffTool, gitCommitTool } from "./git";
 
-export function registerTools(){
+export function registerTools() {
+  toolRegistry.register(readFileTool);
 
-  toolRegistry.register(
-    readFileTool
-  );
+  toolRegistry.register(writeFileTool);
 
+  toolRegistry.register(listFilesTool);
 
-  toolRegistry.register(
-    writeFileTool
-  );
+  toolRegistry.register(deleteFileTool);
 
+  toolRegistry.register(gitStatusTool);
 
-  toolRegistry.register(
-    listFilesTool
-  );
+  toolRegistry.register(gitDiffTool);
 
-
-  toolRegistry.register(
-    deleteFileTool
-  );
-
-  toolRegistry.register(
-  gitStatusTool
-);
-
-
-toolRegistry.register(
-  gitDiffTool
-);
-
-
-toolRegistry.register(
-  gitCommitTool
-);
-
+  toolRegistry.register(gitCommitTool);
 }

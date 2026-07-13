@@ -1,21 +1,13 @@
-import {
-  registerTools
-} from "@/lib/tools/register";
-
+import { registerTools } from "@/lib/tools/register";
 
 let started = false;
 
-
-export function bootstrapAgent(){
-
-  if(started){
+export function bootstrapAgent() {
+  if (started) {
     return;
   }
 
-
   registerTools();
 
-
   started = true;
-
 }
