@@ -1,6 +1,15 @@
 export const CONFIG = {
-  ollamaUrl: process.env.OLLAMA_URL || "http://localhost:11434",
-  model: process.env.OLLAMA_MODEL || "qwen2.5-coder",
+  ollamaUrl:
+    process.env.OLLAMA_URL ||
+    "http://localhost:11434",
+
+  model:
+    process.env.OLLAMA_MODEL ||
+    "qwen2.5-coder",
+
+  plannerMode:
+    process.env.PLANNER_MODE ||
+    "rule",
 };
 
 export const SYSTEM_PROMPT = `You are Codexia, a local coding assistant running entirely on the user's machine. 

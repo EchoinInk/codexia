@@ -61,5 +61,20 @@ export interface AgentResponse {
 
   toolUsed?: string;
 }
+export interface PlannerContext {
+
+  plannerSource?:
+    | "rule"
+    | "llm"
+    | "hybrid";
+
+  plannerFallback?:
+    boolean;
+
+  plannerFallbackReason?:
+    string;
+
+}
+
 
 export type Msg = AgentMessage;

@@ -2,7 +2,9 @@ import type { AgentContext, AgentResponse } from "./types";
 
 import type { AgentState } from "./state";
 
-import { createPlan } from "./planner";
+import {
+  getPlanner,
+} from "./planner-index";
 
 import { executePlan } from "./executor";
 
@@ -40,8 +42,11 @@ export async function runAgent(context: AgentContext): Promise<AgentResponse> {
     status: "planning",
   };
 
-  const plan = await createPlan(context);
+const planner =
+  getPlanner();
 
+const plan =
+  await planner.createPlan(context);
   state.plan = plan.steps;
 
   state.status = "executing";
