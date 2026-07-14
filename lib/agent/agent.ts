@@ -11,8 +11,8 @@ import {
 } from "./planner-index";
 
 import {
-  executePlan,
-} from "./executor";
+  runWorkflow,
+} from "./workflow";
 
 import {
   createRepairPlan,
@@ -27,6 +27,10 @@ import {
 import {
   auditAgentContext,
 } from "./audit";
+
+import {
+  createAgentReport,
+} from "./report-generator";
 
 
 export async function runAgent(
@@ -62,41 +66,36 @@ export async function runAgent(
 
   while (true) {
 
-    const result =
-      await executePlan(
+    const workflow =
+      await runWorkflow(
         plan,
         context
       );
 
 
-    context = result.context;
+    const result =
+      workflow.execution;
+
+
+    context =
+      result.context;
+
+
+    const audit =
+      auditAgentContext(
+        context
+      );
 
 
     if (result.success) {
 
-      const audit =
-        auditAgentContext(
-          context
-        );
-
-
       return {
 
-        content: [
-
-          result.output,
-
-          "",
-
-          "Audit:",
-
-          JSON.stringify(
-            audit.metrics,
-            null,
-            2
+        content:
+          createAgentReport(
+            workflow,
+            audit
           ),
-
-        ].join("\n"),
 
       };
 
@@ -105,29 +104,13 @@ export async function runAgent(
 
     if (!canRetry(retry)) {
 
-      const audit =
-        auditAgentContext(
-          context
-        );
-
-
       return {
 
-        content: [
-
-          result.output,
-
-          "",
-
-          "Audit:",
-
-          JSON.stringify(
-            audit.metrics,
-            null,
-            2
+        content:
+          createAgentReport(
+            workflow,
+            audit
           ),
-
-        ].join("\n"),
 
       };
 
@@ -155,7 +138,17 @@ export async function runAgent(
       steps:
         repair.steps,
 
-      files: [],
+      files:
+        plan.files,
+
+      fileSelection:
+        plan.fileSelection,
+
+      impact:
+        plan.impact,
+
+      metadata:
+        plan.metadata,
 
     };
 
