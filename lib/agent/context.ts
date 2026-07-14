@@ -165,5 +165,20 @@ export function setCurrentTask(
     currentTask: task,
 
   };
+}
+  export function addMemory(
+  context: AgentContext,
+  observation: AgentObservation
+): AgentContext {
 
+  return {
+
+    ...context,
+
+    memory:[
+      ...(context.memory ?? []),
+      observation,
+    ],
+
+  };
 }

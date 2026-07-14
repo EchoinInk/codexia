@@ -31,21 +31,29 @@ export interface ToolResult {
 }
 
 export interface AgentContext {
+
   messages: AgentMessage[];
 
-  workspace: string;
+  workspace:string;
 
-  filesRead: string[];
 
-  filesModified: string[];
+  filesRead:string[];
 
-  observations: AgentObservation[];
+  filesModified:string[];
 
-  toolResults: ToolResult[];
 
-  currentTask?: string;
+  observations:AgentObservation[];
 
-  taskType?: TaskType;
+  toolResults:ToolResult[];
+
+
+  currentTask?:string;
+
+  taskType?:TaskType;
+
+
+  memory?:AgentObservation[];
+
 }
 
 export interface AgentResponse {

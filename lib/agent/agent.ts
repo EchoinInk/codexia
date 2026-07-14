@@ -10,8 +10,15 @@ import { bootstrapAgent } from "./bootstrap";
 
 import { chatWithOllama } from "@/lib/models/ollama";
 
+import {
+  createWorkspaceIndex
+} from "@/lib/intelligence/workspace-index";
+
 export async function runAgent(context: AgentContext): Promise<AgentResponse> {
   bootstrapAgent();
+
+  const workspaceIndex =
+  await createWorkspaceIndex();
 
   const state: AgentState = {
     messages: context.messages,
@@ -69,6 +76,10 @@ Do not reveal:
       content: `
 Task:
 ${plan.goal}
+
+
+Workspace files:
+${workspaceIndex.files.join("\n")}
 
 
 Agent results:
