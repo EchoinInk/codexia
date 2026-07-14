@@ -1,25 +1,70 @@
 import { safeReadFile } from "@/lib/fs-safe";
 
-export interface FileAnalysis {
-  path: string;
+import { parseCode } from "./code-parser";
 
-  size: number;
+import type { IndexedFile } from "./types";
 
-  extension: string;
 
-  preview: string;
+function detectLanguage(
+  extension: string
+): string {
+
+  const languages: Record<string, string> = {
+
+    ts: "typescript",
+
+    tsx: "typescript-react",
+
+    js: "javascript",
+
+    jsx: "javascript-react",
+
+    json: "json",
+
+    css: "css",
+
+    html: "html",
+
+    md: "markdown",
+  };
+
+
+  return languages[extension] ?? "unknown";
 }
 
-export async function analyseFile(path: string): Promise<FileAnalysis> {
+
+export async function analyseFile(
+  path: string
+): Promise<IndexedFile> {
+
   const content = await safeReadFile(path);
 
+
+  const extension =
+    path.includes(".")
+      ? path.split(".").pop()?.toLowerCase() ?? ""
+      : "";
+
+
+  const language = detectLanguage(extension);
+
+
   return {
+
     path,
 
     size: content.length,
 
-    extension: path.includes(".") ? path.split(".").pop() ?? "" : "",
+    extension,
+
+    language,
 
     preview: content.slice(0, 500),
+
+    code: parseCode(
+      content,
+      language
+    ),
+
   };
 }

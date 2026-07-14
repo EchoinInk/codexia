@@ -1,102 +1,164 @@
-import type { AgentContext, AgentResponse } from "./types";
+import type {
+  AgentResponse,
+} from "./types";
 
-import type { AgentState } from "./state";
+import {
+  createContext,
+} from "./context";
 
 import {
   getPlanner,
 } from "./planner-index";
 
-import { executePlan } from "./executor";
-
-import { bootstrapAgent } from "./bootstrap";
-
-import { chatWithOllama } from "@/lib/models/ollama";
+import {
+  executePlan,
+} from "./executor";
 
 import {
-  createWorkspaceIndex
-} from "@/lib/intelligence/workspace-index";
+  createRepairPlan,
+} from "./repair-planner";
 
-export async function runAgent(context: AgentContext): Promise<AgentResponse> {
-  bootstrapAgent();
+import {
+  createRetryState,
+  canRetry,
+  incrementRetry,
+} from "./retry-manager";
 
-  const workspaceIndex =
-  await createWorkspaceIndex();
-
-  const state: AgentState = {
-    messages: context.messages,
-
-    workspace: context.workspace,
-
-    filesRead: context.filesRead,
-
-    filesModified: context.filesModified,
-
-    currentTask: context.currentTask,
-
-    completedSteps: [],
-
-    observations: [],
-
-    errors: [],
-
-    status: "planning",
-  };
-
-const planner =
-  getPlanner();
-
-const plan =
-  await planner.createPlan(context);
-  state.plan = plan.steps;
-
-  state.status = "executing";
-
-  const execution = await executePlan(plan, context);
-
-  state.observations = execution.context.observations;
-
-  state.status = execution.success ? "complete" : "error";
-
-  const response = await chatWithOllama([
-    {
-      role: "system",
-
-      content: `
-You are Codexia, a local AI coding assistant.
-
-Respond naturally.
-
-Do not reveal:
-- plans
-- internal state
-- tool orchestration
-        `.trim(),
-    },
-
-    ...context.messages,
-
-    {
-      role: "user",
-
-      content: `
-Task:
-${plan.goal}
+import {
+  auditAgentContext,
+} from "./audit";
 
 
-Workspace files:
-${workspaceIndex.files.join("\n")}
+export async function runAgent(
+  message: string,
+  workspace: string
+): Promise<AgentResponse> {
+
+  let context =
+    await createContext(
+      [
+        {
+          role: "user",
+          content: message,
+        },
+      ],
+      workspace
+    );
 
 
-Agent results:
-${execution.output}
+  const planner =
+    getPlanner();
 
 
-Use these results to answer the user.
-          `.trim(),
-    },
-  ]);
+  let plan =
+    await planner.createPlan(
+      context
+    );
 
-  return {
-    content: response,
-  };
+
+  let retry =
+    createRetryState();
+
+
+  while (true) {
+
+    const result =
+      await executePlan(
+        plan,
+        context
+      );
+
+
+    context = result.context;
+
+
+    if (result.success) {
+
+      const audit =
+        auditAgentContext(
+          context
+        );
+
+
+      return {
+
+        content: [
+
+          result.output,
+
+          "",
+
+          "Audit:",
+
+          JSON.stringify(
+            audit.metrics,
+            null,
+            2
+          ),
+
+        ].join("\n"),
+
+      };
+
+    }
+
+
+    if (!canRetry(retry)) {
+
+      const audit =
+        auditAgentContext(
+          context
+        );
+
+
+      return {
+
+        content: [
+
+          result.output,
+
+          "",
+
+          "Audit:",
+
+          JSON.stringify(
+            audit.metrics,
+            null,
+            2
+          ),
+
+        ].join("\n"),
+
+      };
+
+    }
+
+
+    retry =
+      incrementRetry(
+        retry
+      );
+
+
+    const repair =
+      createRepairPlan(
+        plan,
+        context
+      );
+
+
+    plan = {
+
+      goal:
+        repair.originalGoal,
+
+      steps:
+        repair.steps,
+
+      files: [],
+
+    };
+
+  }
+
 }

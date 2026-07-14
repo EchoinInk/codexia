@@ -12,6 +12,20 @@ export interface DiffResult {
   changes: FileChange[];
 }
 
+export type FilePatch = FileChange;
+
+export function createPatch(
+  path: string,
+  before: string,
+  after: string
+): FilePatch {
+  return {
+    path,
+    before,
+    after,
+  };
+}
+
 export async function generateFileDiff(
   path: string,
   newContent: string

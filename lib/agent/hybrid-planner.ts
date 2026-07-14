@@ -2,6 +2,11 @@ import type {
   AgentContext,
 } from "./types";
 
+
+import {
+  getRelevantFiles,
+} from "./planner";
+
 import type {
   Plan,
   Planner,
@@ -66,8 +71,21 @@ export const hybridPlanner: Planner = {
           }ms`
         );
 
+        const fileSelection =
+          getRelevantFiles(
+            context,
+            validated.goal
+          );
 
-        return validated;
+
+        return {
+          ...validated,
+
+          files:
+            fileSelection?.files ?? validated.files,
+
+          fileSelection,
+        };
 
       }
 
@@ -84,9 +102,27 @@ export const hybridPlanner: Planner = {
     }
 
 
-    return rulePlanner.createPlan(
-      context
-    );
+    const rulePlan =
+      await rulePlanner.createPlan(
+        context
+      );
+
+
+    const fileSelection =
+      getRelevantFiles(
+        context,
+        rulePlan.goal
+      );
+
+
+    return {
+      ...rulePlan,
+
+      files:
+        fileSelection?.files ?? rulePlan.files,
+
+      fileSelection,
+    };
 
   },
 

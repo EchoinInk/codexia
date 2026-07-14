@@ -1,21 +1,21 @@
-import type { AgentObservation } from "./types";
+import type {
+  AgentObservation,
+} from "./types";
 
-export function createObservation(value: unknown): AgentObservation {
-  if (typeof value === "object" && value !== null && "content" in value) {
-    return {
-      type: "file_read",
 
-      summary: "File contents were read",
-
-      data: value,
-    };
-  }
+export function createObservation(
+  output: string,
+  type:
+    | AgentObservation["type"] = "tool_result"
+): AgentObservation {
 
   return {
-    type: "tool_result",
 
-    summary: "Tool execution completed",
+    type,
 
-    data: value,
+    summary:
+      output,
+
   };
+
 }

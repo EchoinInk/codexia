@@ -1,21 +1,21 @@
 import type {
-  AgentContext,
-} from "./types";
-
-
-import type {
   Plan,
   PlanStep,
 } from "./planner";
 
 
+import type {
+  AgentContext,
+} from "./types";
+
+
 import {
-  toolRegistry
+  toolRegistry,
 } from "@/lib/tools";
 
 
 import {
-  createObservation
+  createObservation,
 } from "./observation";
 
 
@@ -25,69 +25,117 @@ import {
 } from "./context";
 
 
+import {
+  validateExecution,
+} from "./patch-validator";
+
+
+import {
+  runVerification,
+} from "./verification";
+
+
+import {
+  analyseFailures,
+} from "./failure-analyzer";
+
+
+import {
+  createProgress,
+} from "./progress";
+
+
+import {
+  createChangeSummary,
+  addAction,
+  addVerification,
+} from "./change-summary";
+
+
 
 export interface ExecutionResult {
 
-  success:boolean;
+  success: boolean;
 
-  output:string;
+  output: string;
 
-  filesModified:string[];
+  filesModified: string[];
 
-  context:AgentContext;
+  context: AgentContext;
 
 }
 
 
 
 export async function executePlan(
-  plan:Plan,
-  context:AgentContext
-):Promise<ExecutionResult>{
+  plan: Plan,
+  context: AgentContext
+): Promise<ExecutionResult> {
 
 
   let updatedContext =
     context;
 
 
-  const results:string[] = [];
+  let summary =
+    createChangeSummary();
+
+
+  const results: string[] = [];
 
 
 
-  for(
-    const step of plan.steps
-  ){
+  updatedContext =
+    addObservation(
+      updatedContext,
+      createObservation(
+        createProgress(
+          "applying_changes",
+          "Executing plan"
+        ).message
+      )
+    );
+
+
+
+  for (const step of plan.steps) {
+
+
+    summary =
+      addAction(
+        summary,
+        step.description
+      );
 
 
     const result =
       await executeStep(step);
 
 
-
-    results.push(result.output);
-
+    results.push(
+      result.output
+    );
 
 
     updatedContext =
       addObservation(
         updatedContext,
         createObservation(
-          result.output
+          result.output,
+          result.success
+            ? "tool_result"
+            : "error"
         )
       );
 
 
-
-    if(result.tool){
-
+    if (result.tool) {
 
       updatedContext =
         addToolResult(
           updatedContext,
           {
-
-            tool:
-              result.tool,
+            tool: result.tool,
 
             success:
               result.success,
@@ -96,7 +144,6 @@ export async function executePlan(
               result.output,
 
           }
-
         );
 
     }
@@ -105,13 +152,82 @@ export async function executePlan(
 
 
 
+  updatedContext =
+    addObservation(
+      updatedContext,
+      createObservation(
+        createProgress(
+          "verifying",
+          "Running verification"
+        ).message
+      )
+    );
+
+
+
+  const verification =
+    await runVerification();
+
+
+  for (const result of verification) {
+
+    summary =
+      addVerification(
+        summary,
+        result.success
+          ? `${result.command}: passed`
+          : `${result.command}: failed`
+      );
+
+  }
+
+
+
+  const failure =
+    analyseFailures(
+      verification
+    );
+
+
+  if (failure.failed) {
+
+    updatedContext =
+      addObservation(
+        updatedContext,
+        createObservation(
+          failure.failures.join("\n"),
+          "error"
+        )
+      );
+
+  }
+
+
+
+  const validation =
+    validateExecution(
+      updatedContext
+    );
+
+
+
   return {
 
-    success:true,
+    success:
+      validation.valid &&
+      !failure.failed,
 
-    output:[
+
+    output: [
+
       `Task: ${plan.goal}`,
+
       ...results,
+
+      "Verification:",
+
+      ...summary.verification,
+
     ].join("\n"),
 
 
@@ -128,19 +244,16 @@ export async function executePlan(
 
 
 
-
 async function executeStep(
-  step:PlanStep
-){
+  step: PlanStep
+) {
 
 
-  if(
-    !step.tool
-  ){
+  if (!step.tool) {
 
     return {
 
-      success:true,
+      success: true,
 
       output:
         `Completed: ${step.description}`,
@@ -158,11 +271,11 @@ async function executeStep(
 
 
 
-  if(!tool){
+  if (!tool) {
 
     return {
 
-      success:false,
+      success: false,
 
       output:
         `Tool "${step.tool}" not found`,
@@ -175,42 +288,38 @@ async function executeStep(
 
   try {
 
-
     const output =
       await tool.execute(
         step.args ?? {}
       );
 
 
-
     return {
 
-      success:true,
+      success: true,
 
       tool:
         step.tool,
 
       output:
-        JSON.stringify(
-          output
-        ),
+        JSON.stringify(output),
 
     };
 
 
-  }
-  catch(error:any){
-
+  } catch (error) {
 
     return {
 
-      success:false,
+      success: false,
 
       tool:
         step.tool,
 
       output:
-        error.message,
+        error instanceof Error
+          ? error.message
+          : String(error),
 
     };
 

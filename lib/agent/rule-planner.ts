@@ -12,6 +12,9 @@ import type {
   PlanStep,
   Planner,
 } from "./planner";
+import {
+  getRelevantFiles,
+} from "./planner";
 
 
 function createSteps(
@@ -160,6 +163,12 @@ export const rulePlanner: Planner = {
       analyseTask(context);
 
 
+    const fileSelection =
+      getRelevantFiles(
+        context,
+        goal
+      );
+
     return {
 
       goal,
@@ -167,7 +176,10 @@ export const rulePlanner: Planner = {
       steps:
         createSteps(task.type),
 
-      files: [],
+      files:
+        fileSelection?.files ?? [],
+
+      fileSelection,
 
     };
   },

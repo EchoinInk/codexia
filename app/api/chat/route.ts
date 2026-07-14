@@ -9,19 +9,10 @@ export async function POST(req: Request) {
 
   const messages = body.messages as AgentMessage[];
 
-  const result = await runAgent({
-    messages,
-
-    workspace: body.workspace ?? "",
-
-    filesRead: [],
-
-    filesModified: [],
-
-    observations: [],
-
-    toolResults: [],
-  });
+  const result = await runAgent(
+    messages[messages.length - 1]?.content ?? "",
+    body.workspace ?? ""
+  );
 
   return Response.json({
     content: result.content,

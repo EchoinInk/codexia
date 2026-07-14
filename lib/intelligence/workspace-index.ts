@@ -1,35 +1,48 @@
 import { listTree } from "@/lib/fs-safe";
 
-export interface WorkspaceIndex {
-  files: string[];
+import { analyseFile } from "./file-analyzer";
 
-  directories: string[];
-}
+import type { IndexedFile, WorkspaceIndex } from "./types";
+
 
 export async function createWorkspaceIndex(): Promise<WorkspaceIndex> {
+
   const tree = await listTree();
 
-  const files: string[] = [];
+
+  const files: IndexedFile[] = [];
 
   const directories: string[] = [];
 
-  function walk(nodes: any[]) {
+
+  async function walk(nodes: any[]) {
+
     for (const node of nodes) {
+
       if (node.type === "file") {
-        files.push(node.path);
+
+        const analysis = await analyseFile(node.path);
+
+        files.push(analysis);
+
       }
 
+
       if (node.type === "dir") {
+
         directories.push(node.path);
 
+
         if (node.children) {
-          walk(node.children);
+          await walk(node.children);
         }
       }
     }
   }
 
-  walk(tree);
+
+  await walk(tree);
+
 
   return {
     files,

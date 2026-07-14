@@ -1,3 +1,8 @@
+import type {
+  IntelligenceContext,
+} from "@/lib/intelligence/intelligence-context";
+
+
 export interface AgentMessage {
   role: "system" | "user" | "assistant" | "tool";
 
@@ -5,6 +10,7 @@ export interface AgentMessage {
 
   name?: string;
 }
+
 
 export type TaskType =
   | "question"
@@ -14,13 +20,19 @@ export type TaskType =
   | "debug"
   | "unknown";
 
+
 export interface AgentObservation {
-  type: "file_read" | "file_write" | "tool_result" | "error";
+  type:
+    | "file_read"
+    | "file_write"
+    | "tool_result"
+    | "error";
 
   summary: string;
 
   data?: unknown;
 }
+
 
 export interface ToolResult {
   tool: string;
@@ -30,37 +42,45 @@ export interface ToolResult {
   output: unknown;
 }
 
+
 export interface AgentContext {
 
   messages: AgentMessage[];
 
-  workspace:string;
+  workspace: string;
+
+  intelligence?: IntelligenceContext;
 
 
-  filesRead:string[];
+  filesRead: string[];
 
-  filesModified:string[];
-
-
-  observations:AgentObservation[];
-
-  toolResults:ToolResult[];
+  filesModified: string[];
 
 
-  currentTask?:string;
+  observations: AgentObservation[];
 
-  taskType?:TaskType;
+  toolResults: ToolResult[];
 
 
-  memory?:AgentObservation[];
+  currentTask?: string;
+
+  taskType?: TaskType;
+
+
+  memory?: AgentObservation[];
 
 }
 
+
 export interface AgentResponse {
+
   content: string;
 
   toolUsed?: string;
+
 }
+
+
 export interface PlannerContext {
 
   plannerSource?:
@@ -68,11 +88,11 @@ export interface PlannerContext {
     | "llm"
     | "hybrid";
 
-  plannerFallback?:
-    boolean;
 
-  plannerFallbackReason?:
-    string;
+  plannerFallback?: boolean;
+
+
+  plannerFallbackReason?: string;
 
 }
 

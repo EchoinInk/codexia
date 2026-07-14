@@ -26,19 +26,13 @@ export function getPlanner(): Planner {
   ) {
 
     case "llm":
-
       return llmPlanner;
 
-
     case "hybrid":
-
       return hybridPlanner;
 
-
     case "rule":
-
     default:
-
       return rulePlanner;
 
   }

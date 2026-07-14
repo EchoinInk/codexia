@@ -16,6 +16,10 @@ import {
 } from "./plan-validator";
 
 import {
+  getRelevantFiles,
+} from "./planner";
+
+import {
   toolRegistry,
 } from "@/lib/tools/registry";
 
@@ -160,9 +164,27 @@ export const llmPlanner: Planner = {
     }
 
 
-    return validatePlan(
-      json as Plan
-    );
+    const plan =
+      validatePlan(
+        json as Plan
+      );
+
+
+    const fileSelection =
+      getRelevantFiles(
+        context,
+        plan.goal
+      );
+
+
+    return {
+      ...plan,
+
+      files:
+        fileSelection?.files ?? plan.files,
+
+      fileSelection,
+    };
 
   },
 

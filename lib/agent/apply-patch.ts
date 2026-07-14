@@ -1,11 +1,25 @@
 import { safeWriteFile } from "@/lib/fs-safe";
 
-import type { DiffResult } from "./diff";
+import type {
+  DiffResult,
+  FilePatch,
+} from "./diff";
 
 export interface PatchResult {
   applied: string[];
 
   failed: string[];
+}
+
+export function validatePatch(
+  patch: FilePatch
+): boolean {
+
+  return Boolean(
+    patch.path &&
+    patch.after !== undefined
+  );
+
 }
 
 export async function applyPatch(diff: DiffResult): Promise<PatchResult> {

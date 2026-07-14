@@ -6,16 +6,55 @@ import type {
 } from "./types";
 
 
-export function createContext(
+import {
+  createWorkspaceIndex,
+} from "@/lib/intelligence/workspace-index";
+
+
+import {
+  createIntelligenceContext,
+} from "@/lib/intelligence/intelligence-context";
+
+
+import {
+  createMemory,
+} from "./memory";
+
+
+import type {
+  AgentProgress,
+} from "./progress";
+
+
+import type {
+  ChangeSummary,
+} from "./change-summary";
+
+
+
+export async function createContext(
   messages: AgentMessage[],
   workspace: string
-): AgentContext {
+): Promise<AgentContext> {
+
+
+  const workspaceIndex =
+    await createWorkspaceIndex();
+
+
+  const intelligence =
+    createIntelligenceContext(
+      workspaceIndex
+    );
+
 
   return {
 
     messages,
 
     workspace,
+
+    intelligence,
 
     filesRead: [],
 
@@ -25,87 +64,8 @@ export function createContext(
 
     toolResults: [],
 
-  };
-
-}
-
-
-
-export function addMessage(
-  context: AgentContext,
-  message: AgentMessage
-): AgentContext {
-
-  return {
-
-    ...context,
-
-    messages: [
-      ...context.messages,
-      message,
-    ],
-
-  };
-
-}
-
-
-
-export function trackFileRead(
-  context: AgentContext,
-  filePath: string
-): AgentContext {
-
-
-  if (
-    context.filesRead.includes(filePath)
-  ) {
-
-    return context;
-
-  }
-
-
-
-  return {
-
-    ...context,
-
-    filesRead: [
-      ...context.filesRead,
-      filePath,
-    ],
-
-  };
-
-}
-
-
-
-export function trackFileModified(
-  context: AgentContext,
-  filePath: string
-): AgentContext {
-
-
-  if (
-    context.filesModified.includes(filePath)
-  ) {
-
-    return context;
-
-  }
-
-
-
-  return {
-
-    ...context,
-
-    filesModified: [
-      ...context.filesModified,
-      filePath,
-    ],
+    memory:
+      [],
 
   };
 
@@ -149,36 +109,4 @@ export function addToolResult(
 
   };
 
-}
-
-
-
-export function setCurrentTask(
-  context: AgentContext,
-  task: string
-): AgentContext {
-
-  return {
-
-    ...context,
-
-    currentTask: task,
-
-  };
-}
-  export function addMemory(
-  context: AgentContext,
-  observation: AgentObservation
-): AgentContext {
-
-  return {
-
-    ...context,
-
-    memory:[
-      ...(context.memory ?? []),
-      observation,
-    ],
-
-  };
 }
