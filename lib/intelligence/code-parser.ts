@@ -1,9 +1,13 @@
+import { createAst } from "./ast";
+import { analyseAst } from "./ast-walker";
+
 import type { CodeAnalysis } from "./types";
 
 
 export function parseCode(
   content: string,
-  language: string
+  language: string,
+  filePath = "unknown.ts"
 ): CodeAnalysis {
 
   if (
@@ -12,131 +16,90 @@ export function parseCode(
     language !== "javascript" &&
     language !== "javascript-react"
   ) {
+
     return {
       imports: [],
       exports: [],
       functions: [],
       classes: [],
       components: [],
+      symbols: [],
     };
+
   }
 
 
-  const imports = extractImports(content);
+  const ast =
+    createAst(
+      filePath,
+      content
+    );
 
-  const exports = extractExports(content);
 
-  const functions = extractFunctions(content);
+  if (!ast) {
 
-  const classes = extractClasses(content);
+    return {
+      imports: [],
+      exports: [],
+      functions: [],
+      classes: [],
+      components: [],
+      symbols: [],
+    };
 
-  const components = extractComponents(
-    content,
-    language
-  );
+  }
+
+
+  const analysis =
+    analyseAst(
+      ast.sourceFile
+    );
 
 
   return {
-    imports,
 
-    exports,
+    imports:
+      analysis.imports,
 
-    functions,
+    exports:
+      analysis.exports,
 
-    classes,
+    functions:
+      analysis.symbols
+        .filter(
+          symbol =>
+            symbol.kind === "function"
+        )
+        .map(
+          symbol =>
+            symbol.name
+        ),
 
-    components,
+    classes:
+      analysis.symbols
+        .filter(
+          symbol =>
+            symbol.kind === "class"
+        )
+        .map(
+          symbol =>
+            symbol.name
+        ),
+
+    components:
+      analysis.symbols
+        .filter(
+          symbol =>
+            symbol.kind === "component"
+        )
+        .map(
+          symbol =>
+            symbol.name
+        ),
+
+    symbols:
+      analysis.symbols,
+
   };
-}
 
-
-function extractImports(
-  content: string
-): string[] {
-
-  const matches = [
-    ...content.matchAll(
-      /import\s+.*?\s+from\s+["'](.+?)["']/g
-    ),
-  ];
-
-
-  return matches.map(
-    match => match[1]
-  );
-}
-
-
-function extractExports(
-  content: string
-): string[] {
-
-  const matches = [
-    ...content.matchAll(
-      /export\s+(?:default\s+)?(?:function|class|const|let|var)\s+(\w+)/g
-    ),
-  ];
-
-
-  return matches.map(
-    match => match[1]
-  );
-}
-
-
-function extractFunctions(
-  content: string
-): string[] {
-
-  const matches = [
-    ...content.matchAll(
-      /function\s+(\w+)\s*\(/g
-    ),
-  ];
-
-
-  return matches.map(
-    match => match[1]
-  );
-}
-
-
-function extractClasses(
-  content: string
-): string[] {
-
-  const matches = [
-    ...content.matchAll(
-      /class\s+(\w+)/g
-    ),
-  ];
-
-
-  return matches.map(
-    match => match[1]
-  );
-}
-
-
-function extractComponents(
-  content: string,
-  language: string
-): string[] {
-
-  if (language !== "typescript-react" &&
-      language !== "javascript-react") {
-    return [];
-  }
-
-
-  const matches = [
-    ...content.matchAll(
-      /(?:function|const)\s+([A-Z]\w*)/g
-    ),
-  ];
-
-
-  return matches.map(
-    match => match[1]
-  );
 }

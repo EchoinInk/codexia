@@ -6,6 +6,14 @@ import {
   createDependencyGraph,
 } from "./dependency-graph";
 
+import {
+  analyseImpact,
+} from "./impact-analysis";
+
+import type {
+  ImpactAnalysis,
+} from "./impact-analysis";
+
 
 export interface IntelligenceContext {
 
@@ -17,6 +25,12 @@ export interface IntelligenceContext {
 
   confidence: number;
 
+  dependencyOrder: string[];
+
+  analyseImpact(
+    files: string[]
+  ): ImpactAnalysis;
+
 }
 
 
@@ -25,14 +39,17 @@ export function createIntelligenceContext(
   workspace: WorkspaceIndex
 ): IntelligenceContext {
 
+
   const graph =
     createDependencyGraph(
       workspace
     );
 
 
+
   const dependencies:
     Record<string, string[]> = {};
+
 
 
   for (const node of graph.nodes) {
@@ -44,6 +61,7 @@ export function createIntelligenceContext(
   }
 
 
+
   const relatedFiles =
     graph.nodes.flatMap(
       node =>
@@ -51,13 +69,21 @@ export function createIntelligenceContext(
     );
 
 
-  return {
+
+  let context:
+    IntelligenceContext;
+
+
+
+  context = {
+
 
     files:
       workspace.files.map(
         file =>
           file.path
       ),
+
 
 
     relatedFiles:
@@ -68,12 +94,56 @@ export function createIntelligenceContext(
       ],
 
 
+
     dependencies,
+
 
 
     confidence:
       calculateConfidence(
         workspace.files.length
+      ),
+
+
+
+    dependencyOrder:
+      graph.order,
+
+
+
+    analyseImpact(
+      files: string[]
+    ) {
+
+      return analyseImpact(
+        context,
+        files
+      );
+
+    },
+
+
+  };
+
+
+
+  return context;
+
+}
+
+
+
+export function attachIntelligenceContext(
+  workspace: WorkspaceIndex
+): WorkspaceIndex {
+
+  return {
+
+    ...workspace,
+
+    intelligence:
+      createIntelligenceContext(
+        workspace
       ),
 
   };
@@ -87,18 +157,27 @@ function calculateConfidence(
 ): number {
 
   if (fileCount === 0) {
+
     return 0;
+
   }
+
 
 
   if (fileCount < 500) {
+
     return 1;
+
   }
+
 
 
   if (fileCount < 2000) {
+
     return 0.8;
+
   }
+
 
 
   return 0.6;

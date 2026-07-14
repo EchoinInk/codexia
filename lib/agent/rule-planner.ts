@@ -12,8 +12,11 @@ import type {
   PlanStep,
   Planner,
 } from "./planner";
+
 import {
   getRelevantFiles,
+  getImpactAnalysis,
+  addPlanMetadata,
 } from "./planner";
 
 
@@ -31,18 +34,22 @@ function createSteps(
           description:
             "Inspect relevant files",
 
-          action: "read",
+          action:
+            "read",
 
-          tool: "list_files",
+          tool:
+            "list_files",
 
-          args: {},
+          args:
+            {},
         },
 
         {
           description:
             "Analyse requested information",
 
-          action: "analyze",
+          action:
+            "analyze",
         },
 
       ];
@@ -56,29 +63,36 @@ function createSteps(
           description:
             "Inspect workspace",
 
-          action: "read",
+          action:
+            "read",
 
-          tool: "list_files",
+          tool:
+            "list_files",
 
-          args: {},
+          args:
+            {},
         },
 
         {
           description:
             "Inspect git changes",
 
-          action: "read",
+          action:
+            "read",
 
-          tool: "git_diff",
+          tool:
+            "git_diff",
 
-          args: {},
+          args:
+            {},
         },
 
         {
           description:
             "Identify issue",
 
-          action: "analyze",
+          action:
+            "analyze",
         },
 
       ];
@@ -94,32 +108,38 @@ function createSteps(
           description:
             "Inspect workspace",
 
-          action: "read",
+          action:
+            "read",
 
-          tool: "list_files",
+          tool:
+            "list_files",
 
-          args: {},
+          args:
+            {},
         },
 
         {
           description:
-            "Prepare changes",
+            "Analyse required changes",
 
-          action: "analyze",
+          action:
+            "analyze",
         },
 
         {
           description:
             "Apply changes",
 
-          action: "write",
+          action:
+            "write",
         },
 
         {
           description:
             "Verify result",
 
-          action: "verify",
+          action:
+            "verify",
         },
 
       ];
@@ -133,12 +153,16 @@ function createSteps(
           description:
             "Analyse request",
 
-          action: "analyze",
+          action:
+            "analyze",
         },
 
       ];
+
   }
+
 }
+
 
 
 export const rulePlanner: Planner = {
@@ -147,10 +171,12 @@ export const rulePlanner: Planner = {
     context: AgentContext
   ): Promise<Plan> {
 
+
     const lastMessage =
       context.messages[
         context.messages.length - 1
       ];
+
 
 
     const goal =
@@ -159,8 +185,12 @@ export const rulePlanner: Planner = {
       "No task provided";
 
 
+
     const task =
-      analyseTask(context);
+      analyseTask(
+        context
+      );
+
 
 
     const fileSelection =
@@ -169,19 +199,36 @@ export const rulePlanner: Planner = {
         goal
       );
 
-    return {
+
+
+    const files =
+      fileSelection?.files ??
+      [];
+
+
+
+    return addPlanMetadata({
 
       goal,
 
       steps:
-        createSteps(task.type),
+        createSteps(
+          task.type
+        ),
 
-      files:
-        fileSelection?.files ?? [],
+      files,
 
       fileSelection,
 
-    };
+      impact:
+        getImpactAnalysis(
+          context,
+          files
+        ),
+
+    });
+
+
   },
 
 };

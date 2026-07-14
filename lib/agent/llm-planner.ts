@@ -17,6 +17,8 @@ import {
 
 import {
   getRelevantFiles,
+  getImpactAnalysis,
+  addPlanMetadata,
 } from "./planner";
 
 import {
@@ -50,27 +52,30 @@ Rules:
 
 - Do not execute actions.
 - Do not modify files.
-- Use only available tools.
-- Consider workspace context.
-- Consider previous memory.
-- Avoid repeating completed work.
+- Consider workspace architecture.
+- Consider dependency relationships.
 - Prefer inspection before modification.
 - Keep plans minimal.
 `.trim();
+
 
 
 function getAvailableTools() {
 
   return toolRegistry
     .list()
-    .map((tool) => ({
-      name: tool.name,
+    .map(tool => ({
+
+      name:
+        tool.name,
 
       description:
         tool.description ?? "",
+
     }));
 
 }
+
 
 
 export const llmPlanner: Planner = {
@@ -78,7 +83,6 @@ export const llmPlanner: Planner = {
   async createPlan(
     context: AgentContext
   ): Promise<Plan> {
-
 
     const tools =
       getAvailableTools();
@@ -88,15 +92,19 @@ export const llmPlanner: Planner = {
       await chatWithOllama([
 
         {
-          role: "system",
+
+          role:
+            "system",
 
           content:
             SYSTEM_PROMPT,
+
         },
 
-
         {
-          role: "user",
+
+          role:
+            "user",
 
           content:
             JSON.stringify({
@@ -104,13 +112,12 @@ export const llmPlanner: Planner = {
               task:
                 context.currentTask,
 
-
               messages:
                 context.messages,
 
-
               workspace:
                 {
+
                   root:
                     context.workspace,
 
@@ -119,32 +126,21 @@ export const llmPlanner: Planner = {
 
                   filesModified:
                     context.filesModified,
+
                 },
 
-
-              memory:
-{
-  currentTask:
-    context.currentTask,
-
-  filesRead:
-    context.filesRead,
-
-  filesModified:
-    context.filesModified,
-
-  messageCount:
-    context.messages.length,
-},
-
+              intelligence:
+                context.intelligence,
 
               availableTools:
                 tools,
 
             }),
+
         },
 
       ]);
+
 
 
     let json: unknown;
@@ -153,7 +149,9 @@ export const llmPlanner: Planner = {
     try {
 
       json =
-        JSON.parse(response);
+        JSON.parse(
+          response
+        );
 
     } catch {
 
@@ -164,7 +162,8 @@ export const llmPlanner: Planner = {
     }
 
 
-    const plan =
+
+    const validated =
       validatePlan(
         json as Plan
       );
@@ -173,18 +172,35 @@ export const llmPlanner: Planner = {
     const fileSelection =
       getRelevantFiles(
         context,
-        plan.goal
+        validated.goal
       );
 
 
-    return {
-      ...plan,
+    const files =
+      fileSelection?.files ??
+      validated.files;
 
-      files:
-        fileSelection?.files ?? plan.files,
+
+
+    const impact =
+      getImpactAnalysis(
+        context,
+        files
+      );
+
+
+
+    return addPlanMetadata({
+
+      ...validated,
+
+      files,
 
       fileSelection,
-    };
+
+      impact,
+
+    });
 
   },
 

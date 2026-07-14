@@ -26,10 +26,12 @@ function detectLanguage(
     html: "html",
 
     md: "markdown",
+
   };
 
 
   return languages[extension] ?? "unknown";
+
 }
 
 
@@ -37,7 +39,8 @@ export async function analyseFile(
   path: string
 ): Promise<IndexedFile> {
 
-  const content = await safeReadFile(path);
+  const content =
+    await safeReadFile(path);
 
 
   const extension =
@@ -46,25 +49,34 @@ export async function analyseFile(
       : "";
 
 
-  const language = detectLanguage(extension);
+  const language =
+    detectLanguage(extension);
 
 
   return {
 
     path,
 
-    size: content.length,
+    size:
+      content.length,
 
     extension,
 
     language,
 
-    preview: content.slice(0, 500),
+    preview:
+      content.slice(
+        0,
+        500
+      ),
 
-    code: parseCode(
-      content,
-      language
-    ),
+    code:
+      parseCode(
+        content,
+        language,
+        path
+      ),
 
   };
+
 }

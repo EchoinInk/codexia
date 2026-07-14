@@ -1,11 +1,18 @@
-import type { AgentContext } from "./types";
+import type {
+  AgentContext,
+} from "./types";
 
 import {
   selectRelevantFiles,
 } from "@/lib/intelligence/file-selector";
 
+import type {
+  ImpactAnalysis,
+} from "@/lib/intelligence/impact-analysis";
+
 
 export interface PlanStep {
+
   description: string;
 
   action:
@@ -17,10 +24,13 @@ export interface PlanStep {
   tool?: string;
 
   args?: Record<string, unknown>;
+
 }
 
 
+
 export interface Plan {
+
   goal: string;
 
   steps: PlanStep[];
@@ -28,11 +38,28 @@ export interface Plan {
   files: string[];
 
   fileSelection?: {
+
     files: string[];
 
     reason: string;
+
   };
+
+  impact?: ImpactAnalysis;
+
+  metadata?: {
+
+    complexity:
+      | "low"
+      | "medium"
+      | "high";
+
+    architectureAware: boolean;
+
+  };
+
 }
+
 
 
 export interface Planner {
@@ -51,7 +78,9 @@ export function getRelevantFiles(
 ) {
 
   if (!context.intelligence) {
+
     return undefined;
+
   }
 
 
@@ -59,5 +88,56 @@ export function getRelevantFiles(
     context.intelligence,
     task
   );
+
+}
+
+
+
+export function getImpactAnalysis(
+  context: AgentContext,
+  files: string[]
+) {
+
+  if (!context.intelligence) {
+
+    return undefined;
+
+  }
+
+
+  return context.intelligence.analyseImpact(
+    files
+  );
+
+}
+
+
+
+export function addPlanMetadata(
+  plan: Plan
+): Plan {
+
+  const complexity =
+    plan.files.length > 20
+      ? "high"
+      : plan.files.length > 5
+        ? "medium"
+        : "low";
+
+
+  return {
+
+    ...plan,
+
+    metadata: {
+
+      complexity,
+
+      architectureAware:
+        true,
+
+    },
+
+  };
 
 }

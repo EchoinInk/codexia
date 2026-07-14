@@ -1,13 +1,32 @@
-import { listTree } from "@/lib/fs-safe";
+import crypto from "crypto";
+
+import { listTree, safeReadFile } from "@/lib/fs-safe";
 
 import { analyseFile } from "./file-analyzer";
+import { createRelationshipGraph } from "./relationship-graph";
 
-import type { WorkspaceIndex, IndexedFile } from "./types";
+import type {
+  WorkspaceIndex,
+  IndexedFile,
+} from "./types";
+
+
+function createHash(
+  content: string
+): string {
+
+  return crypto
+    .createHash("sha256")
+    .update(content)
+    .digest("hex");
+
+}
 
 
 export async function createWorkspaceIndex(): Promise<WorkspaceIndex> {
 
-  const tree = await listTree();
+  const tree =
+    await listTree();
 
 
   const files: IndexedFile[] = [];
@@ -15,29 +34,62 @@ export async function createWorkspaceIndex(): Promise<WorkspaceIndex> {
   const directories: string[] = [];
 
 
-  async function walk(nodes: any[]) {
+  async function walk(
+    nodes: any[]
+  ) {
 
     for (const node of nodes) {
 
       if (node.type === "file") {
 
-        const analysis = await analyseFile(node.path);
+        const content =
+          await safeReadFile(
+            node.path
+          );
 
-        files.push(analysis);
+
+        const analysis =
+          await analyseFile(
+            node.path
+          );
+
+
+        files.push({
+
+          ...analysis,
+
+          hash:
+            createHash(
+              content
+            ),
+
+          modifiedAt:
+            Date.now(),
+
+        });
 
       }
 
 
       if (node.type === "dir") {
 
-        directories.push(node.path);
+        directories.push(
+          node.path
+        );
 
 
         if (node.children) {
-          await walk(node.children);
+
+          await walk(
+            node.children
+          );
+
         }
+
       }
+
     }
+
   }
 
 
@@ -45,8 +97,16 @@ export async function createWorkspaceIndex(): Promise<WorkspaceIndex> {
 
 
   return {
+
     files,
 
     directories,
+
+    relationships:
+      createRelationshipGraph(
+        files
+      ),
+
   };
+
 }

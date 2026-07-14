@@ -5,24 +5,31 @@ import type {
 
 import {
   getRelevantFiles,
+  getImpactAnalysis,
+  addPlanMetadata,
 } from "./planner";
+
 
 import type {
   Plan,
   Planner,
 } from "./planner";
 
+
 import {
   llmPlanner,
 } from "./llm-planner";
+
 
 import {
   rulePlanner,
 } from "./rule-planner";
 
+
 import {
   validatePlan,
 } from "./plan-validator";
+
 
 
 function isUsefulPlan(
@@ -36,6 +43,7 @@ function isUsefulPlan(
   );
 
 }
+
 
 
 export const hybridPlanner: Planner = {
@@ -58,18 +66,24 @@ export const hybridPlanner: Planner = {
 
 
       const validated =
-        validatePlan(plan);
+        validatePlan(
+          plan
+        );
 
 
       if (
-        isUsefulPlan(validated)
+        isUsefulPlan(
+          validated
+        )
       ) {
+
 
         console.log(
           `[Planner] LLM planner succeeded in ${
             Date.now() - start
           }ms`
         );
+
 
         const fileSelection =
           getRelevantFiles(
@@ -78,14 +92,30 @@ export const hybridPlanner: Planner = {
           );
 
 
-        return {
+        const files =
+          fileSelection?.files ??
+          validated.files;
+
+
+        const impact =
+          getImpactAnalysis(
+            context,
+            files
+          );
+
+
+
+        return addPlanMetadata({
+
           ...validated,
 
-          files:
-            fileSelection?.files ?? validated.files,
+          files,
 
           fileSelection,
-        };
+
+          impact,
+
+        });
 
       }
 
@@ -102,6 +132,7 @@ export const hybridPlanner: Planner = {
     }
 
 
+
     const rulePlan =
       await rulePlanner.createPlan(
         context
@@ -115,14 +146,28 @@ export const hybridPlanner: Planner = {
       );
 
 
-    return {
+    const files =
+      fileSelection?.files ??
+      rulePlan.files;
+
+
+
+    return addPlanMetadata({
+
       ...rulePlan,
 
-      files:
-        fileSelection?.files ?? rulePlan.files,
+      files,
 
       fileSelection,
-    };
+
+      impact:
+        getImpactAnalysis(
+          context,
+          files
+        ),
+
+    });
+
 
   },
 
