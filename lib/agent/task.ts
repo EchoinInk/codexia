@@ -11,6 +11,19 @@ export function analyseTask(context: AgentContext): TaskAnalysis {
     context.messages[context.messages.length - 1]?.content.toLowerCase() ?? "";
 
   if (
+    message.endsWith("?") ||
+    message.includes("would you like") ||
+    message.includes("do you want") ||
+    message.includes("should i")
+  ) {
+    return {
+      type: "question",
+
+      requiresTools: false,
+    };
+  }
+
+  if (
     message.includes("explain") ||
     message.includes("what") ||
     message.includes("why")

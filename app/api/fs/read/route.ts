@@ -12,7 +12,12 @@ export async function GET(req: Request) {
     const abs = safeResolve(p);
     const content = await fs.readFile(abs, "utf8");
     return NextResponse.json({ path: p, content });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 400 });
-  }
+  } catch (error: unknown) {
+  return Response.json({
+    error:
+      error instanceof Error
+        ? error.message
+        : String(error),
+  });
+}
 }

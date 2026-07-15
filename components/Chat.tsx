@@ -27,7 +27,7 @@ type Msg =
   | {
       role: "tool";
       tool: string;
-      data: any;
+      data: unknown;
     };
 
 
@@ -236,7 +236,7 @@ export function Chat({
 
     }
 
-    catch(error:any){
+    catch(error: unknown){
 
 
       setMessages(
@@ -249,7 +249,11 @@ export function Chat({
             role:"assistant",
 
             content:
-              `**Error:** ${error.message}`
+              `**Error:** ${
+                error instanceof Error
+                  ? error.message
+                  : String(error)
+              }`
 
           }
 
@@ -407,7 +411,7 @@ export function Chat({
                 text-ink-900
                 "
               >
-                Hi, I'm Codexia.
+                Hi, I&apos;m Codexia.
               </div>
 
 

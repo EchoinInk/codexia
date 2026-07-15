@@ -11,7 +11,12 @@ export async function POST(req: Request) {
     const abs = safeResolve(p);
     await fs.rm(abs, { recursive: true, force: true });
     return NextResponse.json({ ok: true });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 400 });
-  }
+  } catch (error: unknown) {
+  return Response.json({
+    error:
+      error instanceof Error
+        ? error.message
+        : String(error),
+  });
+}
 }

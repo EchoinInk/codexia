@@ -1,11 +1,30 @@
 "use client";
-import { MessageSquare, Folder, Settings, Sparkles } from "lucide-react";
+import {
+  MessageSquare,
+  Folder,
+  Settings,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
 import clsx from "clsx";
 
 export type View = "chat" | "files" | "settings";
 
-export function Sidebar({ view, setView }: { view: View; setView: (v: View) => void }) {
-  const groups: { label: string; items: { id: View; icon: any; label: string }[] }[] = [
+export function Sidebar({
+  view,
+  setView,
+}: {
+  view: View;
+  setView: (v: View) => void;
+}) {
+  const groups: {
+    label: string;
+    items: {
+      id: View;
+      icon: LucideIcon;
+      label: string;
+    }[];
+  }[] = [
     {
       label: "Workspace",
       items: [
@@ -26,7 +45,9 @@ export function Sidebar({ view, setView }: { view: View; setView: (v: View) => v
           <Sparkles size={18} />
         </div>
         <div>
-          <div className="text-ink-900 font-bold text-lg leading-none">Codexia</div>
+          <div className="text-ink-900 font-bold text-lg leading-none">
+            Codexia
+          </div>
           <div className="text-[11px] text-ink-500 mt-0.5">Local AI coding</div>
         </div>
       </div>
@@ -51,7 +72,10 @@ export function Sidebar({ view, setView }: { view: View; setView: (v: View) => v
                       : "text-ink-700 hover:bg-ink-400/5"
                   )}
                 >
-                  <Icon size={18} className={active ? "text-brand" : "text-ink-500"} />
+                  <Icon
+                    size={18}
+                    className={active ? "text-brand" : "text-ink-500"}
+                  />
                   {it.label}
                 </button>
               );

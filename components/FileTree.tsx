@@ -1,6 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ChevronRight, File as FileIcon, Folder, FolderOpen, RefreshCw } from "lucide-react";
+import {
+  ChevronRight,
+  File as FileIcon,
+  Folder,
+  FolderOpen,
+  RefreshCw,
+} from "lucide-react";
 import clsx from "clsx";
 
 export type FsNode = {
@@ -11,9 +17,15 @@ export type FsNode = {
 };
 
 function Node({
-  node, depth, onOpen, activePath,
+  node,
+  depth,
+  onOpen,
+  activePath,
 }: {
-  node: FsNode; depth: number; onOpen: (p: string) => void; activePath?: string;
+  node: FsNode;
+  depth: number;
+  onOpen: (p: string) => void;
+  activePath?: string;
 }) {
   const [open, setOpen] = useState(depth < 1);
   if (node.type === "file") {
@@ -43,20 +55,35 @@ function Node({
           size={14}
           className={clsx("transition-transform", open && "rotate-90")}
         />
-        {open ? <FolderOpen size={14} className="text-brand" /> : <Folder size={14} className="text-ink-500" />}
+        {open ? (
+          <FolderOpen size={14} className="text-brand" />
+        ) : (
+          <Folder size={14} className="text-ink-500" />
+        )}
         <span className="font-medium truncate">{node.name}</span>
       </button>
-      {open && node.children?.map((c) => (
-        <Node key={c.path} node={c} depth={depth + 1} onOpen={onOpen} activePath={activePath} />
-      ))}
+      {open &&
+        node.children?.map((c) => (
+          <Node
+            key={c.path}
+            node={c}
+            depth={depth + 1}
+            onOpen={onOpen}
+            activePath={activePath}
+          />
+        ))}
     </div>
   );
 }
 
 export function FileTree({
-  onOpen, activePath, refreshKey = 0,
+  onOpen,
+  activePath,
+  refreshKey = 0,
 }: {
-  onOpen: (p: string) => void; activePath?: string; refreshKey?: number;
+  onOpen: (p: string) => void;
+  activePath?: string;
+  refreshKey?: number;
 }) {
   const [tree, setTree] = useState<FsNode[]>([]);
   const [err, setErr] = useState<string | null>(null);
@@ -67,17 +94,31 @@ export function FileTree({
     try {
       const r = await fetch("/api/fs/list");
       const j = await r.json();
-      if (j.error) setErr(j.error); else { setTree(j.tree); setErr(null); }
-    } catch (e: any) { setErr(e.message); }
-    finally { setLoading(false); }
+      if (j.error) setErr(j.error);
+      else {
+        setTree(j.tree);
+        setErr(null);
+      }
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
   };
-  useEffect(() => { load(); }, [refreshKey]);
+  useEffect(() => {
+    load();
+  }, [refreshKey]);
 
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between px-3 py-2 border-b border-ink-400/10">
-        <div className="text-[11px] font-semibold text-ink-400 uppercase tracking-wider">Workspace</div>
-        <button onClick={load} className="text-ink-500 hover:text-brand p-1 rounded">
+        <div className="text-[11px] font-semibold text-ink-400 uppercase tracking-wider">
+          Workspace
+        </div>
+        <button
+          onClick={load}
+          className="text-ink-500 hover:text-brand p-1 rounded"
+        >
           <RefreshCw size={13} className={clsx(loading && "animate-spin")} />
         </button>
       </div>
@@ -87,7 +128,13 @@ export function FileTree({
           <div className="text-xs text-ink-500 p-2">Empty workspace.</div>
         )}
         {tree.map((n) => (
-          <Node key={n.path} node={n} depth={0} onOpen={onOpen} activePath={activePath} />
+          <Node
+            key={n.path}
+            node={n}
+            depth={0}
+            onOpen={onOpen}
+            activePath={activePath}
+          />
         ))}
       </div>
     </div>

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import Image from "next/image";
+
 type GenerateArtifact = {
   kind?: string;
   path?: string;
@@ -155,10 +157,13 @@ export default function GeneratePage() {
 
               <div className="flex min-h-[32rem] items-center justify-center rounded-3xl border border-white/10 bg-black/20 p-6">
                 {generatedImageSrc ? (
-                  <img
+                  <Image
                     src={generatedImageSrc}
                     alt="Generated Lumo logo concept"
+                    width={1024}
+                    height={1024}
                     className="w-full h-auto rounded-2xl object-contain"
+                    unoptimized
                   />
                 ) : (
                   <div className="max-w-sm text-center">

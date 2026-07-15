@@ -101,13 +101,16 @@ export async function listTree(relDir: string = ""): Promise<FsNode[]> {
     );
 
     return nodes;
-  } catch (err: any) {
-    throw new Error(
-      `Unable to list workspace path "${relDir || "."}": ${err.message}`
-    );
-  }
+  } catch (err: unknown) {
+  throw new Error(
+    `Unable to list workspace path "${relDir || "."}": ${
+      err instanceof Error
+        ? err.message
+        : String(err)
+    }`
+  );
 }
-
+}
 /**
  * Read a workspace file safely
  */
