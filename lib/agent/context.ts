@@ -57,3 +57,31 @@ export function addToolResult(
     toolResults: [...context.toolResults, result],
   };
 }
+
+
+export function addFileRead(
+  context: AgentContext,
+  path: string
+): AgentContext {
+  return {
+    ...context,
+
+    filesRead: context.filesRead.includes(path)
+      ? context.filesRead
+      : [...context.filesRead, path],
+  };
+}
+
+
+export function addFileModified(
+  context: AgentContext,
+  path: string
+): AgentContext {
+  return {
+    ...context,
+
+    filesModified: context.filesModified.includes(path)
+      ? context.filesModified
+      : [...context.filesModified, path],
+  };
+}

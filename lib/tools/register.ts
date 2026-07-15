@@ -7,20 +7,34 @@ import {
   deleteFileTool,
 } from "./filesystem";
 
-import { gitStatusTool, gitDiffTool, gitCommitTool } from "./git";
+import {
+  gitStatusTool,
+  gitDiffTool,
+  gitCommitTool,
+} from "./git";
+
 
 export function registerTools() {
-  toolRegistry.register(readFileTool);
+  const existing =
+    toolRegistry
+      .list()
+      .map(tool => tool.name);
 
-  toolRegistry.register(writeFileTool);
 
-  toolRegistry.register(listFilesTool);
+  const tools = [
+    readFileTool,
+    writeFileTool,
+    listFilesTool,
+    deleteFileTool,
+    gitStatusTool,
+    gitDiffTool,
+    gitCommitTool,
+  ];
 
-  toolRegistry.register(deleteFileTool);
 
-  toolRegistry.register(gitStatusTool);
-
-  toolRegistry.register(gitDiffTool);
-
-  toolRegistry.register(gitCommitTool);
+  for (const tool of tools) {
+    if (!existing.includes(tool.name)) {
+      toolRegistry.register(tool);
+    }
+  }
 }

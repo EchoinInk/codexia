@@ -5,7 +5,7 @@ import fs from "node:fs/promises";
 import type { Tool } from "./types";
 
 export const readFileTool: Tool = {
-    name: "read_file",
+  name: "read_file",
 
   description: "Reads a file from the workspace",
 
@@ -15,6 +15,15 @@ export const readFileTool: Tool = {
 
   async execute(args: Record<string, unknown>) {
     const path = typeof args.path === "string" ? args.path : "";
+
+    const stat = await fs.stat(safeResolve(path));
+
+    if (stat.isDirectory()) {
+      return {
+        path,
+        error: "Path is a directory. Use list_files first.",
+      };
+    }
 
     const content = await safeReadFile(path);
 

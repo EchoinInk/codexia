@@ -6,7 +6,12 @@ import { toolRegistry } from "@/lib/tools";
 
 import { createObservation } from "./observation";
 
-import { addObservation, addToolResult } from "./context";
+import {
+  addObservation,
+  addToolResult,
+  addFileRead,
+  addFileModified,
+} from "./context";
 
 import { validateExecution } from "./patch-validator";
 
@@ -66,11 +71,31 @@ export async function executePlan(
     if (result.tool) {
       updatedContext = addToolResult(updatedContext, {
         tool: result.tool,
-
         success: result.success,
-
         output: result.output,
       });
+    }
+
+    if (
+      result.success &&
+      result.tool === "read_file" &&
+      step.args?.path
+    ) {
+      updatedContext = addFileRead(
+        updatedContext,
+        String(step.args.path)
+      );
+    }
+
+    if (
+      result.success &&
+      result.tool === "write_file" &&
+      step.args?.path
+    ) {
+      updatedContext = addFileModified(
+        updatedContext,
+        String(step.args.path)
+      );
     }
   }
 

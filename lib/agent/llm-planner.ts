@@ -56,6 +56,9 @@ Rules:
 - Consider dependency relationships.
 - Prefer inspection before modification.
 - Keep plans minimal.
+- Never use read_file on directories.
+- Use list_files before reading unknown paths.
+- Workspace roots must be inspected with list_files.
 `.trim();
 
 
@@ -148,12 +151,32 @@ export const llmPlanner: Planner = {
 
     try {
 
+      const cleaned =
+        response
+          .replace(/```json/g, "")
+          .replace(/```/g, "")
+          .trim();
+
+      const match =
+        cleaned.match(/\{[\s\S]*\}/);
+
+      if (!match) {
+        throw new Error(
+          "No JSON object found in LLM response"
+        );
+      }
+
       json =
         JSON.parse(
-          response
+          match[0]
         );
 
     } catch {
+
+      console.error(
+        "[LLM Planner] Invalid JSON response:",
+        response
+      );
 
       throw new Error(
         "LLM planner returned invalid JSON"

@@ -4,4 +4,6 @@ export * from "./registry";
 
 export * from "./filesystem";
 
-export * from "./register";
+import { registerTools } from "./register";
+
+registerTools();

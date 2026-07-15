@@ -101,175 +101,115 @@ export function Chat({
 
 
   const send = async () => {
+  const text = input.trim();
 
-    const text =
-      input.trim();
+  if (!text || busy) {
+    return;
+  }
 
+  const next: Msg[] = [
+    ...messages,
+    {
+      role: "user",
+      content: text,
+    },
+  ];
 
-    if(
-      !text ||
-      busy
-    ){
-      return;
+  setMessages(next);
+  setInput("");
+  setBusy(true);
+
+  const history = next
+    .filter(
+      (
+        m
+      ): m is Extract<
+        Msg,
+        {
+          role: "user" | "assistant";
+          content: string;
+        }
+      > =>
+        m.role === "user" ||
+        m.role === "assistant"
+    )
+    .map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+  const controller = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 30000);
+
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messages: history,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      const text = await res.text();
+
+      throw new Error(
+        `HTTP ${res.status}\n${text}`
+      );
     }
 
+    const data = await res.json();
 
+    console.log("Agent response:", data);
 
-    const next: Msg[] = [
-
-      ...messages,
-
+    setMessages((current) => [
+      ...current,
       {
-        role:"user",
-        content:text
-      }
+        role: "assistant",
+        content:
+          data.content ??
+          "**Agent returned an empty response.**",
+      },
+    ]);
+  } catch (error: unknown) {
+    clearTimeout(timeout);
 
-    ];
+    let message = "Unknown error";
 
-
-
-    setMessages(next);
-
-    setInput("");
-
-    setBusy(true);
-
-
-
-    const history =
-      next
-
-      .filter(
-        (
-          m
-        ): m is Extract<
-          Msg,
-          {
-            role:
-              | "user"
-              | "assistant";
-            content:string;
-          }
-        > =>
-          m.role === "user" ||
-          m.role === "assistant"
-      )
-
-      .map(
-        m => ({
-          role:m.role,
-          content:m.content
-        })
-      );
-
-
-
-
-    try {
-
-
-      const res =
-        await fetch(
-          "/api/chat",
-          {
-
-            method:"POST",
-
-            headers:{
-
-              "Content-Type":
-                "application/json"
-
-            },
-
-
-            body:
-              JSON.stringify({
-
-                messages:
-                  history
-
-              })
-
-          }
-        );
-
-
-
-
-      if(!res.ok){
-
-        throw new Error(
-          `Chat error: ${res.status}`
-        );
-
-      }
-
-
-
-
-      const data =
-        await res.json();
-
-
-
-
-      setMessages(
-        current => [
-
-          ...current,
-
-          {
-
-            role:"assistant",
-
-            content:
-              data.content ??
-              "No response received."
-
-          }
-
-        ]
-      );
-
-
-
+    if (
+      error instanceof DOMException &&
+      error.name === "AbortError"
+    ) {
+      message =
+        "The request timed out after 30 seconds. The planner is probably stuck.";
+    } else if (error instanceof Error) {
+      message = error.message;
+    } else {
+      message = String(error);
     }
 
-    catch(error: unknown){
+    console.error("Chat request failed:", error);
 
-
-      setMessages(
-        current => [
-
-          ...current,
-
-          {
-
-            role:"assistant",
-
-            content:
-              `**Error:** ${
-                error instanceof Error
-                  ? error.message
-                  : String(error)
-              }`
-
-          }
-
-        ]
-      );
-
-
-    }
-
-    finally {
-
-      setBusy(false);
-
-    }
-
-  };
+    setMessages((current) => [
+      ...current,
+      {
+        role: "assistant",
+        content: `**Error:** ${message}`,
+      },
+    ]);
+  } finally {
+    clearTimeout(timeout);
+    setBusy(false);
+  }
+};
 
 
 

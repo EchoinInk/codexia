@@ -10,9 +10,15 @@ import {
 
 const VALID_ACTIONS = [
   "analyze",
+  "inspect",
+  "dependency_analysis",
   "read",
   "write",
+  "delete",
   "verify",
+  "list",
+  "list_files",
+  "git",
 ] as const;
 
 
@@ -34,7 +40,11 @@ function validateTool(
   step: PlanStep
 ) {
 
-  if (!step.tool) {
+  if (
+    !step.tool ||
+    step.tool === "None" ||
+    step.tool === "none"
+  ) {
     return;
   }
 
