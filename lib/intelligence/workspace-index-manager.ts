@@ -24,6 +24,12 @@ import {
   compareFingerprints,
 } from "./index-fingerprint";
 
+import {
+  loadWorkspaceState,
+  saveWorkspaceState,
+  createWorkspaceState,
+} from "./workspace-storage";
+
 
 let buildPromise:
   Promise<WorkspaceIndex> | null = null;
@@ -33,6 +39,7 @@ let buildPromise:
 export async function getWorkspaceIndex(
   workspace: string
 ): Promise<WorkspaceIndex> {
+
 
   const cached =
     getWorkspaceCache(
@@ -68,13 +75,13 @@ export async function getWorkspaceIndex(
       );
 
 
-    const hasChanges =
+    const changed =
       diff.changed.length > 0 ||
       diff.added.length > 0 ||
       diff.removed.length > 0;
 
 
-    if (!hasChanges) {
+    if (!changed) {
 
       return cached;
 
@@ -95,15 +102,42 @@ export async function getWorkspaceIndex(
     );
 
 
+    await saveWorkspaceState(
+      workspace,
+      createWorkspaceState(
+        updated,
+        fingerprint
+      )
+    );
+
+
     return updated;
 
   }
 
 
 
-  if (
-    buildPromise
-  ) {
+  const stored =
+    await loadWorkspaceState(
+      workspace
+    );
+
+
+  if (stored) {
+
+    setWorkspaceCache(
+      workspace,
+      stored.index,
+      stored.fingerprint
+    );
+
+    return stored.index;
+
+  }
+
+
+
+  if (buildPromise) {
 
     return buildPromise;
 
@@ -120,16 +154,30 @@ export async function getWorkspaceIndex(
           await createWorkspaceIndex();
 
 
+        const fingerprint =
+          createWorkspaceFingerprint(
+            index
+          );
+
+
         setWorkspaceCache(
           workspace,
           index,
-          createWorkspaceFingerprint(
-            index
+          fingerprint
+        );
+
+
+        await saveWorkspaceState(
+          workspace,
+          createWorkspaceState(
+            index,
+            fingerprint
           )
         );
 
 
         return index;
+
 
       } finally {
 
@@ -140,7 +188,9 @@ export async function getWorkspaceIndex(
     })();
 
 
+
   return buildPromise;
+
 }
 
 
