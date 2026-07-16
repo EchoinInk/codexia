@@ -7,6 +7,10 @@ import {
 } from "./context";
 
 import {
+  analyseTask,
+} from "./task";
+
+import {
   getPlanner,
 } from "./planner-index";
 
@@ -32,6 +36,10 @@ import {
   createAgentReport,
 } from "./report-generator";
 
+import {
+  chatWithOllama,
+} from "@/lib/models/ollama";
+
 
 export async function runAgent(
   message: string,
@@ -50,6 +58,44 @@ export async function runAgent(
     );
 
 
+  const task =
+    analyseTask(
+      context
+    );
+
+
+  /*
+    Conversational requests should not enter
+    the execution workflow.
+  */
+
+  if (
+    !task.requiresTools
+  ) {
+
+    const response =
+      await chatWithOllama([
+        {
+          role: "system",
+          content:
+            "You are Codier, the AI assistant inside Codexia. Answer naturally and concisely.",
+        },
+
+        {
+          role: "user",
+          content: message,
+        },
+      ]);
+
+
+    return {
+      content:
+        response,
+    };
+
+  }
+
+
   const planner =
     getPlanner();
 
@@ -57,22 +103,30 @@ export async function runAgent(
   let plan;
 
   try {
+
     plan =
       await planner.createPlan(
         context
       );
 
   } catch (error) {
+
     return {
+
       content:
         [
           "Planner validation failed.",
+
           error instanceof Error
             ? error.message
             : String(error),
+
           "Execution prevented: true",
+
         ].join("\n"),
+
     };
+
   }
 
 
@@ -103,7 +157,9 @@ export async function runAgent(
       );
 
 
-    if (result.success) {
+    if (
+      result.success
+    ) {
 
       return {
 
@@ -118,7 +174,9 @@ export async function runAgent(
     }
 
 
-    if (!canRetry(retry)) {
+    if (
+      !canRetry(retry)
+    ) {
 
       return {
 
