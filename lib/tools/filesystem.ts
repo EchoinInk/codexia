@@ -16,13 +16,14 @@ export const readFileTool: Tool = {
   async execute(args: Record<string, unknown>) {
     const path = typeof args.path === "string" ? args.path : "";
 
-    const stat = await fs.stat(safeResolve(path));
+    const abs = safeResolve(path);
+
+    const stat = await fs.stat(abs);
 
     if (stat.isDirectory()) {
-      return {
-        path,
-        error: "Path is a directory. Use list_files first.",
-      };
+      throw new Error(
+        `Cannot read directory "${path}". Use list_files instead.`
+      );
     }
 
     const content = await safeReadFile(path);
@@ -95,6 +96,7 @@ export const deleteFileTool: Tool = {
 
     await fs.rm(abs, {
       recursive: true,
+
       force: true,
     });
 

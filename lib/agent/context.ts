@@ -5,15 +5,17 @@ import type {
   ToolResult,
 } from "./types";
 
-import { createWorkspaceIndex } from "@/lib/intelligence/workspace-index";
+import { getWorkspaceIndex } from "@/lib/intelligence/workspace-index-manager";
 
 import { createIntelligenceContext } from "@/lib/intelligence/intelligence-context";
+
+import { invalidateWorkspaceCache } from "@/lib/intelligence/workspace-cache";
 
 export async function createContext(
   messages: AgentMessage[],
   workspace: string
 ): Promise<AgentContext> {
-  const workspaceIndex = await createWorkspaceIndex();
+  const workspaceIndex = await getWorkspaceIndex();
 
   const intelligence = createIntelligenceContext(workspaceIndex);
 
@@ -58,11 +60,7 @@ export function addToolResult(
   };
 }
 
-
-export function addFileRead(
-  context: AgentContext,
-  path: string
-): AgentContext {
+export function addFileRead(context: AgentContext, path: string): AgentContext {
   return {
     ...context,
 
@@ -72,11 +70,12 @@ export function addFileRead(
   };
 }
 
-
 export function addFileModified(
   context: AgentContext,
   path: string
 ): AgentContext {
+  invalidateWorkspaceCache();
+
   return {
     ...context,
 

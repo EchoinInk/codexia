@@ -17,12 +17,24 @@ export function getWorkspaceRoot(): string {
 export function safeResolve(relOrAbs: string): string {
   const root = getWorkspaceRoot();
 
-  const candidate = path.resolve(root, relOrAbs.replace(/^\/+/, ""));
+  const candidate =
+    path.isAbsolute(relOrAbs)
+      ? path.normalize(relOrAbs)
+      : path.resolve(
+          root,
+          relOrAbs
+        );
 
-  const normalized = path.normalize(candidate);
+  const normalized =
+    path.normalize(candidate);
 
-  if (normalized !== root && !normalized.startsWith(root + path.sep)) {
-    throw new Error("Path escapes workspace root");
+  if (
+    normalized !== root &&
+    !normalized.startsWith(root + path.sep)
+  ) {
+    throw new Error(
+      "Path escapes workspace root"
+    );
   }
 
   return normalized;
