@@ -1,8 +1,16 @@
-import { safeReadFile } from "@/lib/fs-safe";
+import {
+  safeReadFile,
+  safeResolve,
+} from "@/lib/fs-safe";
+
+import fs from "node:fs/promises";
 
 import { parseCode } from "./code-parser";
 
-import type { IndexedFile } from "./types";
+import type {
+  IndexedFile,
+} from "./types";
+
 
 
 function detectLanguage(
@@ -30,9 +38,13 @@ function detectLanguage(
   };
 
 
-  return languages[extension] ?? "unknown";
+  return (
+    languages[extension] ??
+    "unknown"
+  );
 
 }
+
 
 
 export async function analyseFile(
@@ -40,7 +52,17 @@ export async function analyseFile(
 ): Promise<IndexedFile> {
 
   const content =
-    await safeReadFile(path);
+    await safeReadFile(
+      path
+    );
+
+
+  const stats =
+    await fs.stat(
+      safeResolve(
+        path
+      )
+    );
 
 
   const extension =
@@ -49,8 +71,12 @@ export async function analyseFile(
       : "";
 
 
+
   const language =
-    detectLanguage(extension);
+    detectLanguage(
+      extension
+    );
+
 
 
   return {
@@ -58,17 +84,23 @@ export async function analyseFile(
     path,
 
     size:
-      content.length,
+      stats.size,
+
+    modifiedAt:
+      stats.mtimeMs,
+
 
     extension,
 
     language,
+
 
     preview:
       content.slice(
         0,
         500
       ),
+
 
     code:
       parseCode(
