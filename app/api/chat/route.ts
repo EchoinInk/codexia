@@ -12,9 +12,11 @@ export async function POST(req: Request) {
 
     console.log("Incoming chat:", messages);
 
+    const workspace = body.workspace ?? process.env.WORKSPACE_DIR ?? "";
+
     const result = await runAgent(
       messages[messages.length - 1]?.content ?? "",
-      body.workspace ?? ""
+      workspace
     );
 
     console.log("Agent result:", result);

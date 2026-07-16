@@ -15,7 +15,7 @@ export async function createContext(
   messages: AgentMessage[],
   workspace: string
 ): Promise<AgentContext> {
-  const workspaceIndex = await getWorkspaceIndex();
+  const workspaceIndex = await getWorkspaceIndex(workspace);
 
   const intelligence = createIntelligenceContext(workspaceIndex);
 
@@ -74,7 +74,7 @@ export function addFileModified(
   context: AgentContext,
   path: string
 ): AgentContext {
-  invalidateWorkspaceCache();
+  invalidateWorkspaceCache(context.workspace);
 
   return {
     ...context,

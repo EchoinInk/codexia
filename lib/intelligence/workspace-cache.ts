@@ -1,51 +1,83 @@
 import type { WorkspaceIndex } from "./types";
 
-let cachedWorkspaceIndex: WorkspaceIndex | null = null;
+import type { WorkspaceFingerprint } from "./index-fingerprint";
 
-let cacheCreatedAt = 0;
+interface WorkspaceCacheEntry {
+  index: WorkspaceIndex;
 
-let cacheDirty = true;
+  fingerprint: WorkspaceFingerprint;
 
-export function getWorkspaceCache(): WorkspaceIndex | null {
-  if (cacheDirty) {
+  createdAt: number;
+}
+
+const workspaceCaches = new Map<string, WorkspaceCacheEntry>();
+
+export function getWorkspaceCache(workspace: string): WorkspaceIndex | null {
+  const entry = workspaceCaches.get(workspace);
+
+  if (!entry) {
     return null;
   }
 
-  return cachedWorkspaceIndex;
+  return entry.index;
 }
 
-export function setWorkspaceCache(index: WorkspaceIndex): void {
-  cachedWorkspaceIndex = index;
-
-  cacheCreatedAt = Date.now();
-
-  cacheDirty = false;
+export function getWorkspaceCacheEntry(
+  workspace: string
+): WorkspaceCacheEntry | null {
+  return workspaceCaches.get(workspace) ?? null;
 }
 
-export function invalidateWorkspaceCache(): void {
-  cacheDirty = true;
+export function getWorkspaceFingerprint(
+  workspace: string
+): WorkspaceFingerprint | null {
+  const entry = workspaceCaches.get(workspace);
+
+  if (!entry) {
+    return null;
+  }
+
+  return entry.fingerprint;
+}
+
+export function setWorkspaceCache(
+  workspace: string,
+  index: WorkspaceIndex,
+  fingerprint: WorkspaceFingerprint
+): void {
+  workspaceCaches.set(workspace, {
+    index,
+
+    fingerprint,
+
+    createdAt: Date.now(),
+  });
+}
+
+export function invalidateWorkspaceCache(workspace?: string): void {
+  if (workspace) {
+    workspaceCaches.delete(workspace);
+
+    return;
+  }
+
+  workspaceCaches.clear();
 }
 
 export function clearWorkspaceCache(): void {
-  cachedWorkspaceIndex = null;
-
-  cacheCreatedAt = 0;
-
-  cacheDirty = true;
+  workspaceCaches.clear();
 }
 
-export function isWorkspaceCacheDirty(): boolean {
-  return cacheDirty;
+export function hasWorkspaceCache(workspace: string): boolean {
+  return workspaceCaches.has(workspace);
 }
 
-export function getWorkspaceCacheAge(): number {
-  if (cacheCreatedAt === 0) {
+export function getWorkspaceCacheAge(workspace: string): number {
+  const entry = workspaceCaches.get(workspace);
+
+  if (!entry) {
     return 0;
   }
 
-  return Date.now() - cacheCreatedAt;
-}
-
-export function hasWorkspaceCache(): boolean {
-  return cachedWorkspaceIndex !== null && !cacheDirty;
+  return Date.now() - entry.createdAt;
 }

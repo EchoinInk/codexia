@@ -4,19 +4,35 @@ import type { WorkspaceIndex } from "./types";
 
 import {
   getWorkspaceCache,
+  getWorkspaceCacheEntry,
   setWorkspaceCache,
   invalidateWorkspaceCache,
   clearWorkspaceCache,
   hasWorkspaceCache,
 } from "./workspace-cache";
 
+import { createWorkspaceFingerprint } from "./index-fingerprint";
+
 let buildPromise: Promise<WorkspaceIndex> | null = null;
 
-export async function getWorkspaceIndex(): Promise<WorkspaceIndex> {
-  const cached = getWorkspaceCache();
+export async function getWorkspaceIndex(
+  workspace: string
+): Promise<WorkspaceIndex> {
+  const cached = getWorkspaceCache(workspace);
 
-  if (cached) {
-    return cached;
+  const cacheEntry = getWorkspaceCacheEntry(workspace);
+
+  if (cached && cacheEntry) {
+    const refreshed = await createWorkspaceIndex(
+      cached,
+      cacheEntry.fingerprint
+    );
+
+    const fingerprint = createWorkspaceFingerprint(refreshed);
+
+    setWorkspaceCache(workspace, refreshed, fingerprint);
+
+    return refreshed;
   }
 
   if (buildPromise) {
@@ -27,7 +43,7 @@ export async function getWorkspaceIndex(): Promise<WorkspaceIndex> {
     try {
       const index = await createWorkspaceIndex();
 
-      setWorkspaceCache(index);
+      setWorkspaceCache(workspace, index, createWorkspaceFingerprint(index));
 
       return index;
     } finally {
@@ -38,20 +54,22 @@ export async function getWorkspaceIndex(): Promise<WorkspaceIndex> {
   return buildPromise;
 }
 
-export function markWorkspaceDirty(): void {
-  invalidateWorkspaceCache();
+export function markWorkspaceDirty(workspace?: string): void {
+  invalidateWorkspaceCache(workspace);
 }
 
 export function resetWorkspaceIndex(): void {
   clearWorkspaceCache();
 }
 
-export function hasWorkspaceIndex(): boolean {
-  return hasWorkspaceCache();
+export function hasWorkspaceIndex(workspace: string): boolean {
+  return hasWorkspaceCache(workspace);
 }
 
-export async function rebuildWorkspaceIndex(): Promise<WorkspaceIndex> {
-  invalidateWorkspaceCache();
+export async function rebuildWorkspaceIndex(
+  workspace: string
+): Promise<WorkspaceIndex> {
+  invalidateWorkspaceCache(workspace);
 
-  return getWorkspaceIndex();
+  return getWorkspaceIndex(workspace);
 }
