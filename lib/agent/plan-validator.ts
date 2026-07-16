@@ -4,36 +4,172 @@ import type {
 } from "./planner";
 
 import {
+  AGENT_ACTIONS,
+} from "./contracts/action-types";
+
+import {
   toolRegistry,
-} from "../tools/registry";
+} from "@/lib/tools/registry";
 
 
-const VALID_ACTIONS = [
-  "analyze",
-  "inspect",
-  "dependency_analysis",
-  "read",
-  "write",
-  "delete",
-  "verify",
-  "list",
-  "list_files",
-  "git",
-] as const;
+export class PlanValidationError extends Error {
+
+  constructor(
+    message: string
+  ) {
+
+    super(message);
+
+    this.name =
+      "PlanValidationError";
+
+  }
+
+}
 
 
-function isValidAction(
+export function isValidAction(
   action: unknown
 ): action is PlanStep["action"] {
 
   return (
+
     typeof action === "string" &&
-    VALID_ACTIONS.includes(
-      action as PlanStep["action"]
+
+    AGENT_ACTIONS.includes(
+      action as typeof AGENT_ACTIONS[number]
     )
+
   );
 
 }
+
+
+
+export function validatePlanContract(
+  plan: unknown
+): Plan {
+
+  if (
+    !plan ||
+    typeof plan !== "object"
+  ) {
+
+    throw new PlanValidationError(
+      "Invalid plan contract"
+    );
+
+  }
+
+
+  const candidate =
+    plan as Partial<Plan>;
+
+
+
+  if (
+    typeof candidate.goal !== "string" ||
+    !candidate.goal.trim()
+  ) {
+
+    throw new PlanValidationError(
+      "Plan contract missing goal"
+    );
+
+  }
+
+
+
+  if (
+    !Array.isArray(candidate.steps)
+  ) {
+
+    throw new PlanValidationError(
+      "Plan contract steps must be an array"
+    );
+
+  }
+
+
+
+  const steps =
+    candidate.steps.map(
+      (step) => {
+
+        if (
+          !step ||
+          typeof step !== "object"
+        ) {
+
+          throw new PlanValidationError(
+            "Invalid plan step"
+          );
+
+        }
+
+
+
+        const item =
+          step as PlanStep;
+
+
+
+        if (
+          !item.description
+        ) {
+
+          throw new PlanValidationError(
+            "Plan step missing description"
+          );
+
+        }
+
+
+
+        if (
+          !isValidAction(
+            item.action
+          )
+        ) {
+
+          throw new PlanValidationError(
+            `Invalid plan action: ${String(item.action)}`
+          );
+
+        }
+
+
+
+        return {
+
+          ...item,
+
+          args:
+            item.args ?? {},
+
+        };
+
+      }
+    );
+
+
+
+  return {
+
+    goal:
+      candidate.goal,
+
+    steps,
+
+    files:
+      Array.isArray(candidate.files)
+        ? candidate.files
+        : [],
+
+  };
+
+}
+
 
 
 function validateTool(
@@ -41,12 +177,13 @@ function validateTool(
 ) {
 
   if (
-    !step.tool ||
-    step.tool === "None" ||
-    step.tool === "none"
+    !step.tool
   ) {
+
     return;
+
   }
+
 
 
   const tool =
@@ -55,9 +192,12 @@ function validateTool(
     );
 
 
-  if (!tool) {
 
-    throw new Error(
+  if (
+    !tool
+  ) {
+
+    throw new PlanValidationError(
       `Unknown tool: ${step.tool}`
     );
 
@@ -66,21 +206,22 @@ function validateTool(
 }
 
 
+
 export function validatePlan(
   plan: Plan
 ): Plan {
-
 
   if (
     !plan ||
     typeof plan !== "object"
   ) {
 
-    throw new Error(
+    throw new PlanValidationError(
       "Invalid plan"
     );
 
   }
+
 
 
   if (
@@ -88,22 +229,24 @@ export function validatePlan(
     !plan.goal.trim()
   ) {
 
-    throw new Error(
+    throw new PlanValidationError(
       "Plan missing goal"
     );
 
   }
 
 
+
   if (
     !Array.isArray(plan.steps)
   ) {
 
-    throw new Error(
+    throw new PlanValidationError(
       "Plan steps must be an array"
     );
 
   }
+
 
 
   const steps =
@@ -112,30 +255,35 @@ export function validatePlan(
 
 
         if (
+          !isValidAction(
+            step.action
+          )
+        ) {
+
+          throw new PlanValidationError(
+            `Invalid plan action: ${String(step.action)}`
+          );
+
+        }
+
+
+
+        if (
           !step.description
         ) {
 
-          throw new Error(
+          throw new PlanValidationError(
             "Plan step missing description"
           );
 
         }
 
 
-        if (
-          !isValidAction(
-            step.action
-          )
-        ) {
 
-          throw new Error(
-            `Invalid plan action: ${step.action}`
-          );
+        validateTool(
+          step
+        );
 
-        }
-
-
-        validateTool(step);
 
 
         return {
@@ -149,6 +297,7 @@ export function validatePlan(
 
       }
     );
+
 
 
   return {

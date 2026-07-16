@@ -1,19 +1,10 @@
-import type {
-  AgentContext,
-} from "./types";
+import type { AgentContext } from "./types";
 
-import type {
-  Plan,
-  Planner,
-} from "./planner";
+import type { Plan, Planner } from "./planner";
 
-import {
-  chatWithOllama,
-} from "@/lib/models/ollama";
+import { chatWithOllama } from "@/lib/models/ollama";
 
-import {
-  validatePlan,
-} from "./plan-validator";
+import { validatePlan, validatePlanContract } from "./plan-validator";
 
 import {
   getRelevantFiles,
@@ -21,10 +12,9 @@ import {
   addPlanMetadata,
 } from "./planner";
 
-import {
-  toolRegistry,
-} from "@/lib/tools/registry";
+import { toolRegistry } from "@/lib/tools/registry";
 
+import { AGENT_ACTIONS } from "./contracts/action-types";
 
 const SYSTEM_PROMPT = `
 You are Codexia's planning system.
@@ -40,7 +30,7 @@ Format:
   "steps": [
     {
       "description": "string",
-      "action": "analyze | read | write | verify",
+      "action": "one of the available actions provided below",
       "tool": "optional tool name",
       "args": {}
     }
@@ -59,162 +49,84 @@ Rules:
 - Never use read_file on directories.
 - Use list_files before reading unknown paths.
 - Workspace roots must be inspected with list_files.
+${AGENT_ACTIONS.join(", ")}
+
 `.trim();
 
-
-
 function getAvailableTools() {
+  return toolRegistry.list().map((tool) => ({
+    name: tool.name,
 
-  return toolRegistry
-    .list()
-    .map(tool => ({
-
-      name:
-        tool.name,
-
-      description:
-        tool.description ?? "",
-
-    }));
-
+    description: tool.description ?? "",
+  }));
 }
 
-
-
 export const llmPlanner: Planner = {
+  async createPlan(context: AgentContext): Promise<Plan> {
+    const tools = getAvailableTools();
 
-  async createPlan(
-    context: AgentContext
-  ): Promise<Plan> {
+    const response = await chatWithOllama([
+      {
+        role: "system",
 
-    const tools =
-      getAvailableTools();
+        content: SYSTEM_PROMPT,
+      },
 
+      {
+        role: "user",
 
-    const response =
-      await chatWithOllama([
+        content: JSON.stringify({
+          task: context.currentTask,
 
-        {
+          messages: context.messages,
 
-          role:
-            "system",
+          workspace: {
+            root: context.workspace,
 
-          content:
-            SYSTEM_PROMPT,
+            filesRead: context.filesRead,
 
-        },
+            filesModified: context.filesModified,
+          },
 
-        {
+          intelligence: context.intelligence,
 
-          role:
-            "user",
-
-          content:
-            JSON.stringify({
-
-              task:
-                context.currentTask,
-
-              messages:
-                context.messages,
-
-              workspace:
-                {
-
-                  root:
-                    context.workspace,
-
-                  filesRead:
-                    context.filesRead,
-
-                  filesModified:
-                    context.filesModified,
-
-                },
-
-              intelligence:
-                context.intelligence,
-
-              availableTools:
-                tools,
-
-            }),
-
-        },
-
-      ]);
-
-
+          availableTools: tools,
+        }),
+      },
+    ]);
 
     let json: unknown;
 
-
     try {
+      const cleaned = response
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
 
-      const cleaned =
-        response
-          .replace(/```json/g, "")
-          .replace(/```/g, "")
-          .trim();
-
-      const match =
-        cleaned.match(/\{[\s\S]*\}/);
+      const match = cleaned.match(/\{[\s\S]*\}/);
 
       if (!match) {
-        throw new Error(
-          "No JSON object found in LLM response"
-        );
+        throw new Error("No JSON object found in LLM response");
       }
 
-      json =
-        JSON.parse(
-          match[0]
-        );
-
+      json = JSON.parse(match[0]);
     } catch {
+      console.error("[LLM Planner] Invalid JSON response:", response);
 
-      console.error(
-        "[LLM Planner] Invalid JSON response:",
-        response
-      );
-
-      throw new Error(
-        "LLM planner returned invalid JSON"
-      );
-
+      throw new Error("LLM planner returned invalid JSON");
     }
 
+    const contractValidated = validatePlanContract(json);
 
+    const validated = validatePlan(contractValidated);
 
-    const validated =
-      validatePlan(
-        json as Plan
-      );
+    const fileSelection = getRelevantFiles(context, validated.goal);
 
+    const files = fileSelection?.files ?? validated.files;
 
-    const fileSelection =
-      getRelevantFiles(
-        context,
-        validated.goal
-      );
-
-
-    const files =
-      fileSelection?.files ??
-      validated.files;
-
-
-
-    const impact =
-      getImpactAnalysis(
-        context,
-        files
-      );
-
-
+    const impact = getImpactAnalysis(context, files);
 
     return addPlanMetadata({
-
       ...validated,
 
       files,
@@ -222,9 +134,6 @@ export const llmPlanner: Planner = {
       fileSelection,
 
       impact,
-
     });
-
   },
-
 };

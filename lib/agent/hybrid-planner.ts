@@ -2,34 +2,28 @@ import type {
   AgentContext,
 } from "./types";
 
-
 import {
   getRelevantFiles,
   getImpactAnalysis,
   addPlanMetadata,
 } from "./planner";
 
-
 import type {
   Plan,
   Planner,
 } from "./planner";
 
-
 import {
   llmPlanner,
 } from "./llm-planner";
-
 
 import {
   rulePlanner,
 } from "./rule-planner";
 
-
 import {
   validatePlan,
 } from "./plan-validator";
-
 
 
 function isUsefulPlan(
@@ -52,12 +46,11 @@ export const hybridPlanner: Planner = {
     context: AgentContext
   ): Promise<Plan> {
 
+    const start =
+      Date.now();
+
 
     try {
-
-      const start =
-        Date.now();
-
 
       const plan =
         await llmPlanner.createPlan(
@@ -76,7 +69,6 @@ export const hybridPlanner: Planner = {
           validated
         )
       ) {
-
 
         console.log(
           `[Planner] LLM planner succeeded in ${
@@ -97,14 +89,6 @@ export const hybridPlanner: Planner = {
           validated.files;
 
 
-        const impact =
-          getImpactAnalysis(
-            context,
-            files
-          );
-
-
-
         return addPlanMetadata({
 
           ...validated,
@@ -113,7 +97,11 @@ export const hybridPlanner: Planner = {
 
           fileSelection,
 
-          impact,
+          impact:
+            getImpactAnalysis(
+              context,
+              files
+            ),
 
         });
 
@@ -122,16 +110,25 @@ export const hybridPlanner: Planner = {
 
     } catch (error) {
 
+      if (
+        error instanceof Error &&
+        error.name === "PlanValidationError"
+      ) {
+        throw error;
+      }
 
-      console.log(
-        "[Planner] LLM planner failed, using rule planner",
+      console.error(
+        "[Planner] LLM planner unavailable, using rule planner:",
         error
       );
-
 
     }
 
 
+    /*
+      Only use rule planner when the LLM planner
+      is unavailable, not when validation fails.
+    */
 
     const rulePlan =
       await rulePlanner.createPlan(
@@ -151,7 +148,6 @@ export const hybridPlanner: Planner = {
       rulePlan.files;
 
 
-
     return addPlanMetadata({
 
       ...rulePlan,
@@ -167,7 +163,6 @@ export const hybridPlanner: Planner = {
         ),
 
     });
-
 
   },
 

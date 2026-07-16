@@ -1,9 +1,7 @@
-export function resolveActionTool(
-  action: string
-): string | undefined {
+import type { AgentAction } from "./contracts/action-types";
 
+export function resolveActionTool(action: AgentAction): string | undefined {
   switch (action) {
-
     case "read":
       return "read_file";
 
@@ -16,9 +14,10 @@ export function resolveActionTool(
     case "analyze":
       return undefined;
 
-    default:
-      return undefined;
+    default: {
+      const exhaustiveCheck: never = action;
 
+      return exhaustiveCheck;
+    }
   }
-
 }

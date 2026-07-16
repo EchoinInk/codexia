@@ -54,10 +54,26 @@ export async function runAgent(
     getPlanner();
 
 
-  let plan =
-    await planner.createPlan(
-      context
-    );
+  let plan;
+
+  try {
+    plan =
+      await planner.createPlan(
+        context
+      );
+
+  } catch (error) {
+    return {
+      content:
+        [
+          "Planner validation failed.",
+          error instanceof Error
+            ? error.message
+            : String(error),
+          "Execution prevented: true",
+        ].join("\n"),
+    };
+  }
 
 
   let retry =
