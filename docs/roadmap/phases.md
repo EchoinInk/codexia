@@ -1,6 +1,6 @@
 # Codexia Roadmap
 
-Updated after completion of incremental workspace indexing.
+Updated after completion of 4.4.2 Incremental Workspace Indexing.
 
 ## Roadmap Status Philosophy
 
@@ -179,6 +179,10 @@ Status: Complete
 
 Status: In Progress
 
+Goal:
+
+Avoid rebuilding the complete workspace index when only a subset of files has changed.
+
 Flow:
 
 - scan
@@ -196,9 +200,9 @@ Features:
 - Removed file cleanup
 - Index merging
 
-### 🚧 4.4.4 File Watching
+### 🌙 4.4.4 File Watching
 
-Status: In Progress
+Status: Future
 
 - chokidar / fs.watch
 - Live workspace cache

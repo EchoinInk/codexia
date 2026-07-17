@@ -5905,78 +5905,6 @@
         }
       },
       {
-        "path": "lib/lumo-engine.ts",
-        "size": 758,
-        "modifiedAt": 1784080861212.2876,
-        "extension": "ts",
-        "language": "typescript",
-        "preview": "type GeneratePayload = {\n  prompt: string;\n  width?: number;\n  height?: number;\n  output?: \"png\" | \"svg\" | \"both\";\n  style?: Record<string, unknown>;\n  brand_rules?: Record<string, unknown>;\n  filename_prefix?: string;\n  vectorizer?: string;\n};\n\n\ntype GenerateResponse = {\n  [key: string]: unknown;\n};\n\n\n\nexport async function generateSymbol(\n  payload: GeneratePayload\n): Promise<GenerateResponse> {\n\n  const res =\n    await fetch(\n      \"http://localhost:5001/generate\",\n      {\n        method: \"PO",
-        "code": {
-          "imports": [],
-          "exports": [
-            "generateSymbol"
-          ],
-          "functions": [
-            "generateSymbol"
-          ],
-          "classes": [],
-          "components": [],
-          "symbols": [
-            {
-              "name": "GeneratePayload",
-              "kind": "type",
-              "exported": false,
-              "line": 1
-            },
-            {
-              "name": "GenerateResponse",
-              "kind": "type",
-              "exported": false,
-              "line": 13
-            },
-            {
-              "name": "generateSymbol",
-              "kind": "function",
-              "exported": true,
-              "line": 19
-            },
-            {
-              "name": "res",
-              "kind": "variable",
-              "exported": false,
-              "line": 23
-            }
-          ]
-        }
-      },
-      {
-        "path": "lib/prompts.ts",
-        "size": 156,
-        "modifiedAt": 1783979924478.6963,
-        "extension": "ts",
-        "language": "typescript",
-        "preview": "export function fluxPromptTemplate(brief: string) {\n  return `${brief}, clean centered logo symbol, no text, no letters, no watermark, no mockup, no 3D`;\n}\n",
-        "code": {
-          "imports": [],
-          "exports": [
-            "fluxPromptTemplate"
-          ],
-          "functions": [
-            "fluxPromptTemplate"
-          ],
-          "classes": [],
-          "components": [],
-          "symbols": [
-            {
-              "name": "fluxPromptTemplate",
-              "kind": "function",
-              "exported": true,
-              "line": 1
-            }
-          ]
-        }
-      },
-      {
         "path": ".env.local",
         "size": 139,
         "modifiedAt": 1783999864075.0725,
@@ -6359,7 +6287,6 @@
       "lib/workspace/context.ts": "149:1783979872256.1465:",
       "lib/config.ts": "3156:1783999245104.9163:",
       "lib/fs-safe.ts": "2701:1784205817081.9297:",
-      "lib/lumo-engine.ts": "758:1784080861212.2876:",
       "lib/prompts.ts": "156:1783979924478.6963:",
       ".env.local": "139:1783999864075.0725:",
       ".eslintrc.json": "73:1784070864366.016:",
