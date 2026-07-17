@@ -1,0 +1,72 @@
+# Codexia Security Model
+
+## Purpose
+
+Codexia modifies software systems.
+
+The architecture must prioritise safe execution, controlled changes, and developer trust.
+
+
+## Security Principles
+
+
+## Controlled File Access
+
+File operations should:
+
+- validate paths
+- prevent unsafe traversal
+- restrict access scope
+
+
+## Patch-First Changes
+
+Codexia should not blindly overwrite files.
+
+Preferred workflow:
+
+Plan
+
+↓
+
+Generate Patch
+
+↓
+
+Validate Patch
+
+↓
+
+Apply Change
+
+↓
+
+Verify Result
+
+
+## Secret Protection
+
+The system must avoid exposing:
+
+- environment variables
+- API keys
+- credentials
+- private configuration
+
+
+## Observable Actions
+
+All autonomous actions should provide:
+
+- what changed
+- why it changed
+- which files were affected
+
+
+## Recovery
+
+Failed operations should support:
+
+- rollback
+- repair planning
+- clear failure reporting
