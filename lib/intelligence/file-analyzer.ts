@@ -11,8 +11,6 @@ import type {
   IndexedFile,
 } from "./types";
 
-
-
 function detectLanguage(
   extension: string
 ): string {
@@ -37,7 +35,6 @@ function detectLanguage(
 
   };
 
-
   return (
     languages[extension] ??
     "unknown"
@@ -45,39 +42,34 @@ function detectLanguage(
 
 }
 
-
-
 export async function analyseFile(
-  path: string
+  path: string,
+  workspace?: string
 ): Promise<IndexedFile> {
 
   const content =
     await safeReadFile(
-      path
+      path,
+      workspace
     );
-
 
   const stats =
     await fs.stat(
       safeResolve(
-        path
+        path,
+        workspace
       )
     );
-
 
   const extension =
     path.includes(".")
       ? path.split(".").pop()?.toLowerCase() ?? ""
       : "";
 
-
-
   const language =
     detectLanguage(
       extension
     );
-
-
 
   return {
 
@@ -89,18 +81,15 @@ export async function analyseFile(
     modifiedAt:
       stats.mtimeMs,
 
-
     extension,
 
     language,
-
 
     preview:
       content.slice(
         0,
         500
       ),
-
 
     code:
       parseCode(

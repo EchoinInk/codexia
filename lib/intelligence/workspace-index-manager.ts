@@ -78,7 +78,10 @@ export async function getWorkspaceIndex(
     const changed =
       diff.changed.length > 0 ||
       diff.added.length > 0 ||
-      diff.removed.length > 0;
+      diff.removed.length > 0 ||
+      diff.changedDirectories.length > 0 ||
+      diff.addedDirectories.length > 0 ||
+      diff.removedDirectories.length > 0;
 
 
     if (!changed) {

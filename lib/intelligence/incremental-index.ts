@@ -1,4 +1,10 @@
-import { analyseFile } from "./file-analyzer";
+import {
+  createIndexedFile,
+} from "./workspace-index";
+
+import {
+  createRelationshipGraph,
+} from "./relationship-graph";
 
 import type {
   IndexedFile,
@@ -16,6 +22,22 @@ export async function applyIncrementalIndexUpdate(
 ): Promise<WorkspaceIndex> {
 
   const files: IndexedFile[] = [];
+
+  const directories =
+    [
+      ...new Set(
+        previous.directories
+          .filter(
+            directory =>
+              !diff.removedDirectories.includes(
+                directory
+              )
+          )
+          .concat(
+            diff.addedDirectories
+          )
+      ),
+    ].sort();
 
 
   for (const file of previous.files) {
@@ -35,7 +57,7 @@ export async function applyIncrementalIndexUpdate(
       )
     ) {
       const updated =
-        await analyseFile(
+        await createIndexedFile(
           file.path
         );
 
@@ -54,7 +76,7 @@ export async function applyIncrementalIndexUpdate(
   for (const file of diff.added) {
 
     const analysed =
-      await analyseFile(
+      await createIndexedFile(
         file
       );
 
@@ -69,6 +91,13 @@ export async function applyIncrementalIndexUpdate(
     ...previous,
 
     files,
+
+    directories,
+
+    relationships:
+      createRelationshipGraph(
+        files
+      ),
 
   };
 }

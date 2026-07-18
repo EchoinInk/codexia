@@ -1,6 +1,11 @@
-import { listTree } from "@/lib/fs-safe";
+import {
+  listTree,
+  safeReadFile,
+} from "@/lib/fs-safe";
 
 import { analyseFile } from "./file-analyzer";
+import { createContentHash } from "./index-fingerprint";
+import { createRelationshipGraph } from "./relationship-graph";
 
 import type {
   IndexedFile,
@@ -11,18 +16,47 @@ import type {
   FsNode,
 } from "@/lib/fs-safe";
 
+export async function createIndexedFile(
+  path: string,
+  workspace?: string
+): Promise<IndexedFile> {
 
-export async function createWorkspaceIndex(): Promise<WorkspaceIndex> {
+  const content =
+    await safeReadFile(
+      path,
+      workspace
+    );
+
+  const analysis =
+    await analyseFile(
+      path,
+      workspace
+    );
+
+  return {
+    ...analysis,
+
+    hash:
+      createContentHash(
+        content
+      ),
+  };
+
+}
+
+export async function createWorkspaceIndex(
+  workspace?: string
+): Promise<WorkspaceIndex> {
 
   const tree =
-    await listTree();
-
+    await listTree(
+      "",
+      workspace
+    );
 
   const files: IndexedFile[] = [];
 
   const directories: string[] = [];
-
-
 
   async function walk(
     nodes: FsNode[]
@@ -38,7 +72,6 @@ export async function createWorkspaceIndex(): Promise<WorkspaceIndex> {
           node.path
         );
 
-
         if (
           node.children
         ) {
@@ -49,25 +82,19 @@ export async function createWorkspaceIndex(): Promise<WorkspaceIndex> {
 
         }
 
-
         continue;
 
       }
-
-
 
       if (
         node.type === "file"
       ) {
 
-        const analysis =
-          await analyseFile(
-            node.path
-          );
-
-
         files.push(
-          analysis
+          await createIndexedFile(
+            node.path,
+            workspace
+          )
         );
 
       }
@@ -76,17 +103,19 @@ export async function createWorkspaceIndex(): Promise<WorkspaceIndex> {
 
   }
 
-
-
   await walk(
     tree
   );
-
 
   return {
     files,
 
     directories,
+
+    relationships:
+      createRelationshipGraph(
+        files
+      ),
   };
 
 }
