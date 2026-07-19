@@ -5,11 +5,12 @@ import type {
   ToolResult,
 } from "./types";
 
-import { getWorkspaceIndex } from "@/lib/intelligence/workspace-index-manager";
+import {
+  getWorkspaceIndex,
+  markWorkspaceDirty,
+} from "@/lib/intelligence/workspace-index-manager";
 
 import { createIntelligenceContext } from "@/lib/intelligence/intelligence-context";
-
-import { invalidateWorkspaceCache } from "@/lib/intelligence/workspace-cache";
 
 export async function createContext(
   messages: AgentMessage[],
@@ -74,7 +75,9 @@ export function addFileModified(
   context: AgentContext,
   path: string
 ): AgentContext {
-  invalidateWorkspaceCache(context.workspace);
+  markWorkspaceDirty(
+    context.workspace
+  );
 
   return {
     ...context,

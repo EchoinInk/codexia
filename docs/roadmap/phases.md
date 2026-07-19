@@ -207,9 +207,9 @@ Status: Complete
 - fs.watch
 - Live workspace cache
 
-### 🚧  4.4.5 Background Indexing
+### ✅ 4.4.5 Background Indexing
 
-Status: In Progress
+Status: Complete
 
 Flow:
 
@@ -217,9 +217,17 @@ Flow:
 - Agent replies immediately
 - Background worker updates index
 
-### 🌙 4.4.6 Memory-aware Workspace Intelligence
+Features:
 
-Status: Future
+- Background index refresh queue
+- Non-blocking cached index reuse
+- Stored index hydration
+- Watcher-triggered background refresh
+- Background refresh status tracking
+
+### 🚧 4.4.6 Memory-aware Workspace Intelligence
+
+Status: In Progress
 
 - Frequently edited files
 - Commonly opened files
@@ -336,7 +344,7 @@ Status: Future
 ## ⏳ Current Development Focus
 
 Current focus:
-Phase 4.4.5 — Background Indexing
+Phase 4.4.6 — Memory-aware Workspace Intelligence
 
 Completed:
 
@@ -354,12 +362,15 @@ Completed:
 - Incremental workspace refresh pipeline
 - File watching
 - Live workspace cache invalidation
-
-Next objectives:
-
 - Background indexing
 - Deferred index refresh
 - Non-blocking user responses during refresh
+
+Next objectives:
+
+- Frequently edited file tracking
+- Recently modified file tracking
+- Workspace hotspot detection
 
 ---
 
@@ -369,7 +380,7 @@ Phase 0  [████████████████████] 100%
 Phase 1  [████████████████████] 100%  
 Phase 2  [████████████████████] 100%  
 Phase 3  [████████████████████] 100%  
-Phase 4  [███████████████░░░░] ~80%  
+Phase 4  [████████████████░░░] ~85%  
 
 - 4.1 Complete  
 - 4.2 Complete  
@@ -379,8 +390,8 @@ Phase 4  [███████████████░░░░] ~80%
   - 4.4.2 Complete  
   - 4.4.3 Complete  
   - 4.4.4 Complete  
-  - 4.4.5 Future  
-  - 4.4.6 Future  
+  - 4.4.5 Complete  
+  - 4.4.6 In Progress  
 
 Phase 5  [░░░░░░░░░░░░░░░░░░░] 0%  
 Phase 6  [░░░░░░░░░░░░░░░░░░░] 0%  

@@ -45,11 +45,25 @@ import type {
   WorkspaceWatcherStatus,
 } from "./workspace-watcher";
 
+import {
+  scheduleWorkspaceBackgroundIndex,
+  clearWorkspaceBackgroundIndex,
+  clearAllWorkspaceBackgroundIndexes,
+  getWorkspaceBackgroundIndexStatus,
+} from "./workspace-background-indexer";
+
+import type {
+  WorkspaceBackgroundIndexStatus,
+} from "./workspace-background-indexer";
+
 const buildPromises =
   new Map<string, Promise<WorkspaceIndex>>();
 
 const watcherPromises =
   new Map<string, Promise<void>>();
+
+const dirtyWorkspaceVersions =
+  new Map<string, number>();
 
 function hasFingerprintChanges(
   diff: FingerprintDiff
@@ -118,6 +132,136 @@ async function refreshWorkspaceIndex(
   return updated;
 }
 
+async function buildFreshWorkspaceIndex(
+  workspace: string
+): Promise<WorkspaceIndex> {
+  const index =
+    await createWorkspaceIndex(
+      workspace
+    );
+
+  const fingerprint =
+    createWorkspaceFingerprint(
+      index
+    );
+
+  setWorkspaceCache(
+    workspace,
+    index,
+    fingerprint
+  );
+
+  await saveWorkspaceState(
+    workspace,
+    createWorkspaceState(
+      index,
+      fingerprint
+    )
+  );
+
+  return index;
+}
+
+async function refreshCurrentWorkspaceIndex(
+  workspace: string
+): Promise<WorkspaceIndex> {
+  const cacheEntry =
+    getWorkspaceCacheEntry(
+      workspace
+    );
+
+  if (cacheEntry) {
+    return refreshWorkspaceIndex(
+      workspace,
+      cacheEntry.index,
+      cacheEntry.fingerprint
+    );
+  }
+
+  const stored =
+    await loadWorkspaceState(
+      workspace
+    );
+
+  if (stored) {
+    setWorkspaceCache(
+      workspace,
+      stored.index,
+      stored.fingerprint
+    );
+
+    return refreshWorkspaceIndex(
+      workspace,
+      stored.index,
+      stored.fingerprint
+    );
+  }
+
+  return buildFreshWorkspaceIndex(
+    workspace
+  );
+}
+
+function markWorkspaceVersionDirty(
+  workspace: string
+): number {
+  const version =
+    (
+      dirtyWorkspaceVersions.get(
+        workspace
+      ) ?? 0
+    ) + 1;
+
+  dirtyWorkspaceVersions.set(
+    workspace,
+    version
+  );
+
+  return version;
+}
+
+function scheduleWorkspaceRefresh(
+  workspace: string
+): WorkspaceBackgroundIndexStatus {
+  const version =
+    dirtyWorkspaceVersions.get(
+      workspace
+    ) ??
+    markWorkspaceVersionDirty(
+      workspace
+    );
+
+  return scheduleWorkspaceBackgroundIndex(
+    workspace,
+    async () => {
+      await refreshCurrentWorkspaceIndex(
+        workspace
+      );
+
+      if (
+        dirtyWorkspaceVersions.get(
+          workspace
+        ) === version
+      ) {
+        dirtyWorkspaceVersions.delete(
+          workspace
+        );
+
+        return;
+      }
+
+      setTimeout(
+        () => {
+          scheduleWorkspaceRefresh(
+            workspace
+          );
+        },
+        0
+      );
+    }
+  );
+}
+
 async function ensureWorkspaceWatcher(
   workspace: string
 ): Promise<void> {
@@ -142,7 +286,7 @@ async function ensureWorkspaceWatcher(
     startWorkspaceWatcher(
       workspace,
       event => {
-        invalidateWorkspaceCache(
+        markWorkspaceDirty(
           event.workspace
         );
       }
@@ -195,11 +339,17 @@ export async function getWorkspaceIndex(
     cached &&
     cacheEntry
   ) {
-    return refreshWorkspaceIndex(
-      workspace,
-      cached,
-      cacheEntry.fingerprint
-    );
+    if (
+      dirtyWorkspaceVersions.has(
+        workspace
+      )
+    ) {
+      scheduleWorkspaceRefresh(
+        workspace
+      );
+    }
+
+    return cached;
   }
 
   const stored =
@@ -208,11 +358,21 @@ export async function getWorkspaceIndex(
     );
 
   if (stored) {
-    return refreshWorkspaceIndex(
+    setWorkspaceCache(
       workspace,
       stored.index,
       stored.fingerprint
     );
+
+    markWorkspaceVersionDirty(
+      workspace
+    );
+
+    scheduleWorkspaceRefresh(
+      workspace
+    );
+
+    return stored.index;
   }
 
   const existingBuild =
@@ -227,31 +387,9 @@ export async function getWorkspaceIndex(
   const buildPromise =
     (async () => {
       try {
-        const index =
-          await createWorkspaceIndex(
-            workspace
-          );
-
-        const fingerprint =
-          createWorkspaceFingerprint(
-            index
-          );
-
-        setWorkspaceCache(
-          workspace,
-          index,
-          fingerprint
+        return buildFreshWorkspaceIndex(
+          workspace
         );
-
-        await saveWorkspaceState(
-          workspace,
-          createWorkspaceState(
-            index,
-            fingerprint
-          )
-        );
-
-        return index;
       } finally {
         buildPromises.delete(
           workspace
@@ -270,13 +408,31 @@ export async function getWorkspaceIndex(
 export function markWorkspaceDirty(
   workspace?: string
 ): void {
-  invalidateWorkspaceCache(
+  if (!workspace) {
+    invalidateWorkspaceCache();
+
+    clearAllWorkspaceBackgroundIndexes();
+
+    dirtyWorkspaceVersions.clear();
+
+    return;
+  }
+
+  markWorkspaceVersionDirty(
+    workspace
+  );
+
+  scheduleWorkspaceRefresh(
     workspace
   );
 }
 
 export function resetWorkspaceIndex(): void {
   clearWorkspaceCache();
+
+  clearAllWorkspaceBackgroundIndexes();
+
+  dirtyWorkspaceVersions.clear();
 }
 
 export function hasWorkspaceIndex(
@@ -294,7 +450,15 @@ export async function rebuildWorkspaceIndex(
     workspace
   );
 
-  return getWorkspaceIndex(
+  clearWorkspaceBackgroundIndex(
+    workspace
+  );
+
+  dirtyWorkspaceVersions.delete(
+    workspace
+  );
+
+  return buildFreshWorkspaceIndex(
     workspace
   );
 }
@@ -337,6 +501,14 @@ export function getWorkspaceIndexWatcherStatus(
   workspace: string
 ): WorkspaceWatcherStatus | null {
   return getWorkspaceWatcherStatus(
+    workspace
+  );
+}
+
+export function getWorkspaceIndexBackgroundStatus(
+  workspace: string
+): WorkspaceBackgroundIndexStatus | null {
+  return getWorkspaceBackgroundIndexStatus(
     workspace
   );
 }
