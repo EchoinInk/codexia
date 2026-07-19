@@ -19,9 +19,10 @@ export function safeResolve(
   relOrAbs: string,
   workspace?: string
 ): string {
-  const root = getWorkspaceRoot(
-    workspace
-  );
+  const root =
+    getWorkspaceRoot(
+      workspace
+    );
 
   const candidate =
     path.isAbsolute(relOrAbs)
@@ -56,46 +57,74 @@ export type FsNode = {
   children?: FsNode[];
 };
 
-const IGNORE = new Set([
-  "node_modules",
-  ".git",
-  ".next",
-  ".turbo",
-  ".cache",
-  "dist",
-  "build",
-  ".DS_Store",
-  ".vercel",
-]);
+const IGNORE =
+  new Set([
+    "node_modules",
+    ".git",
+    ".next",
+    ".turbo",
+    ".cache",
+    ".codexia",
+    "dist",
+    "build",
+    ".DS_Store",
+    ".vercel",
+  ]);
+
+export function shouldIgnoreWorkspaceEntry(
+  name: string
+): boolean {
+  return IGNORE.has(
+    name
+  );
+}
 
 export async function listTree(
   relDir: string = "",
   workspace?: string
 ): Promise<FsNode[]> {
-  const root = getWorkspaceRoot(
-    workspace
-  );
+  const root =
+    getWorkspaceRoot(
+      workspace
+    );
 
-  const abs = safeResolve(
-    relDir,
-    workspace
-  );
+  const abs =
+    safeResolve(
+      relDir,
+      workspace
+    );
 
   try {
-    const entries = await fs.readdir(abs, {
-      withFileTypes: true,
-    });
+    const entries =
+      await fs.readdir(
+        abs,
+        {
+          withFileTypes: true,
+        }
+      );
 
     const nodes: FsNode[] = [];
 
     for (const entry of entries) {
-      if (IGNORE.has(entry.name)) {
+      if (
+        shouldIgnoreWorkspaceEntry(
+          entry.name
+        )
+      ) {
         continue;
       }
 
-      const fullPath = path.join(abs, entry.name);
+      const fullPath =
+        path.join(
+          abs,
+          entry.name
+        );
 
-      const relative = path.relative(root, fullPath);
+      const relative =
+        path.relative(
+          root,
+          fullPath
+        );
 
       if (entry.isDirectory()) {
         nodes.push({
@@ -105,10 +134,11 @@ export async function listTree(
 
           type: "dir",
 
-          children: await listTree(
-            relative,
-            workspace
-          ),
+          children:
+            await listTree(
+              relative,
+              workspace
+            ),
         });
       } else if (entry.isFile()) {
         nodes.push({
@@ -125,8 +155,8 @@ export async function listTree(
       a.type === b.type
         ? a.name.localeCompare(b.name)
         : a.type === "dir"
-        ? -1
-        : 1
+          ? -1
+          : 1
     );
 
     return nodes;
@@ -145,12 +175,16 @@ export async function safeReadFile(
   relPath: string,
   workspace?: string
 ): Promise<string> {
-  const abs = safeResolve(
-    relPath,
-    workspace
-  );
+  const abs =
+    safeResolve(
+      relPath,
+      workspace
+    );
 
-  return fs.readFile(abs, "utf8");
+  return fs.readFile(
+    abs,
+    "utf8"
+  );
 }
 
 export async function safeWriteFile(
@@ -158,14 +192,22 @@ export async function safeWriteFile(
   content: string,
   workspace?: string
 ): Promise<void> {
-  const abs = safeResolve(
-    relPath,
-    workspace
+  const abs =
+    safeResolve(
+      relPath,
+      workspace
+    );
+
+  await fs.mkdir(
+    path.dirname(abs),
+    {
+      recursive: true,
+    }
   );
 
-  await fs.mkdir(path.dirname(abs), {
-    recursive: true,
-  });
-
-  await fs.writeFile(abs, content, "utf8");
+  await fs.writeFile(
+    abs,
+    content,
+    "utf8"
+  );
 }

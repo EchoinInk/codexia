@@ -175,9 +175,9 @@ Status: Complete
 - Change detection
 - Workspace-aware indexing
 
-### 🚧 4.4.3 Smart Incremental Refresh
+### ✅ 4.4.3 Smart Incremental Refresh
 
-Status: In Progress
+Status: Complete
 
 Goal:
 
@@ -200,16 +200,16 @@ Features:
 - Removed file cleanup
 - Index merging
 
-### 🌙 4.4.4 File Watching
+### ✅ 4.4.4 File Watching
 
-Status: Future
+Status: Complete
 
-- chokidar / fs.watch
+- fs.watch
 - Live workspace cache
 
-### 🌙 4.4.5 Background Indexing
+### 🚧  4.4.5 Background Indexing
 
-Status: Future
+Status: In Progress
 
 Flow:
 
@@ -336,7 +336,7 @@ Status: Future
 ## ⏳ Current Development Focus
 
 Current focus:
-Phase 4.4.3 — Smart Incremental Refresh
+Phase 4.4.5 — Background Indexing
 
 Completed:
 
@@ -348,13 +348,18 @@ Completed:
 - Fingerprint-based change detection
 - Index diffing
 - Cached index reuse
-
-Next objectives:
-
 - Changed-file analysis
 - Index merging
 - Added/removed file handling
 - Incremental workspace refresh pipeline
+- File watching
+- Live workspace cache invalidation
+
+Next objectives:
+
+- Background indexing
+- Deferred index refresh
+- Non-blocking user responses during refresh
 
 ---
 
@@ -364,7 +369,7 @@ Phase 0  [████████████████████] 100%
 Phase 1  [████████████████████] 100%  
 Phase 2  [████████████████████] 100%  
 Phase 3  [████████████████████] 100%  
-Phase 4  [██████████████░░░░░] ~75%  
+Phase 4  [███████████████░░░░] ~80%  
 
 - 4.1 Complete  
 - 4.2 Complete  
@@ -372,8 +377,8 @@ Phase 4  [██████████████░░░░░] ~75%
 - 4.4 In Progress  
   - 4.4.1 Complete  
   - 4.4.2 Complete  
-  - 4.4.3 In Progress  
-  - 4.4.4 Future  
+  - 4.4.3 Complete  
+  - 4.4.4 Complete  
   - 4.4.5 Future  
   - 4.4.6 Future  
 

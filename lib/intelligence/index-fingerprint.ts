@@ -7,7 +7,10 @@ import {
   safeResolve,
 } from "@/lib/fs-safe";
 
-import type { IndexedFile, WorkspaceIndex } from "./types";
+import type {
+  IndexedFile,
+  WorkspaceIndex,
+} from "./types";
 
 import type {
   FsNode,
@@ -41,20 +44,28 @@ export function createWorkspaceFingerprint(
   index: WorkspaceIndex
 ): WorkspaceFingerprint {
   return {
-    files: Object.fromEntries(
-      index.files.map((file) => [file.path, createFileFingerprint(file)])
-    ),
+    files:
+      Object.fromEntries(
+        index.files.map(
+          file => [
+            file.path,
+            createFileFingerprint(
+              file
+            ),
+          ]
+        )
+      ),
 
-    directories: [
-      ...index.directories,
-    ].sort(),
+    directories:
+      [
+        ...index.directories,
+      ].sort(),
   };
 }
 
 export async function createWorkspaceFingerprintFromFilesystem(
   workspace?: string
 ): Promise<WorkspaceFingerprint> {
-
   const tree =
     await listTree(
       "",
@@ -68,13 +79,10 @@ export async function createWorkspaceFingerprintFromFilesystem(
   async function walk(
     nodes: FsNode[]
   ): Promise<void> {
-
     for (const node of nodes) {
-
       if (
         node.type === "dir"
       ) {
-
         directories.push(
           node.path
         );
@@ -82,31 +90,24 @@ export async function createWorkspaceFingerprintFromFilesystem(
         if (
           node.children
         ) {
-
           await walk(
             node.children
           );
-
         }
 
         continue;
-
       }
 
       if (
         node.type === "file"
       ) {
-
         files[node.path] =
           await createFilesystemFileFingerprint(
             node.path,
             workspace
           );
-
       }
-
     }
-
   }
 
   await walk(
@@ -119,17 +120,23 @@ export async function createWorkspaceFingerprintFromFilesystem(
     directories:
       directories.sort(),
   };
-
 }
 
-export function createFileFingerprint(file: IndexedFile): string {
-  return [file.size, file.modifiedAt ?? 0, file.hash ?? ""].join(":");
+export function createFileFingerprint(
+  file: IndexedFile
+): string {
+  return [
+    file.size,
+    file.modifiedAt ?? 0,
+    file.hash ?? "",
+  ].join(
+    ":"
+  );
 }
 
 export function createContentHash(
   content: string
 ): string {
-
   return crypto
     .createHash(
       "sha256"
@@ -140,7 +147,6 @@ export function createContentHash(
     .digest(
       "hex"
     );
-
 }
 
 export function compareFingerprints(
@@ -163,9 +169,15 @@ export function compareFingerprints(
 
   const unchangedDirectories: string[] = [];
 
-  const previousFiles = Object.keys(previous.files);
+  const previousFiles =
+    Object.keys(
+      previous.files
+    );
 
-  const currentFiles = Object.keys(current.files);
+  const currentFiles =
+    Object.keys(
+      current.files
+    );
 
   const previousDirectoryList =
     previous.directories ?? [];
@@ -174,24 +186,38 @@ export function compareFingerprints(
     current.directories ?? [];
 
   for (const file of currentFiles) {
-    if (!previous.files[file]) {
-      added.push(file);
+    if (
+      !previous.files[file]
+    ) {
+      added.push(
+        file
+      );
 
       continue;
     }
 
-    if (previous.files[file] !== current.files[file]) {
-      changed.push(file);
+    if (
+      previous.files[file] !== current.files[file]
+    ) {
+      changed.push(
+        file
+      );
 
       continue;
     }
 
-    unchanged.push(file);
+    unchanged.push(
+      file
+    );
   }
 
   for (const file of previousFiles) {
-    if (!current.files[file]) {
-      removed.push(file);
+    if (
+      !current.files[file]
+    ) {
+      removed.push(
+        file
+      );
     }
   }
 
@@ -258,7 +284,6 @@ async function createFilesystemFileFingerprint(
   path: string,
   workspace?: string
 ): Promise<string> {
-
   const content =
     await safeReadFile(
       path,
@@ -282,5 +307,4 @@ async function createFilesystemFileFingerprint(
   ].join(
     ":"
   );
-
 }

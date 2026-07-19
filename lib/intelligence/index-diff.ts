@@ -10,21 +10,49 @@ export interface WorkspaceIndexDiff {
   removedFiles: string[];
 
   unchangedFiles: string[];
+
+  changedDirectories: string[];
+
+  addedDirectories: string[];
+
+  removedDirectories: string[];
+
+  unchangedDirectories: string[];
 }
 
 export function diffWorkspaceIndexes(
   previous: WorkspaceFingerprint,
   current: WorkspaceFingerprint
 ): WorkspaceIndexDiff {
-  const diff = compareFingerprints(previous, current);
+  const diff =
+    compareFingerprints(
+      previous,
+      current
+    );
 
   return {
-    changedFiles: diff.changed,
+    changedFiles:
+      diff.changed,
 
-    addedFiles: diff.added,
+    addedFiles:
+      diff.added,
 
-    removedFiles: diff.removed,
+    removedFiles:
+      diff.removed,
 
-    unchangedFiles: diff.unchanged,
+    unchangedFiles:
+      diff.unchanged,
+
+    changedDirectories:
+      diff.changedDirectories,
+
+    addedDirectories:
+      diff.addedDirectories,
+
+    removedDirectories:
+      diff.removedDirectories,
+
+    unchangedDirectories:
+      diff.unchangedDirectories,
   };
 }

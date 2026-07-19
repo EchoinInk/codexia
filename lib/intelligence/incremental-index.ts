@@ -15,12 +15,11 @@ import type {
   FingerprintDiff,
 } from "./index-fingerprint";
 
-
 export async function applyIncrementalIndexUpdate(
   previous: WorkspaceIndex,
-  diff: FingerprintDiff
+  diff: FingerprintDiff,
+  workspace?: string
 ): Promise<WorkspaceIndex> {
-
   const files: IndexedFile[] = [];
 
   const directories =
@@ -39,9 +38,7 @@ export async function applyIncrementalIndexUpdate(
       ),
     ].sort();
 
-
   for (const file of previous.files) {
-
     if (
       diff.removed.includes(
         file.path
@@ -50,7 +47,6 @@ export async function applyIncrementalIndexUpdate(
       continue;
     }
 
-
     if (
       diff.changed.includes(
         file.path
@@ -58,7 +54,8 @@ export async function applyIncrementalIndexUpdate(
     ) {
       const updated =
         await createIndexedFile(
-          file.path
+          file.path,
+          workspace
         );
 
       files.push(
@@ -68,24 +65,22 @@ export async function applyIncrementalIndexUpdate(
       continue;
     }
 
-
-    files.push(file);
+    files.push(
+      file
+    );
   }
 
-
   for (const file of diff.added) {
-
     const analysed =
       await createIndexedFile(
-        file
+        file,
+        workspace
       );
 
     files.push(
       analysed
     );
-
   }
-
 
   return {
     ...previous,
@@ -98,6 +93,5 @@ export async function applyIncrementalIndexUpdate(
       createRelationshipGraph(
         files
       ),
-
   };
 }

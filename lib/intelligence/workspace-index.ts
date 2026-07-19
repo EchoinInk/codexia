@@ -20,7 +20,6 @@ export async function createIndexedFile(
   path: string,
   workspace?: string
 ): Promise<IndexedFile> {
-
   const content =
     await safeReadFile(
       path,
@@ -41,13 +40,11 @@ export async function createIndexedFile(
         content
       ),
   };
-
 }
 
 export async function createWorkspaceIndex(
   workspace?: string
 ): Promise<WorkspaceIndex> {
-
   const tree =
     await listTree(
       "",
@@ -61,13 +58,10 @@ export async function createWorkspaceIndex(
   async function walk(
     nodes: FsNode[]
   ): Promise<void> {
-
     for (const node of nodes) {
-
       if (
         node.type === "dir"
       ) {
-
         directories.push(
           node.path
         );
@@ -75,32 +69,25 @@ export async function createWorkspaceIndex(
         if (
           node.children
         ) {
-
           await walk(
             node.children
           );
-
         }
 
         continue;
-
       }
 
       if (
         node.type === "file"
       ) {
-
         files.push(
           await createIndexedFile(
             node.path,
             workspace
           )
         );
-
       }
-
     }
-
   }
 
   await walk(
@@ -117,5 +104,4 @@ export async function createWorkspaceIndex(
         files
       ),
   };
-
 }
