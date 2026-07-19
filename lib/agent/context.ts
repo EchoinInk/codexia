@@ -12,6 +12,11 @@ import {
 
 import { createIntelligenceContext } from "@/lib/intelligence/intelligence-context";
 
+import {
+  recordWorkspaceFileEdit,
+  recordWorkspaceFileRead,
+} from "@/lib/intelligence/workspace-memory";
+
 export async function createContext(
   messages: AgentMessage[],
   workspace: string
@@ -62,6 +67,21 @@ export function addToolResult(
 }
 
 export function addFileRead(context: AgentContext, path: string): AgentContext {
+  recordWorkspaceFileRead(
+    context.workspace,
+    path
+  ).catch(
+    error => {
+      console.warn(
+        `Unable to record workspace file read for "${path}": ${
+          error instanceof Error
+            ? error.message
+            : String(error)
+        }`
+      );
+    }
+  );
+
   return {
     ...context,
 
@@ -75,6 +95,21 @@ export function addFileModified(
   context: AgentContext,
   path: string
 ): AgentContext {
+  recordWorkspaceFileEdit(
+    context.workspace,
+    path
+  ).catch(
+    error => {
+      console.warn(
+        `Unable to record workspace file edit for "${path}": ${
+          error instanceof Error
+            ? error.message
+            : String(error)
+        }`
+      );
+    }
+  );
+
   markWorkspaceDirty(
     context.workspace
   );

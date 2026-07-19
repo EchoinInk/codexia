@@ -56,6 +56,12 @@ import type {
   WorkspaceBackgroundIndexStatus,
 } from "./workspace-background-indexer";
 
+import {
+  attachWorkspaceMemory,
+  recordWorkspaceFileChange,
+  recordWorkspaceIndexDiff,
+} from "./workspace-memory";
+
 const buildPromises =
   new Map<string, Promise<WorkspaceIndex>>();
 
@@ -115,6 +121,11 @@ async function refreshWorkspaceIndex(
       workspace
     );
 
+  await recordWorkspaceIndexDiff(
+    workspace,
+    diff
+  );
+
   setWorkspaceCache(
     workspace,
     updated,
@@ -159,7 +170,10 @@ async function buildFreshWorkspaceIndex(
     )
   );
 
-  return index;
+  return attachWorkspaceMemory(
+    workspace,
+    index
+  );
 }
 
 async function refreshCurrentWorkspaceIndex(
@@ -171,10 +185,13 @@ async function refreshCurrentWorkspaceIndex(
     );
 
   if (cacheEntry) {
-    return refreshWorkspaceIndex(
+    return attachWorkspaceMemory(
       workspace,
-      cacheEntry.index,
-      cacheEntry.fingerprint
+      await refreshWorkspaceIndex(
+        workspace,
+        cacheEntry.index,
+        cacheEntry.fingerprint
+      )
     );
   }
 
@@ -190,10 +207,13 @@ async function refreshCurrentWorkspaceIndex(
       stored.fingerprint
     );
 
-    return refreshWorkspaceIndex(
+    return attachWorkspaceMemory(
       workspace,
-      stored.index,
-      stored.fingerprint
+      await refreshWorkspaceIndex(
+        workspace,
+        stored.index,
+        stored.fingerprint
+      )
     );
   }
 
@@ -286,6 +306,21 @@ async function ensureWorkspaceWatcher(
     startWorkspaceWatcher(
       workspace,
       event => {
+        recordWorkspaceFileChange(
+          event.workspace,
+          event.path
+        ).catch(
+          error => {
+            console.warn(
+              `Unable to record workspace memory for "${event.path}": ${
+                error instanceof Error
+                  ? error.message
+                  : String(error)
+              }`
+            );
+          }
+        );
+
         markWorkspaceDirty(
           event.workspace
         );
@@ -349,7 +384,10 @@ export async function getWorkspaceIndex(
       );
     }
 
-    return cached;
+    return attachWorkspaceMemory(
+      workspace,
+      cached
+    );
   }
 
   const stored =
@@ -372,7 +410,10 @@ export async function getWorkspaceIndex(
       workspace
     );
 
-    return stored.index;
+    return attachWorkspaceMemory(
+      workspace,
+      stored.index
+    );
   }
 
   const existingBuild =

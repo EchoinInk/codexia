@@ -4,6 +4,10 @@ import type {
   RelationshipGraph,
 } from "./relationship-graph";
 
+import type {
+  WorkspaceMemorySnapshot,
+} from "./workspace-memory";
+
 
 export interface CodeAnalysis {
 
@@ -52,6 +56,8 @@ export interface WorkspaceIndex {
   relationships?: RelationshipGraph;
 
   intelligence?: IntelligenceSnapshot;
+
+  memory?: WorkspaceMemorySnapshot;
 
 }
 

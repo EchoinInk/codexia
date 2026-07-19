@@ -2,6 +2,10 @@ import type {
   WorkspaceIndex,
 } from "./types";
 
+import type {
+  WorkspaceMemorySnapshot,
+} from "./workspace-memory";
+
 import {
   createDependencyGraph,
 } from "./dependency-graph";
@@ -20,6 +24,7 @@ export interface IntelligenceContext {
   dependencies: Record<string, string[]>;
   confidence: number;
   dependencyOrder: string[];
+  memory?: WorkspaceMemorySnapshot;
   analyseImpact(files: string[]): ImpactAnalysis;
 }
 
@@ -56,6 +61,9 @@ export function createIntelligenceContext(
     ),
 
     dependencyOrder: graph.order,
+
+    memory:
+      workspace.memory,
 
     analyseImpact(
       files: string[]

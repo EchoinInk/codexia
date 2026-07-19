@@ -104,9 +104,9 @@ Status: Complete
 
 ---
 
-## 🚧 Phase 4 — Runtime Intelligence
+## ✅ Phase 4 — Runtime Intelligence
 
-Status: In Progress
+Status: Complete
 
 Codexia evolves from a “planner that executes” into an intelligent coding runtime.
 
@@ -147,9 +147,9 @@ Status: Complete
 
 ---
 
-## 🚧 4.4 Workspace Intelligence Runtime
+## ✅ 4.4 Workspace Intelligence Runtime
 
-Status: In Progress
+Status: Complete
 
 ### ✅ 4.4.1 Workspace Cache
 
@@ -225,9 +225,9 @@ Features:
 - Watcher-triggered background refresh
 - Background refresh status tracking
 
-### 🚧 4.4.6 Memory-aware Workspace Intelligence
+### ✅ 4.4.6 Memory-aware Workspace Intelligence
 
-Status: In Progress
+Status: Complete
 
 - Frequently edited files
 - Commonly opened files
@@ -237,13 +237,13 @@ Status: In Progress
 
 ---
 
-## 🌙 Phase 5 — Agent Runtime
+## 🚧 Phase 5 — Agent Runtime
 
-Status: Future
+Status: In Progress
 
-### 🌙 5.1 Long-running Tasks
+### 🚧 5.1 Long-running Tasks
 
-Status: Future
+Status: In Progress
 
 - observe
 - plan
@@ -251,9 +251,9 @@ Status: Future
 - verify
 - continue
 
-### 🌙 5.2 Task Queue
+### 🚧 5.2 Task Queue
 
-Status: Future
+Status: In Progress
 
 - build
 - tests
@@ -261,18 +261,18 @@ Status: Future
 - documentation
 - indexing
 
-### 🌙 5.3 Event System
+### 🚧 5.3 Event System
 
-Status: Future
+Status: In Progress
 
 - File changed
 - Agent notified
 - Reason about impact
 - Update memory
 
-### 🌙 5.4 Workspace Memory
+### 🚧 5.4 Workspace Memory
 
-Status: Future
+Status: In Progress
 
 - architecture
 - coding style
@@ -280,9 +280,9 @@ Status: Future
 - previous failures
 - previous fixes
 
-### 🌙 5.5 Multi-Agent Runtime
+### 🚧 5.5 Multi-Agent Runtime
 
-Status: Future
+Status: In Progress
 
 - Planner
 - Executor
@@ -344,7 +344,7 @@ Status: Future
 ## ⏳ Current Development Focus
 
 Current focus:
-Phase 4.4.6 — Memory-aware Workspace Intelligence
+Phase 5.1 — Long-running Tasks
 
 Completed:
 
@@ -365,12 +365,16 @@ Completed:
 - Background indexing
 - Deferred index refresh
 - Non-blocking user responses during refresh
-
-Next objectives:
-
 - Frequently edited file tracking
 - Recently modified file tracking
 - Workspace hotspot detection
+- Developer habit summaries
+
+Next objectives:
+
+- Long-running task lifecycle
+- Continued observe-plan-execute-verify loops
+- Task continuation
 
 ---
 
@@ -380,18 +384,18 @@ Phase 0  [████████████████████] 100%
 Phase 1  [████████████████████] 100%  
 Phase 2  [████████████████████] 100%  
 Phase 3  [████████████████████] 100%  
-Phase 4  [████████████████░░░] ~85%  
+Phase 4  [████████████████████] 100%  
 
 - 4.1 Complete  
 - 4.2 Complete  
 - 4.3 Complete  
-- 4.4 In Progress  
+- 4.4 Complete  
   - 4.4.1 Complete  
   - 4.4.2 Complete  
   - 4.4.3 Complete  
   - 4.4.4 Complete  
   - 4.4.5 Complete  
-  - 4.4.6 In Progress  
+  - 4.4.6 Complete  
 
 Phase 5  [░░░░░░░░░░░░░░░░░░░] 0%  
 Phase 6  [░░░░░░░░░░░░░░░░░░░] 0%  
