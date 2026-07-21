@@ -99,14 +99,26 @@ export async function executePlan(
     }
   }
 
-  updatedContext = addObservation(
-    updatedContext,
-    createObservation(
-      createProgress("verifying", "Running verification").message
-    )
-  );
+  const shouldVerify =
+    plan.steps.some(
+      step =>
+        step.action === "write" ||
+        step.action === "verify"
+    );
 
-  const verification = await runVerification();
+  const verification =
+    shouldVerify
+      ? await runVerification()
+      : [];
+
+  if (shouldVerify) {
+    updatedContext = addObservation(
+      updatedContext,
+      createObservation(
+        createProgress("verifying", "Running verification").message
+      )
+    );
+  }
 
   for (const result of verification) {
     summary = addVerification(
@@ -134,7 +146,9 @@ export async function executePlan(
 
       ...results,
 
-      "Verification:",
+      shouldVerify
+        ? "Verification:"
+        : "Verification skipped: read-only plan",
 
       ...summary.verification,
     ].join("\n"),

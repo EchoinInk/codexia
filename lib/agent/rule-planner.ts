@@ -26,6 +26,35 @@ function createSteps(
 
   switch (type) {
 
+    case "analysis":
+
+      return [
+
+        {
+          description:
+            "Inspect workspace files",
+
+          action:
+            "read",
+
+          tool:
+            "list_files",
+
+          args:
+            {},
+        },
+
+        {
+          description:
+            "Analyse workspace structure",
+
+          action:
+            "analyze",
+        },
+
+      ];
+
+
     case "question":
 
       return [

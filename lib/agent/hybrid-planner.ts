@@ -25,6 +25,10 @@ import {
   validatePlan,
 } from "./plan-validator";
 
+import {
+  analyseTask,
+} from "./task";
+
 
 function isUsefulPlan(
   plan: Plan
@@ -45,6 +49,19 @@ export const hybridPlanner: Planner = {
   async createPlan(
     context: AgentContext
   ): Promise<Plan> {
+
+    const task =
+      analyseTask(
+        context
+      );
+
+    if (
+      task.type === "analysis"
+    ) {
+      return rulePlanner.createPlan(
+        context
+      );
+    }
 
     const start =
       Date.now();
