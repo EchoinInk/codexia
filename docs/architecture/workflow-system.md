@@ -2,7 +2,9 @@
 
 ## Purpose
 
-The Workflow System coordinates Codexia's development lifecycle.
+The Workflow System coordinates one bounded Codexia development lifecycle.
+
+Long-running task orchestration is owned by the Runtime above the Workflow. The Runtime may invoke multiple Workflow cycles, but the Workflow itself remains bounded and independent.
 
 
 ## Lifecycle
@@ -76,6 +78,24 @@ Provides:
 - summaries
 - changed files
 - validation results
+
+
+## Runtime Boundary
+
+The Workflow owns a single bounded execution cycle.
+
+The Long-running Task Runtime owns:
+
+- repeating Workflow cycles
+- task lifecycle state
+- checkpoints
+- continuation and retry decisions
+- pause and resume
+- cancellation
+- timeout and iteration limits
+- runtime events and metrics
+
+Planner, Executor, Validator, Reporter, Workflow, and Intelligence remain independent components.
 
 
 ## Design Goal

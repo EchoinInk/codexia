@@ -4,19 +4,35 @@
 
 The Agent Runtime coordinates Codexia's autonomous development workflow.
 
-It transforms developer intent into validated changes.
+It transforms developer intent into validated changes while preserving strict boundaries between planning, execution, validation, reporting, and workspace intelligence.
 
 
-## Responsibilities
+## Runtime Layers
 
-The Agent Runtime manages:
+Codexia has two execution scopes:
 
-- task lifecycle
-- planning
-- execution
+- The Workflow coordinates one bounded execution cycle.
+- The Long-running Task Runtime sits above the Workflow and may repeat bounded cycles until a stop condition is reached.
+
+The long-running runtime does not replace or duplicate Workflow responsibilities.
+
+
+## Long-running Task Runtime
+
+The Phase 5.1 runtime coordinates:
+
 - observation
-- validation
-- repair
+- planning
+- bounded workflow execution
+- goal evaluation
+- checkpointing
+- continuation decisions
+- pause and resume
+- cancellation
+- iteration and timeout limits
+- runtime events and metrics
+
+Runtime lifecycle state and durable checkpoints remain separate from the bounded Workflow state model.
 
 
 ## Core Components
@@ -61,13 +77,16 @@ The executor manages:
 
 Responsibility:
 
-Coordinate the lifecycle.
+Coordinate one bounded execution lifecycle.
 
 The workflow manages:
 
 - state transitions
 - execution stages
-- error handling
+- validation handoff
+- bounded-cycle error handling
+
+The Workflow does not own long-running continuation, checkpoints, pause/resume, cancellation policy, or iteration limits.
 
 
 ## Validator

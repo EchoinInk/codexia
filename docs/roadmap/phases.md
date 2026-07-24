@@ -1,6 +1,6 @@
 # Codexia Roadmap
 
-Updated after completion of 4.4.2 Incremental Workspace Indexing.
+Updated after completion of Phase 5.1 Long-running Tasks.
 
 ## Roadmap Status Philosophy
 
@@ -241,19 +241,25 @@ Status: Complete
 
 Status: In Progress
 
-### 🚧 5.1 Long-running Tasks
+### ✅ 5.1 Long-running Tasks
 
-Status: In Progress
+Status: Complete
 
-- observe
-- plan
-- execute
-- verify
-- continue
+- Runtime controller above the bounded workflow
+- Task runtime lifecycle state
+- Runtime context across iterations
+- Durable checkpoints and resume
+- Continuation and retry policy
+- Pause and cancellation controls
+- Timeout and iteration limits
+- Runtime lifecycle events
+- Runtime metrics and progress
+- Runtime configuration and error handling
+- observe → plan → execute → verify → checkpoint → continue
 
-### 🚧 5.2 Task Queue
+### ⏳ 5.2 Task Queue
 
-Status: In Progress
+Status: Planned
 
 - build
 - tests

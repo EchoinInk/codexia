@@ -39,9 +39,15 @@ export interface ExecutionResult {
   context: AgentContext;
 }
 
+/** Optional execution controls supplied by a workflow coordinator. */
+export interface ExecutionOptions {
+  signal?: AbortSignal;
+}
+
 export async function executePlan(
   plan: Plan,
-  context: AgentContext
+  context: AgentContext,
+  options: ExecutionOptions = {}
 ): Promise<ExecutionResult> {
   let updatedContext = context;
 
@@ -57,6 +63,15 @@ export async function executePlan(
   );
 
   for (const step of plan.steps) {
+    if (options.signal?.aborted) {
+      updatedContext = addObservation(
+        updatedContext,
+        createObservation("Execution cancelled", "error")
+      );
+      results.push("Execution cancelled");
+      break;
+    }
+
     summary = addAction(summary, step.description);
 
     const result = await executeStep(step);
@@ -108,7 +123,7 @@ export async function executePlan(
 
   const verification =
     shouldVerify
-      ? await runVerification()
+      ? await runVerification(options.signal)
       : [];
 
   if (shouldVerify) {

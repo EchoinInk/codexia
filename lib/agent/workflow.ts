@@ -70,6 +70,14 @@ export interface WorkflowResult {
 }
 
 
+/** Optional controls supplied by orchestration layers above one workflow cycle. */
+export interface WorkflowOptions {
+
+  signal?: AbortSignal;
+
+}
+
+
 
 function createWorkflowState(): WorkflowState {
 
@@ -209,7 +217,8 @@ function createWorkflowReview(
 
 export async function runWorkflow(
   plan: Plan,
-  context: AgentContext
+  context: AgentContext,
+  options: WorkflowOptions = {}
 ): Promise<WorkflowResult> {
 
   let state =
@@ -227,7 +236,10 @@ export async function runWorkflow(
   const execution =
     await executePlan(
       plan,
-      context
+      context,
+      {
+        signal: options.signal,
+      }
     );
 
 

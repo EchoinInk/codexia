@@ -19,7 +19,7 @@ export interface VerificationResult {
 
 
 
-export async function runVerification(): Promise<
+export async function runVerification(signal?: AbortSignal): Promise<
   VerificationResult[]
 > {
 
@@ -35,10 +35,28 @@ export async function runVerification(): Promise<
 
   for (const command of commands) {
 
+    if (signal?.aborted) {
+
+      results.push({
+
+        success: false,
+
+        command,
+
+        output: "Verification cancelled",
+
+        error: "Verification cancelled",
+
+      });
+
+      break;
+
+    }
+
     try {
 
       const { stdout, stderr } =
-        await execAsync(command);
+        await execAsync(command, { signal });
 
 
       results.push({
