@@ -1,6 +1,6 @@
 # Codexia Roadmap
 
-Updated after completion of Phase 5.1 Long-running Tasks.
+Updated after completion of Phase 5.2 Task Queue.
 
 ## Roadmap Status Philosophy
 
@@ -257,10 +257,17 @@ Status: Complete
 - Runtime configuration and error handling
 - observe → plan → execute → verify → checkpoint → continue
 
-### ⏳ 5.2 Task Queue
+### ✅ 5.2 Task Queue
 
-Status: Planned
+Status: Complete
 
+- Durable task queue state
+- Priority scheduling
+- Configurable concurrency
+- Bounded retries
+- Safe cancellation
+- Queue lifecycle events
+- Queue metrics
 - build
 - tests
 - lint
@@ -350,7 +357,7 @@ Status: Future
 ## ⏳ Current Development Focus
 
 Current focus:
-Phase 5.1 — Long-running Tasks
+Phase 5.3 — Event System
 
 Completed:
 
@@ -378,9 +385,9 @@ Completed:
 
 Next objectives:
 
-- Long-running task lifecycle
-- Continued observe-plan-execute-verify loops
-- Task continuation
+- Phase 5.3 event-driven runtime integration
+- File-change event propagation
+- Impact reasoning and memory updates
 
 ---
 
@@ -403,7 +410,10 @@ Phase 4  [████████████████████] 100%
   - 4.4.5 Complete  
   - 4.4.6 Complete  
 
-Phase 5  [░░░░░░░░░░░░░░░░░░░] 0%  
+- 5.1 Complete  
+- 5.2 Complete  
+
+Phase 5  [████████░░░░░░░░░░░░] 40%  
 Phase 6  [░░░░░░░░░░░░░░░░░░░] 0%  
 Phase 7  [░░░░░░░░░░░░░░░░░░░] 0%  
 Phase 8  [░░░░░░░░░░░░░░░░░░░] 0%

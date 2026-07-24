@@ -97,6 +97,8 @@ The Long-running Task Runtime owns:
 
 Planner, Executor, Validator, Reporter, Workflow, and Intelligence remain independent components.
 
+The Phase 5.2 Task Queue may schedule work that eventually invokes Workflow or the Long-running Task Runtime, but queue scheduling remains outside the bounded Workflow lifecycle.
+
 
 ## Design Goal
 

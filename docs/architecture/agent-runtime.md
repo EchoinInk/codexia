@@ -35,6 +35,15 @@ The Phase 5.1 runtime coordinates:
 Runtime lifecycle state and durable checkpoints remain separate from the bounded Workflow state model.
 
 
+## Task Queue
+
+Phase 5.2 adds a durable Task Queue alongside the Long-running Task Runtime.
+
+The queue schedules build, test, lint, documentation, and indexing work while delegating execution to the existing subsystem that owns each responsibility. It does not replace Workflow or Runtime orchestration.
+
+Queue state is persisted locally, supports priority ordering, bounded retries, configurable concurrency, cancellation, lifecycle events, and aggregate metrics.
+
+
 ## Core Components
 
 
