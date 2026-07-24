@@ -57,8 +57,12 @@ import type {
 } from "./workspace-background-indexer";
 
 import {
+  configureWorkspaceEventSystem,
+  notifyWorkspaceFileChanged,
+} from "@/lib/agent/event-system";
+
+import {
   attachWorkspaceMemory,
-  recordWorkspaceFileChange,
   recordWorkspaceIndexDiff,
 } from "./workspace-memory";
 
@@ -306,23 +310,8 @@ async function ensureWorkspaceWatcher(
     startWorkspaceWatcher(
       workspace,
       event => {
-        recordWorkspaceFileChange(
-          event.workspace,
-          event.path
-        ).catch(
-          error => {
-            console.warn(
-              `Unable to record workspace memory for "${event.path}": ${
-                error instanceof Error
-                  ? error.message
-                  : String(error)
-              }`
-            );
-          }
-        );
-
-        markWorkspaceDirty(
-          event.workspace
+        notifyWorkspaceFileChanged(
+          event
         );
       }
     )
@@ -553,3 +542,9 @@ export function getWorkspaceIndexBackgroundStatus(
     workspace
   );
 }
+
+configureWorkspaceEventSystem({
+  getWorkspaceIndex,
+  markWorkspaceDirty,
+});
+

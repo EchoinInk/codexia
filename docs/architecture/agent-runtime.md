@@ -44,6 +44,15 @@ The queue schedules build, test, lint, documentation, and indexing work while de
 Queue state is persisted locally, supports priority ordering, bounded retries, configurable concurrency, cancellation, lifecycle events, and aggregate metrics.
 
 
+## Event System
+
+Phase 5.3 adds a typed Event System between workspace change detection and agent/runtime reactions.
+
+Workspace watcher notifications are promoted into observable file-change events, dispatched to agent/runtime subscribers, analysed through the existing workspace intelligence impact boundary, and recorded in existing workspace activity memory.
+
+The Event System does not replace file watching, indexing, Workflow, the Long-running Task Runtime, the Task Queue, or Workspace Memory.
+
+
 ## Core Components
 
 

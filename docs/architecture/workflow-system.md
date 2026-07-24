@@ -99,6 +99,8 @@ Planner, Executor, Validator, Reporter, Workflow, and Intelligence remain indepe
 
 The Phase 5.2 Task Queue may schedule work that eventually invokes Workflow or the Long-running Task Runtime, but queue scheduling remains outside the bounded Workflow lifecycle.
 
+The Phase 5.3 Event System may notify runtime consumers about workspace changes and their impact, but event processing remains outside the bounded Workflow lifecycle.
+
 
 ## Design Goal
 

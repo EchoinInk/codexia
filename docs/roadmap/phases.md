@@ -1,6 +1,6 @@
 # Codexia Roadmap
 
-Updated after completion of Phase 5.2 Task Queue.
+Updated after completion of Phase 5.3 Event System.
 
 ## Roadmap Status Philosophy
 
@@ -274,14 +274,18 @@ Status: Complete
 - documentation
 - indexing
 
-### 🚧 5.3 Event System
+### ✅ 5.3 Event System
 
-Status: In Progress
+Status: Complete
 
-- File changed
-- Agent notified
-- Reason about impact
-- Update memory
+- Typed workspace file-change events
+- Agent/runtime notification boundary
+- Dependency-aware impact reasoning
+- Existing workspace activity memory updates
+- Per-workspace serial event processing
+- Event history and status
+- Event metrics
+- Observer isolation and safe error handling
 
 ### 🚧 5.4 Workspace Memory
 
@@ -357,7 +361,7 @@ Status: Future
 ## ⏳ Current Development Focus
 
 Current focus:
-Phase 5.3 — Event System
+Phase 5.4 — Workspace Memory
 
 Completed:
 
