@@ -53,6 +53,15 @@ Workspace watcher notifications are promoted into observable file-change events,
 The Event System does not replace file watching, indexing, Workflow, the Long-running Task Runtime, the Task Queue, or Workspace Memory.
 
 
+## Workspace Memory
+
+Phase 5.4 expands Workspace Intelligence memory beyond file activity into durable semantic project knowledge.
+
+The memory snapshot now carries architecture, coding style, preferred patterns, previous failures, and previous fixes alongside the existing activity signals. The Long-running Task Runtime may record failure/fix outcomes through an optional adapter, while the bounded Workflow remains independent from Workspace Intelligence persistence.
+
+Semantic memory is exposed through the existing `IntelligenceContext`, allowing planning to consume remembered project knowledge without introducing a second context path.
+
+
 ## Core Components
 
 

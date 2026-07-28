@@ -97,7 +97,7 @@ The existing background indexing system remains responsible for incremental refr
 
 Phase 5.3 updates the existing activity-oriented Workspace Memory by recording changed files.
 
-This is intentionally separate from Phase 5.4 Workspace Memory, which will expand long-lived project knowledge such as architecture, coding style, preferred patterns, previous failures, and previous fixes.
+Phase 5.4 expands this same Workspace Intelligence memory boundary with long-lived semantic project knowledge such as architecture, coding style, preferred patterns, previous failures, and previous fixes. Event processing continues to record file activity only; it does not infer or author semantic project knowledge.
 
 ## Ordering and Concurrency
 

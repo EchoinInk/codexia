@@ -101,6 +101,8 @@ The Phase 5.2 Task Queue may schedule work that eventually invokes Workflow or t
 
 The Phase 5.3 Event System may notify runtime consumers about workspace changes and their impact, but event processing remains outside the bounded Workflow lifecycle.
 
+Phase 5.4 Workspace Memory remains owned by Workspace Intelligence. Runtime-level adapters may record durable failures and fixes after a bounded Workflow returns, but Workflow itself does not persist semantic memory.
+
 
 ## Design Goal
 

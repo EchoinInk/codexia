@@ -294,6 +294,30 @@ export class RuntimeController {
             timestamp: completedAt,
           });
 
+          if (this.dependencies.memoryRecorder) {
+            try {
+              await this.dependencies.memoryRecorder.recordIteration({
+                state,
+                context,
+                plan,
+                workflow,
+                evaluation,
+                success,
+              });
+            } catch (error) {
+              this.dependencies.logger?.warn(
+                "Unable to record runtime workspace memory",
+                {
+                  taskId: state.id,
+                  error:
+                    error instanceof Error
+                      ? error.message
+                      : String(error),
+                }
+              );
+            }
+          }
+
           if (this.configuration.checkpointAfterEachIteration) {
             ({ state, metrics, checkpoint: latestCheckpoint } =
               await this.saveCheckpoint(state, context, metrics, lastIteration));

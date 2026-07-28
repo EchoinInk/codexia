@@ -186,6 +186,19 @@ export interface RuntimeGoalEvaluator {
   }): Promise<RuntimeIterationEvaluation>;
 }
 
+/** Records durable workspace learning from completed runtime iterations. */
+export interface RuntimeMemoryRecorder {
+  recordIteration(input: {
+    state: Readonly<TaskRuntimeState>;
+    context: AgentContext;
+    plan: Plan;
+    workflow: WorkflowResult;
+    evaluation: RuntimeIterationEvaluation;
+    success: boolean;
+  }): Promise<void>;
+}
+
+
 /** Applies stop limits and task-specific continuation semantics. */
 export interface RuntimeContinuationPolicy {
   decide(input: {
@@ -263,6 +276,7 @@ export interface RuntimeDependencies {
     context: AgentContext,
     options?: WorkflowOptions
   ) => Promise<WorkflowResult>;
+  memoryRecorder?: RuntimeMemoryRecorder;
   logger?: RuntimeLogger;
   now?: () => number;
   createId?: () => string;

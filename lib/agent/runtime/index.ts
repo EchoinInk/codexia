@@ -8,4 +8,5 @@ export * from "./errors";
 export * from "./events";
 export * from "./factory";
 export * from "./lifecycle";
+export * from "./memory-recorder";
 export * from "./types";

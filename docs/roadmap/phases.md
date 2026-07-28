@@ -1,6 +1,6 @@
 # Codexia Roadmap
 
-Updated after completion of Phase 5.3 Event System.
+Updated after completion of Phase 5.4 Workspace Memory.
 
 ## Roadmap Status Philosophy
 
@@ -287,15 +287,21 @@ Status: Complete
 - Event metrics
 - Observer isolation and safe error handling
 
-### 🚧 5.4 Workspace Memory
+### ✅ 5.4 Workspace Memory
 
-Status: In Progress
+Status: Complete
 
+- Durable semantic project memory
 - architecture
 - coding style
 - preferred patterns
 - previous failures
 - previous fixes
+- Activity-memory schema migration
+- Bounded semantic retention and deduplication
+- Failure-to-fix relationships
+- Runtime failure/fix learning adapter
+- Intelligence-context integration
 
 ### 🚧 5.5 Multi-Agent Runtime
 
@@ -361,7 +367,7 @@ Status: Future
 ## ⏳ Current Development Focus
 
 Current focus:
-Phase 5.4 — Workspace Memory
+Phase 5.5 — Multi-Agent Runtime
 
 Completed:
 
@@ -389,9 +395,9 @@ Completed:
 
 Next objectives:
 
-- Phase 5.3 event-driven runtime integration
-- File-change event propagation
-- Impact reasoning and memory updates
+- Phase 5.5 multi-agent runtime
+- Role-specific agent coordination
+- Preserve Planner, Executor, Reviewer, Architect, Refactorer, Test Writer, and Documentation Writer boundaries
 
 ---
 
@@ -416,8 +422,10 @@ Phase 4  [████████████████████] 100%
 
 - 5.1 Complete  
 - 5.2 Complete  
+- 5.3 Complete  
+- 5.4 Complete  
 
-Phase 5  [████████░░░░░░░░░░░░] 40%  
+Phase 5  [████████████████░░░░] 80%  
 Phase 6  [░░░░░░░░░░░░░░░░░░░] 0%  
 Phase 7  [░░░░░░░░░░░░░░░░░░░] 0%  
 Phase 8  [░░░░░░░░░░░░░░░░░░░] 0%

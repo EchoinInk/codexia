@@ -9,6 +9,7 @@ import {
   defaultRuntimeLogger,
 } from "./defaults";
 import { DefaultRuntimeContinuationPolicy } from "./continuation-policy";
+import { WorkspaceRuntimeMemoryRecorder } from "./memory-recorder";
 import type {
   RuntimeConfiguration,
   RuntimeContextSnapshot,
@@ -40,6 +41,8 @@ export function createRuntimeController(
       overrides?.checkpointStore ?? new FileRuntimeCheckpointStore(workspace),
     restoreContext: overrides?.restoreContext ?? restoreContext,
     runWorkflow: overrides?.runWorkflow ?? runWorkflow,
+    memoryRecorder:
+      overrides?.memoryRecorder ?? new WorkspaceRuntimeMemoryRecorder(),
     logger: overrides?.logger ?? defaultRuntimeLogger,
     now: overrides?.now,
     createId: overrides?.createId,
