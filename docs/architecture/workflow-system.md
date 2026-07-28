@@ -107,3 +107,9 @@ Phase 5.4 Workspace Memory remains owned by Workspace Intelligence. Runtime-leve
 ## Design Goal
 
 The workflow system should make autonomous actions predictable and trustworthy.
+
+## Multi-Agent Coordination Boundary
+
+Phase 5.5 may wrap a bounded Workflow with role-specific consultation and review. Specialist roles do not execute tools or modify files. The Planner still determines the plan, the Workflow still coordinates one bounded lifecycle, and the Executor still owns tool execution.
+
+A Reviewer may reject a completed coordinated task without changing the underlying Workflow result. Follow-up repair or continuation remains the responsibility of the orchestration layer above Workflow.

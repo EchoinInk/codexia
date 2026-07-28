@@ -141,3 +141,19 @@ The system analyses:
 - possible fixes
 
 Then generates a repair strategy.
+
+## Multi-Agent Runtime
+
+Phase 5.5 adds a role-coordination layer above the existing Planner and bounded Workflow.
+
+The coordinator may consult role-specific agents before and after execution:
+
+- Architect
+- Refactorer
+- Test Writer
+- Documentation Writer
+- Reviewer
+
+The existing Planner remains the only component that creates executable plans. The existing Workflow and Executor remain the only components that perform workspace actions. Specialist agents produce typed advice, and the Reviewer produces a typed approval result after the bounded Workflow completes.
+
+This prevents multiple agents from independently mutating the workspace and preserves the approved Planner, Executor, Validator, Reporter, Workflow, Intelligence, and Runtime boundaries.

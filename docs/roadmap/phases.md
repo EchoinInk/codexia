@@ -1,6 +1,6 @@
 # Codexia Roadmap
 
-Updated after completion of Phase 5.4 Workspace Memory.
+Updated after completion of Phase 5.5 Multi-Agent Runtime.
 
 ## Roadmap Status Philosophy
 
@@ -239,7 +239,7 @@ Status: Complete
 
 ## 🚧 Phase 5 — Agent Runtime
 
-Status: In Progress
+Status: Complete
 
 ### ✅ 5.1 Long-running Tasks
 
@@ -303,9 +303,9 @@ Status: Complete
 - Runtime failure/fix learning adapter
 - Intelligence-context integration
 
-### 🚧 5.5 Multi-Agent Runtime
+### ✅ 5.5 Multi-Agent Runtime
 
-Status: In Progress
+Status: Complete
 
 - Planner
 - Executor
@@ -367,7 +367,7 @@ Status: Future
 ## ⏳ Current Development Focus
 
 Current focus:
-Phase 5.5 — Multi-Agent Runtime
+Phase 6 — IDE Intelligence
 
 Completed:
 
@@ -395,9 +395,9 @@ Completed:
 
 Next objectives:
 
-- Phase 5.5 multi-agent runtime
-- Role-specific agent coordination
-- Preserve Planner, Executor, Reviewer, Architect, Refactorer, Test Writer, and Documentation Writer boundaries
+- Phase 6 IDE Intelligence
+- Semantic navigation and symbol search
+- AI diagnostics and code actions
 
 ---
 
@@ -424,8 +424,9 @@ Phase 4  [████████████████████] 100%
 - 5.2 Complete  
 - 5.3 Complete  
 - 5.4 Complete  
+- 5.5 Complete  
 
-Phase 5  [████████████████░░░░] 80%  
+Phase 5  [████████████████████] 100%  
 Phase 6  [░░░░░░░░░░░░░░░░░░░] 0%  
 Phase 7  [░░░░░░░░░░░░░░░░░░░] 0%  
 Phase 8  [░░░░░░░░░░░░░░░░░░░] 0%
