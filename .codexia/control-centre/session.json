@@ -1,0 +1,127 @@
+{
+  "id": "codexia-main-session",
+  "mode": "ide",
+  "status": "working",
+  "selectedTask": {
+    "id": "phase-6-semantic-navigation",
+    "title": "Continue Semantic Navigation",
+    "description": "Connect indexed symbols to editor navigation while preserving the existing workspace intelligence boundary.",
+    "phase": "Phase 6 · IDE Intelligence",
+    "progress": 64,
+    "status": "recommended",
+    "relevantFiles": [
+      "lib/intelligence/workspace-index-manager.ts",
+      "lib/intelligence/symbols.ts",
+      "components/FileViewer.tsx"
+    ]
+  },
+  "runtimeStatus": "paused",
+  "checkpoint": 3,
+  "briefing": "I restored the Phase 6 workspace and analysed the latest repository state. The runtime foundation is healthy. Semantic navigation is the strongest next step because the index and symbol model are already in place.",
+  "activeFile": "",
+  "openFiles": [
+    "lib/intelligence/workspace-index-manager.ts",
+    "lib/agent/runtime/controller.ts",
+    ""
+  ],
+  "panel": "terminal",
+  "controlView": "home",
+  "ideTool": "explorer",
+  "expandedFolders": [
+    "app",
+    "components",
+    "lib",
+    "lib/agent",
+    "lib/agent/runtime",
+    "lib/intelligence",
+    "docs",
+    "docs/roadmap"
+  ],
+  "terminalHistory": [
+    "alex@codexia % npm run verify",
+    "runtime › validating task checkpoint 3",
+    "✓ planner contracts  ✓ task queue  ✓ workspace index"
+  ],
+  "bottomPanelOpen": true,
+  "codierPresence": {
+    "state": "warning",
+    "message": "No durable checkpoint exists for runtime task phase-6-semantic-navigation.",
+    "priority": "attention",
+    "expression": "waving",
+    "relatedTaskId": "phase-6-semantic-navigation",
+    "runtimeStatus": "paused",
+    "lastUpdatedAt": "Just now"
+  },
+  "snapshot": {
+    "repository": "codexia-aicoder",
+    "branch": "main",
+    "phase": "Phase 6 · IDE Intelligence",
+    "health": 98,
+    "memoryStatus": "Loaded · 0 recent files · 0 architecture memories",
+    "graphStatus": "Indexed · 0 relationships",
+    "architectureScore": 0,
+    "indexedFiles": 132,
+    "symbolCount": 517,
+    "activeWorkflows": 1,
+    "agentStatus": "Ready",
+    "gitStatus": "D codexia-29-07-2026-0725am.zip\n?? .codexia/control-centre/\n?? codexia-phase-6-baseline.zip",
+    "verificationStatus": "Passing",
+    "recentChanges": 3
+  },
+  "events": [
+    {
+      "id": "event-1785409032744",
+      "kind": "verification.failed",
+      "title": "Runtime action unavailable",
+      "detail": "No durable checkpoint exists for runtime task phase-6-semantic-navigation.",
+      "actor": "Workspace",
+      "occurredAt": "now",
+      "tone": "warning"
+    },
+    {
+      "id": "event-1785409020395",
+      "kind": "verification.failed",
+      "title": "Runtime action unavailable",
+      "detail": "No durable checkpoint exists for runtime task phase-6-semantic-navigation.",
+      "actor": "Workspace",
+      "occurredAt": "now",
+      "tone": "warning"
+    },
+    {
+      "id": "event-1",
+      "kind": "verification.passed",
+      "title": "Verification passed",
+      "detail": "Runtime and task queue checks completed successfully.",
+      "actor": "Runtime",
+      "occurredAt": "2 min",
+      "tone": "success"
+    },
+    {
+      "id": "event-2",
+      "kind": "architecture.updated",
+      "title": "Architecture map updated",
+      "detail": "Three symbol relationships changed after the latest index.",
+      "actor": "Workspace",
+      "occurredAt": "6 min",
+      "tone": "neutral"
+    },
+    {
+      "id": "event-3",
+      "kind": "memory.updated",
+      "title": "Workspace memory refreshed",
+      "detail": "Phase 6 goals and the latest implementation checkpoint were restored.",
+      "actor": "Codier",
+      "occurredAt": "8 min",
+      "tone": "neutral"
+    },
+    {
+      "id": "event-4",
+      "kind": "documentation.updated",
+      "title": "Roadmap changed",
+      "detail": "IDE Intelligence is now the active development phase.",
+      "actor": "Git",
+      "occurredAt": "21 min",
+      "tone": "neutral"
+    }
+  ]
+}
