@@ -1,0 +1,75 @@
+import type { CodeSymbol } from "./symbols";
+
+import type {
+  RelationshipGraph,
+} from "./relationship-graph";
+
+import type {
+  WorkspaceMemorySnapshot,
+} from "./workspace-memory";
+
+
+export interface CodeAnalysis {
+
+  imports: string[];
+
+  exports: string[];
+
+  functions: string[];
+
+  classes: string[];
+
+  components: string[];
+
+  symbols: CodeSymbol[];
+
+}
+
+
+export interface IndexedFile {
+
+  path: string;
+
+  size: number;
+
+  modifiedAt?: number;
+
+  hash?: string;
+
+  extension: string;
+
+  language: string;
+
+  preview: string;
+
+  code?: CodeAnalysis;
+
+}
+
+
+export interface WorkspaceIndex {
+
+  files: IndexedFile[];
+
+  directories: string[];
+
+  relationships?: RelationshipGraph;
+
+  intelligence?: IntelligenceSnapshot;
+
+  memory?: WorkspaceMemorySnapshot;
+
+}
+
+
+export interface IntelligenceSnapshot {
+
+  files: string[];
+
+  relatedFiles: string[];
+
+  dependencies: Record<string, string[]>;
+
+  confidence: number;
+
+}
