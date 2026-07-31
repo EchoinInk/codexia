@@ -5,3 +5,8 @@ node_modules
 .DS_Store
 *.tsbuildinfo
 codexia-clean*.zip
+
+workspace-memory.json
+*/session.json
+workspace-index.json
+.codexia
