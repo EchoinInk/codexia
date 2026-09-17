@@ -1,6 +1,8 @@
 # Codexia Roadmap
 
-Updated after completion of Phase 5.5 Multi-Agent Runtime.
+Updated to reflect completion of Phase 6, including Phase 6.4, Phase 7 as the
+current active phase, and the expanded Phase 8 continuously intelligent workspace
+roadmap.
 
 ## Roadmap Status Philosophy
 
@@ -317,87 +319,263 @@ Status: Complete
 
 ---
 
-## 🌙 Phase 6 — IDE Intelligence
+## ✅ Phase 6 — IDE Intelligence
 
-Status: Future
+Status: Complete
 
-- Semantic navigation
-- Symbol search
-- AI diagnostics
-- AI code actions
-- Refactoring engine
-- Rename engine
-- Dead code detection
-- Architecture analysis
+Extend the existing workspace index, symbol database, relationship graph, and
+incremental indexing systems. Keep Intelligence responsible for workspace
+understanding and preserve the Planner, Executor, Workflow, Validator, and
+Reporter boundaries.
+
+### ✅ 6.1 Semantic Navigation and Symbol Search
+
+Status: Complete
+
+- Workspace-wide symbol index
+- Exact and fuzzy symbol search
+- Definition lookup
+- Reference lookup
+- Implementation lookup
+- Symbol hierarchy and relationships
+- File and source-location navigation
+- Incremental index compatibility
+
+Current implementation covers the read-only Intelligence and HTTP API scope:
+
+- Workspace symbol search: exact, prefix, fuzzy, and filters
+- Document symbols, lexical containers, and source ranges
+- Compiler-resolved definitions, references, and implementations
+- Existing workspace index, incremental refresh, and persistence integration
+- Versioned persisted snapshots with legacy rebuild
+
+See `docs/architecture/ide-intelligence.md` and
+`docs/contracts/semantic-navigation.md` for supported behavior and limits.
+Symbol hierarchy and navigation are exposed through semantic data and source
+locations within those documented limits. Editor UI integration is not part of
+this implementation.
+
+### ✅ 6.2 AI Diagnostics and Code Actions
+
+Status: Complete
+
+- Structured diagnostic model
+- Diagnostic providers
+- Workspace-aware explanations
+- Suggested fixes
+- Safe code-action generation
+- Validation before application
+
+### ✅ 6.3 Refactoring and Rename Engines
+
+Status: Complete
+
+- Refactoring contracts
+- Rename planning across references
+- Conflict and scope detection
+- Patch generation
+- Verification and rollback boundaries
+
+### ✅ 6.4 Dead Code and Architecture Analysis
+
+Status: Complete
+
+- Unused symbols and exports
+- Unreachable modules
+- Dependency anomalies
+- Layer-boundary violations
+- Architecture findings and reports
 
 ---
 
-## 🌙 Phase 7 — Autonomous Engineering
+## ✅ Phase 7 — Autonomous Engineering
 
-Status: Future
+Status: Completed
 
-- Architectural smell detection
-- Improvement suggestions
-- Auto-repair failing builds
-- Migration plans
-- Large-scale refactors
-- Technical debt reports
-- Performance optimisation
-- Security analysis
+Use Phase 6 navigation, diagnostics, code actions, refactoring contracts, and
+architecture findings as inputs to autonomous engineering reasoning and
+execution. Extend the existing Agent Runtime above the Workflow rather than
+introducing another execution lifecycle or reimplementing analysis engines.
+
+Planning determines what should happen; execution performs actions; Workflow
+coordinates each bounded execution lifecycle; validation confirms correctness;
+reporting explains outcomes. The Runtime owns continuation across cycles.
+Intelligence supplies workspace understanding. Reasoning remains model-provider
+independent, supporting OpenAI, local models, and future providers.
+
+### ✅ 7.1 Autonomous Engineering Planner
+
+Status: Complete
+
+- Decompose authorised engineering goals into bounded tasks with dependencies and explicit scope
+- Define acceptance criteria, verification requirements, and measurable completion conditions
+- Select and prioritise tasks using Phase 6 findings, workspace context, and provenance-backed memory
+- Assess affected symbols, files, dependants, architecture boundaries, and change risk through existing Intelligence
+- Extend existing Planner contracts with evidence, assumptions, constraints, and escalation conditions
+- Revise plans when evidence changes, while leaving execution and continuation to the existing Workflow and Runtime
+
+### ✅ 7.2 Autonomous Repair and Recovery
+
+Status: Complete
+
+- Investigate build, test, lint, and type-check failures using structured verification results and Phase 6 diagnostics
+- Correlate failure evidence with affected code and remembered failure/fix relationships
+- Extend existing repair planning with bounded repair loops, retry budgets, time limits, and no-progress detection
+- Replan from Validator evidence after each bounded Workflow cycle without weakening acceptance criteria
+- Recover through existing Runtime checkpoints and approved rollback boundaries; revalidate workspace state before resuming
+- Escalate ambiguous failures, exhausted budgets, repeated regressions, and changes outside authorised scope
+
+### ✅ 7.3 Migration and Large-Scale Refactor Orchestration
+
+Status: Complete
+
+- Create staged migration and refactoring plans with compatibility constraints and explicit completion criteria
+- Sequence cross-file and cross-module changes using existing dependency, reference, and impact analysis
+- Consume Phase 6 refactoring and rename contracts for scope checks, conflicts, and patch generation
+- Apply bounded change batches through the existing Workflow and Executor with verification between stages
+- Use existing Runtime checkpoints and Git/patch capabilities for approved rollback, interruption, and safe resume
+- Track partial migrations, remaining dependencies, and documentation updates without declaring incomplete transitions successful
+
+### ✅ 7.4 Technical Debt, Performance, and Security Remediation
+
+Status: Complete
+
+- Consume existing diagnostic, architecture, dead-code, performance, and security provider findings with source provenance
+- Prioritise remediation by severity, confidence, engineering impact, dependency risk, and estimated effort
+- Produce scoped remediation plans through the existing Planner using Phase 6 code-action and refactoring capabilities
+- Establish reproducible baselines and acceptance criteria, including targeted tests, benchmarks, or security checks as appropriate
+- Apply approved changes through the existing execution pipeline and compare verification evidence against the baseline
+- Record resolved, deferred, unsupported, and residual findings with rationale and evidence limits
+
+### ✅ 7.5 Multi-Agent Engineering Orchestration
+
+Status: Complete
+
+- Extend the Phase 5.5 coordinator for Planner, Executor, Reviewer, Architect, Refactorer, Test Writer, and Documentation Writer roles
+- Select and sequence specialist consultations according to task scope, risk, and required evidence
+- Preserve typed advice and review handoffs through the existing context and coordination contracts
+- Keep the existing Planner as the sole executable-plan author and Workflow/Executor as the workspace action path
+- Coordinate implementation, testing, and documentation obligations through executable plans; specialists do not independently mutate the workspace
+- Route review findings and disagreements into bounded Runtime replanning or user escalation without overriding Validator results
+- Reuse existing task scheduling, cancellation, lifecycle events, and resource limits for coordinated engineering work
+
+### ✅ 7.6 Autonomous Engineering Governance and Reporting
+
+Status: Complete
+
+- Enforce explicit approval boundaries for task scope, risk, tool actions, and externally visible or irreversible changes
+- Apply existing runtime budgets, workspace isolation, pause/cancel controls, and escalation policies across engineering cycles
+- Preserve audit trails linking goals, evidence, plans, approvals, patches, checkpoints, and verification outcomes
+- Record provider and role provenance, workspace versions, assumptions, and evidence freshness for traceable decisions
+- Produce Reporter-owned outcome reports covering acceptance criteria, changes, verification evidence, and recovery actions
+- Distinguish verified outcomes from attempted, deferred, failed, or unverified work and identify unresolved risks
+- Require explicit authorisation for scope expansion and retain user control over continuation and completion
 
 ---
 
-## 🌙 Phase 8 — AI Workspace
+Implementation contracts and limits: see `docs/architecture/autonomous-engineering.md`,
+`docs/contracts/autonomous-engineering.md`, and `docs/operations/autonomous-engineering.md`.
+Existing-file TS/JS/Markdown changes are supported. Migration/refactor stages are explicit;
+missing performance/security providers and unsupported operations escalate. Phase 8 is not implemented.
 
-Status: Future
+## 🚧 Phase 8 — Continuously Intelligent AI Workspace
 
-- Live architecture graph
-- Real-time dependency analysis
-- Continuous indexing
-- Continuous learning
-- Project evolution tracking
-- Engineering insights dashboard
-- Autonomous maintenance
-- Autonomous documentation
-- Autonomous testing
-- Autonomous code review
+Status: In progress
+
+Integrate the existing indexing, event, memory, and runtime foundations with
+Phase 6 intelligence and Phase 7 autonomous engineering into a continuously
+intelligent workspace and platform layer. Consume existing analysis and
+execution capabilities rather than rebuilding them.
+
+Phase 8 owns workspace presentation, integration, and policy-controlled entry
+points into existing capabilities. Intelligence owns workspace understanding;
+Planner determines what should happen; Executor performs approved actions;
+Workflow coordinates each bounded execution lifecycle; Validator confirms
+correctness; Reporter explains outcomes. Runtime remains above Workflow and
+owns continuation, checkpoints, and interruption across cycles. Platform views,
+schedulers, and integrations must preserve these boundaries and must not
+introduce a second engineering planner, execution path, or verification system.
+
+### 🚧 8.1 Live Workspace Intelligence
+
+Status: In progress
+
+- Present a unified workspace view of architecture, dependencies, diagnostics, findings, and engineering activity
+- Consume existing Phase 6 analysis and navigation contracts with links to supporting symbols, files, and source locations
+- Coordinate event-driven refresh through existing workspace events, cache invalidation, and incremental indexing
+- Integrate continuous background indexing with non-blocking reads, refresh status, and explicit snapshot freshness
+- Coalesce repeated change notifications and bound refresh work through existing queues and resource controls
+- Surface stale, incomplete, unavailable, and failed analysis distinctly without presenting cached evidence as current
+- Keep workspace understanding in Intelligence and expose read-only projections without triggering unapproved engineering work
+
+### 8.2 Project Evolution and Learning
+
+Status: Future — not started
+
+- Track project history across workspace revisions, architecture changes, findings, decisions, and engineering outcomes
+- Link decisions and findings to source evidence, affected workspace versions, plans, approvals, and verification results
+- Extend existing durable workspace memory with provenance, retention, deduplication, correction, and invalidation controls
+- Distinguish observations, proposed explanations, failed attempts, and verified outcomes in stored project knowledge
+- Learn reusable failure/fix relationships and project patterns from Validator-confirmed outcomes through existing Runtime memory adapters
+- Expose relevant history through existing Intelligence context while preserving workspace isolation and local-first persistence
+- Keep remembered outcomes advisory; historical success must not bypass current planning, policy checks, or verification
+
+### 8.3 Engineering Insights and Prioritisation
+
+Status: Future — not started
+
+- Aggregate architecture, dependency, diagnostic, activity, and verified outcome evidence into engineering insight views
+- Track trends, change hotspots, dependency risk, recurring failures, technical debt, and unresolved diagnostics over time
+- Attach source provenance, freshness, confidence, and coverage limits to insights and avoid unsupported risk claims
+- Suggest priorities using severity, impact, recurrence, dependency exposure, and estimated effort with explainable rationale
+- Measure outcomes against recorded baselines, including verified resolution, recurrence, regressions, and deferred work
+- Feed evidence and suggested priorities into the Phase 7 Planner; keep executable planning and remediation in Phase 7
+- Present Reporter-owned outcome summaries separately from analytical estimates and unverified suggestions
+
+### 8.4 Autonomous Maintenance and Continuous Engineering
+
+Status: Future — not started
+
+- Configure policy-controlled recurring maintenance, documentation, testing, and review work with explicit workspace scope
+- Translate authorised schedules and event triggers into bounded Phase 7 engineering requests through existing task queues
+- Reuse Phase 7 planning, repair, migration, remediation, specialist coordination, governance, and reporting capabilities
+- Bound automation with concurrency, time, iteration, retry, and resource budgets plus no-progress escalation
+- Prevent duplicate or overlapping runs and revalidate workspace state, evidence freshness, and applicable approvals before execution
+- Delegate continuation, checkpoints, pause, cancellation, and recovery to Runtime above the bounded Workflow
+- Retain explicit approval and scope-expansion controls; recurring triggers do not grant broader engineering authority
+- Record each scheduled run and its verified, failed, deferred, or interrupted outcome through existing audit and reporting contracts
+
+### 8.5 Workspace Operations and Control Centre
+
+Status: Future — not started
+
+- Provide a unified view of queued, active, paused, completed, failed, and cancelled work across authorised workspaces
+- Show task dependencies, progress, budgets, checkpoints, pending approvals, and verification evidence from existing lifecycle state
+- Route approval, pause, resume, cancellation, and interruption controls through existing governance, queue, and Runtime contracts
+- Distinguish requested control actions from acknowledged state transitions and explain recovery or resume requirements
+- Support notification preferences for meaningful progress, completion, failures, and required developer action
+- Coordinate multi-workspace lifecycle visibility, isolation, concurrency, and resource allocation through existing runtime controls
+- Expose audit history and Reporter-owned outcomes without letting presentation state override execution or Validator results
+
+### 8.6 Platform and Integration Layer
+
+Status: Future — not started
+
+- Define provider-independent interfaces for IDE clients, tools, model providers, and workspace platform APIs
+- Extend existing model abstractions to support OpenAI, local models, and future providers without coupling Runtime to a provider
+- Establish versioned extension and integration contracts with capability discovery, compatibility rules, and typed errors and events
+- Expose existing Intelligence queries, engineering requests, lifecycle controls, and reports through stable workspace-scoped APIs
+- Enforce workspace identity, isolation, scoped permissions, and resource limits at every integration boundary
+- Route external engineering requests through Phase 7 governance, Planner, Workflow, and Executor rather than allowing integration-specific mutation paths
+- Preserve local-first operation and explicit data-sharing controls for integrations that communicate with external services
+- Verify contract compatibility and adapter failure isolation without introducing a parallel execution or verification lifecycle
 
 ---
 
 ## ⏳ Current Development Focus
 
 Current focus:
-Phase 6 — IDE Intelligence
-
-Completed:
-
-- Workspace cache
-- Workspace cache manager
-- Multi-workspace support
-- Cache invalidation
-- Incremental indexing
-- Fingerprint-based change detection
-- Index diffing
-- Cached index reuse
-- Changed-file analysis
-- Index merging
-- Added/removed file handling
-- Incremental workspace refresh pipeline
-- File watching
-- Live workspace cache invalidation
-- Background indexing
-- Deferred index refresh
-- Non-blocking user responses during refresh
-- Frequently edited file tracking
-- Recently modified file tracking
-- Workspace hotspot detection
-- Developer habit summaries
-
-Next objectives:
-
-- Phase 6 IDE Intelligence
-- Semantic navigation and symbol search
-- AI diagnostics and code actions
+Phase 8 — Continuously Intelligent AI Workspace
 
 ---
 
@@ -408,25 +586,15 @@ Phase 1  [████████████████████] 100%
 Phase 2  [████████████████████] 100%  
 Phase 3  [████████████████████] 100%  
 Phase 4  [████████████████████] 100%  
-
-- 4.1 Complete  
-- 4.2 Complete  
-- 4.3 Complete  
-- 4.4 Complete  
-  - 4.4.1 Complete  
-  - 4.4.2 Complete  
-  - 4.4.3 Complete  
-  - 4.4.4 Complete  
-  - 4.4.5 Complete  
-  - 4.4.6 Complete  
-
-- 5.1 Complete  
-- 5.2 Complete  
-- 5.3 Complete  
-- 5.4 Complete  
-- 5.5 Complete  
-
 Phase 5  [████████████████████] 100%  
-Phase 6  [░░░░░░░░░░░░░░░░░░░] 0%  
-Phase 7  [░░░░░░░░░░░░░░░░░░░] 0%  
-Phase 8  [░░░░░░░░░░░░░░░░░░░] 0%
+Phase 6  [████████████████████] 100% 
+Phase 7  [████████████████████] 100%
+
+Phase 8  [░░░░░░░░░░░░░░░░░░░] 0% — Future; not started
+
+- 8.1 In progress
+- 8.2 Future — not started
+- 8.3 Future — not started
+- 8.4 Future — not started
+- 8.5 Future — not started
+- 8.6 Future — not started

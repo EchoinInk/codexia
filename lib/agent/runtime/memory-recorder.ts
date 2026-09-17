@@ -59,6 +59,8 @@ export class WorkspaceRuntimeMemoryRecorder implements RuntimeMemoryRecorder {
       return;
     }
 
+    if (input.context.engineering && !input.evaluation.goalAchieved) return;
+
     const memory =
       await loadWorkspaceMemorySnapshot(
         workspace

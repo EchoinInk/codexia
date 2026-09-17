@@ -19,13 +19,13 @@ export interface VerificationResult {
 
 
 
-export async function runVerification(signal?: AbortSignal): Promise<
+export async function runVerification(signal?: AbortSignal, workspace?: string): Promise<
   VerificationResult[]
 > {
 
   const commands = [
     "npx tsc --noEmit",
-    "npm test -- --runInBand",
+    "npm test",
     "npm run lint",
   ];
 
@@ -56,7 +56,7 @@ export async function runVerification(signal?: AbortSignal): Promise<
     try {
 
       const { stdout, stderr } =
-        await execAsync(command, { signal });
+        await execAsync(command, { signal, cwd: workspace });
 
 
       results.push({

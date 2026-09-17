@@ -4,7 +4,8 @@ export type TaskQueueTaskType =
   | "tests"
   | "lint"
   | "documentation"
-  | "indexing";
+  | "indexing"
+  | "engineering";
 
 /** Stable lifecycle states for queued work. */
 export type TaskQueueTaskStatus =

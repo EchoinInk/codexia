@@ -42,6 +42,8 @@ export interface IndexedFile {
 
   preview: string;
 
+  sourceText?: string;
+
   code?: CodeAnalysis;
 
 }

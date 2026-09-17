@@ -12,6 +12,7 @@ export function snapshotRuntimeContext(
   context: AgentContext
 ): RuntimeContextSnapshot {
   return structuredClone({
+    engineering: context.engineering,
     messages: context.messages,
     workspace: context.workspace,
     filesRead: context.filesRead,

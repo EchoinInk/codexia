@@ -40,10 +40,11 @@ function detectLanguage(
 
 export async function analyseFile(
   path: string,
-  workspace?: string
+  workspace?: string,
+  source?: string
 ): Promise<IndexedFile> {
   const content =
-    await safeReadFile(
+    source ?? await safeReadFile(
       path,
       workspace
     );
@@ -84,6 +85,13 @@ export async function analyseFile(
         0,
         500
       ),
+
+    sourceText:
+      /^(typescript|javascript)(-react)?$/.test(language) ||
+      extension === "md" ||
+      /(^|[/\\])(tsconfig|jsconfig).*\.json$/.test(path)
+        ? content
+        : undefined,
 
     code:
       parseCode(

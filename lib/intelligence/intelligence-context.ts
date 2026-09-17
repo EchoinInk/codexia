@@ -1,3 +1,7 @@
+import { analyseArchitecture, type ArchitectureOptions, type ArchitectureReport } from "./architecture-analysis";
+import { diagnoseWorkspace, type DiagnosticReport } from "./diagnostics";
+import { createSemanticNavigation, type SemanticNavigation } from "./semantic-navigation";
+
 import type {
   WorkspaceIndex,
 } from "./types";
@@ -25,6 +29,9 @@ export interface IntelligenceContext {
   confidence: number;
   dependencyOrder: string[];
   memory?: WorkspaceMemorySnapshot;
+  navigation: SemanticNavigation;
+  diagnose(): Promise<DiagnosticReport>;
+  analyseArchitecture(options?: ArchitectureOptions): ArchitectureReport;
   analyseImpact(files: string[]): ImpactAnalysis;
 }
 
@@ -37,7 +44,7 @@ export function createIntelligenceContext(
 
   for (const node of graph.nodes) {
     dependencies[node.file] = [
-      ...node.imports,
+      ...node.resolvedImports,
     ];
   }
 
@@ -46,6 +53,10 @@ export function createIntelligenceContext(
   );
 
   const context: IntelligenceContext = {
+    navigation: createSemanticNavigation(workspace),
+    diagnose: () => diagnoseWorkspace(workspace),
+    analyseArchitecture: options => analyseArchitecture(workspace, options),
+
     files: workspace.files.map(
       file => file.path
     ),

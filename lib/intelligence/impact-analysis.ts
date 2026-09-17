@@ -88,21 +88,17 @@ function findDependents(
   file: string
 ): string[] {
 
-  return Object.entries(
-    context.dependencies
-  )
-    .filter(
-      ([, dependencies]) =>
-        dependencies.some(
-          dependency =>
-            file.includes(
-              dependency
-            )
-        )
-    )
-    .map(
-      ([path]) =>
-        path
-    );
+  const affected = new Set<string>();
+  const pending = [file];
+  while (pending.length) {
+    const target = pending.pop()!;
+    for (const [candidate, dependencies] of Object.entries(context.dependencies)) {
+      if (candidate !== file && !affected.has(candidate) && dependencies.includes(target)) {
+        affected.add(candidate);
+        pending.push(candidate);
+      }
+    }
+  }
+  return [...affected];
 
 }

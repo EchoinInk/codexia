@@ -29,7 +29,8 @@ export async function createIndexedFile(
   const analysis =
     await analyseFile(
       path,
-      workspace
+      workspace,
+      content
     );
 
   return {

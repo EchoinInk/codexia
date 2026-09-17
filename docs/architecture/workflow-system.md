@@ -113,3 +113,8 @@ The workflow system should make autonomous actions predictable and trustworthy.
 Phase 5.5 may wrap a bounded Workflow with role-specific consultation and review. Specialist roles do not execute tools or modify files. The Planner still determines the plan, the Workflow still coordinates one bounded lifecycle, and the Executor still owns tool execution.
 
 A Reviewer may reject a completed coordinated task without changing the underlying Workflow result. Follow-up repair or continuation remains the responsibility of the orchestration layer above Workflow.
+
+
+## Reviewed IDE Change Workflow
+
+Phase 6.3 adds a bounded workflow for quick-fix/refactor/rename proposals. Intelligence produces the diff; Validator checks a fresh snapshot; the existing Patch Executor applies guarded replacements; the existing verification runner checks the explicit workspace. Durable before/after journals support rollback and interrupted-operation recovery without overwriting concurrent edits. This workflow remains below Runtime and does not invoke a model or plan further work. See `docs/contracts/ide-changes.md` for limits and API contracts.

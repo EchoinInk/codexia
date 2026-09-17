@@ -1,3 +1,4 @@
+import type { EngineeringSession } from "./engineering/types";
 import type {
   IntelligenceContext,
 } from "@/lib/intelligence/intelligence-context";
@@ -44,6 +45,8 @@ export interface ToolResult {
 
 
 export interface AgentContext {
+
+  engineering?: EngineeringSession;
 
   messages: AgentMessage[];
 

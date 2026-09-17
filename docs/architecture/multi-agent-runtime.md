@@ -70,3 +70,8 @@ It does not own:
 - Task Queue scheduling
 - Event System dispatch
 - Workspace Memory persistence
+
+
+## Phase 7 Engineering Adapter
+
+Engineering tasks reuse this coordinator inside each existing Runtime iteration. The engineering Planner remains the executable-plan author; the coordinator receives that plan through the Planner interface. Task risk, operation, and documentation obligations select enabled consultations. Typed advice/review is retained in the engineering checkpoint. Reviewer rejection after verified execution pauses for user action; failed validation remains failed regardless of review approval. Specialists do not acquire another execution path.

@@ -13,6 +13,7 @@ It coordinates when work runs while preserving ownership of how each task is per
 - lint
 - documentation
 - indexing
+- engineering
 
 ## Boundary
 
@@ -89,7 +90,7 @@ Delegates to:
 
 Delegates to:
 
-`npm test -- --runInBand`
+`npm test`
 
 ### Lint
 
@@ -118,3 +119,8 @@ The queue exposes typed events for:
 - drain
 
 It also tracks aggregate counts for queued, running, completed, failed, cancelled, and retried tasks.
+
+
+### Engineering
+
+Delegates approved goal/approval payloads to the Phase 7 adapter over the existing Runtime. Engineering queue tasks require `maxAttempts: 1`; interrupted or failed migrations are inspected/resumed through their durable Runtime checkpoints, not replayed blindly. Queue cancellation propagates into Runtime, including cancellation during startup. See `docs/contracts/autonomous-engineering.md`.

@@ -74,7 +74,7 @@ const IGNORE =
 export function shouldIgnoreWorkspaceEntry(
   name: string
 ): boolean {
-  return IGNORE.has(
+  return name.endsWith(".tsbuildinfo") || IGNORE.has(
     name
   );
 }

@@ -1,3 +1,4 @@
+import type { EngineeringPlanData } from "./engineering/types";
 import type { AgentContext } from "./types";
 
 import { selectRelevantFiles } from "@/lib/intelligence/file-selector";
@@ -17,6 +18,8 @@ export interface PlanStep {
 }
 
 export interface Plan {
+
+  engineering?: EngineeringPlanData;
   goal: string;
 
   steps: PlanStep[];

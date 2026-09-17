@@ -1,7 +1,22 @@
-node_modules
-.next
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+
+# Environment
 .env
-.env.local
+.env.*
+!.env.example
+
+# macOS
 .DS_Store
+
+# Codexia generated runtime and workspace state
+.codexia/
+workspace-memory.json
+workspace-index.json
+**/session.json
+
+# TypeScript build cache
 *.tsbuildinfo
-codexia-clean*.zip

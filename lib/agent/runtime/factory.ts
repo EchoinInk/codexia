@@ -40,6 +40,7 @@ export function createRuntimeController(
     checkpointStore:
       overrides?.checkpointStore ?? new FileRuntimeCheckpointStore(workspace),
     restoreContext: overrides?.restoreContext ?? restoreContext,
+    prepareWorkflow: overrides?.prepareWorkflow,
     runWorkflow: overrides?.runWorkflow ?? runWorkflow,
     memoryRecorder:
       overrides?.memoryRecorder ?? new WorkspaceRuntimeMemoryRecorder(),

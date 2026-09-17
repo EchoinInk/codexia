@@ -1,3 +1,6 @@
+import { createEngineeringRuntime } from "../engineering/runtime";
+import { createEngineeringReport } from "../engineering/report";
+import type { EngineeringGoal, EngineeringApproval } from "../engineering/types";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
@@ -32,8 +35,8 @@ export function createDefaultTaskQueueHandlers(
     }),
     tests: commandHandler({
       executable: "npm",
-      args: ["test", "--", "--runInBand"],
-      display: "npm test -- --runInBand",
+      args: ["test"],
+      display: "npm test",
     }),
     lint: commandHandler({
       executable: "npm",
@@ -42,6 +45,23 @@ export function createDefaultTaskQueueHandlers(
     }),
     documentation: documentationHandler(workspace),
     indexing: indexingHandler(workspace),
+    engineering: async (task, context) => {
+      if (task.maxAttempts !== 1) throw new Error("Engineering queue jobs require maxAttempts: 1; use explicit checkpoint resume after interruption");
+      const runtime = createEngineeringRuntime(workspace);
+      const id = `engineering-${task.id}`;
+      const abort = () => runtime.cancel(id, "Queue task cancelled");
+      context.signal.addEventListener("abort", abort, { once: true });
+      const unsubscribe = runtime.subscribe(event => {
+        if (context.signal.aborted && (event.type === "iteration_started" || event.type === "phase_changed")) abort();
+      });
+      try {
+        context.signal.throwIfAborted();
+        const result = await runtime.start(task.payload.goal as EngineeringGoal, task.payload.approval as EngineeringApproval, id);
+        const report = createEngineeringReport(result);
+        if (result.state.status !== "completed") throw new Error(`Engineering task ${id} ${result.state.status}: ${report.reason}; inspect its checkpoint`);
+        return { summary: "Engineering goal verified", details: { report } };
+      } finally { context.signal.removeEventListener("abort", abort); unsubscribe(); }
+    },
   };
 }
 

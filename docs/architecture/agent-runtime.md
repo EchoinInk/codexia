@@ -157,3 +157,8 @@ The coordinator may consult role-specific agents before and after execution:
 The existing Planner remains the only component that creates executable plans. The existing Workflow and Executor remain the only components that perform workspace actions. Specialist agents produce typed advice, and the Reviewer produces a typed approval result after the bounded Workflow completes.
 
 This prevents multiple agents from independently mutating the workspace and preserves the approved Planner, Executor, Validator, Reporter, Workflow, Intelligence, and Runtime boundaries.
+
+
+## Autonomous Engineering
+
+Phase 7 injects engineering observation, planning, evaluation, and bounded Workflow adapters into this existing Runtime. AgentContext carries serializable goal/approval/evidence/task state; a generic `prepareWorkflow` hook permits an additional durable checkpoint before any change. Pause/cancel boundaries are rechecked after planning. Engineering resume validates scope and fresh source before continuation. The existing memory recorder resolves engineering failures only after goal acceptance, rather than after an unrelated successful intermediate stage. See `autonomous-engineering.md`.

@@ -246,6 +246,13 @@ export class RuntimeController {
           state = this.phase(state, "planning");
           const plan = await this.dependencies.planner.createPlan(context);
 
+          if (this.dependencies.prepareWorkflow) {
+            context = await this.dependencies.prepareWorkflow(plan, context);
+            ({ state, metrics, checkpoint: latestCheckpoint } =
+              await this.saveCheckpoint(state, context, metrics, lastIteration));
+          }
+          // Pause/cancel requests during observation or planning must not write.
+          if (this.boundaryDecision(state, control)) continue;
           state = this.phase(state, "executing");
           const workflow = await this.dependencies.runWorkflow(plan, context, {
             signal: control.abortController.signal,

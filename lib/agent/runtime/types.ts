@@ -271,6 +271,7 @@ export interface RuntimeDependencies {
   continuationPolicy: RuntimeContinuationPolicy;
   checkpointStore: RuntimeCheckpointStore;
   restoreContext: RuntimeContextRestorer;
+  prepareWorkflow?: (plan: Plan, context: AgentContext) => Promise<AgentContext>;
   runWorkflow: (
     plan: Plan,
     context: AgentContext,

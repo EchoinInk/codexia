@@ -86,10 +86,12 @@ export async function* iterOllamaTokens(stream: ReadableStream<Uint8Array>) {
  * Non-streaming Ollama request
  */
 export async function chatWithOllama(
-  messages: OllamaMessage[]
+  messages: OllamaMessage[],
+  signal?: AbortSignal
 ): Promise<string> {
   const res = await fetch(`${CONFIG.ollamaUrl}/api/chat`, {
     method: "POST",
+    signal,
 
     headers: {
       "Content-Type": "application/json",

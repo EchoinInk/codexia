@@ -12,6 +12,8 @@ import type {
 
 interface PersistedWorkspaceState {
 
+  schemaVersion: 3;
+
   index: WorkspaceIndex;
 
   fingerprint: WorkspaceFingerprint;
@@ -56,9 +58,14 @@ export async function loadWorkspaceState(
       );
 
 
-    return JSON.parse(
-      content
-    ) as PersistedWorkspaceState;
+    const state = JSON.parse(content) as PersistedWorkspaceState;
+
+    // Older snapshots lack the complete source required for navigation.
+    if (state.schemaVersion !== 3) {
+      return null;
+    }
+
+    return state;
 
 
   } catch {
@@ -110,6 +117,8 @@ export function createWorkspaceState(
 ): PersistedWorkspaceState {
 
   return {
+
+    schemaVersion: 3,
 
     index,
 
