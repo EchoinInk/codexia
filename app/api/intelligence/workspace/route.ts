@@ -9,6 +9,8 @@ export const dynamic = "force-dynamic";
 const MAX_RELATIONSHIPS = 200;
 const MAX_DIAGNOSTICS = 500;
 const MAX_FINDINGS = 500;
+const MAX_EVOLUTION = 25;
+const MAX_LEARNING = 25;
 
 export async function GET(request: Request): Promise<Response> {
   try {
@@ -78,6 +80,9 @@ export async function GET(request: Request): Promise<Response> {
       );
     }
 
+    const evolution = (snapshot.evidence.memory?.evolution ?? []).slice(0, MAX_EVOLUTION);
+    const learning = (snapshot.evidence.memory?.learning ?? []).slice(0, MAX_LEARNING);
+
     return Response.json({
       ...createResponse(snapshot),
 
@@ -128,6 +133,20 @@ export async function GET(request: Request): Promise<Response> {
             limitations: diagnostics.limitations,
           }
         : undefined,
+
+      evolution: {
+        snapshotId,
+        entries: evolution,
+        entryCount: snapshot.evidence.memory?.evolution?.length ?? 0,
+        truncated: (snapshot.evidence.memory?.evolution?.length ?? 0) > MAX_EVOLUTION,
+      },
+
+      learning: {
+        snapshotId,
+        entries: learning,
+        entryCount: snapshot.evidence.memory?.learning?.length ?? 0,
+        truncated: (snapshot.evidence.memory?.learning?.length ?? 0) > MAX_LEARNING,
+      },
 
       activity: {
         snapshotId,

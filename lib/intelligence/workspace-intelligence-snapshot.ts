@@ -10,6 +10,9 @@ import {
 import {
   loadWorkspaceState,
 } from "./workspace-storage";
+import {
+  attachWorkspaceMemory,
+} from "./workspace-memory";
 
 import type {
   WorkspaceIndex,
@@ -219,7 +222,7 @@ async function getSnapshotSource(
 
   if (cached) {
     return {
-      index: cached.index,
+      index: await attachWorkspaceMemory(workspace, cached.index),
 
       fingerprint: cached.fingerprint,
 
@@ -237,7 +240,7 @@ async function getSnapshotSource(
 
     if (canonicalCache) {
       return {
-        index: canonicalCache.index,
+        index: await attachWorkspaceMemory(canonicalWorkspace, canonicalCache.index),
 
         fingerprint: canonicalCache.fingerprint,
 
@@ -263,7 +266,7 @@ async function getSnapshotSource(
   }
 
   return {
-    index: persisted.index,
+    index: await attachWorkspaceMemory(canonicalWorkspace, persisted.index),
 
     fingerprint: persisted.fingerprint,
 
