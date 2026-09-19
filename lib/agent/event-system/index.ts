@@ -61,6 +61,7 @@ export type {
   WorkspaceEventSystemConfiguration,
   WorkspaceEventSystemDependencies,
   WorkspaceEventSystemStatus,
+  WorkspaceFileChangeInput,
   WorkspaceFileChangedEvent,
   WorkspaceFileChangedInput,
 } from "./types";
