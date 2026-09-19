@@ -9,6 +9,7 @@ const route = load(path.join(root, "app/api/intelligence/workspace/route.ts"));
 const manager = load(path.join(root, "lib/intelligence/workspace-index-manager.ts"));
 const background = load(path.join(root, "lib/intelligence/workspace-background-indexer.ts"));
 const cache = load(path.join(root, "lib/intelligence/workspace-cache.ts"));
+const memory = load(path.join(root, "lib/intelligence/workspace-memory.ts"));
 
 function request(workspace) {
   const query =
@@ -121,5 +122,31 @@ test("aggregate API is read-only and bounds repeated relationship/analysis outpu
     assert.equal(body.dependencies.truncated, false);
     assert.ok(body.diagnostics.diagnosticCount >= body.diagnostics.diagnostics.length);
     assert.ok(body.architecture.findingCount >= body.architecture.findings.length);
+  });
+
+  test("aggregate API projects bounded evolution and learning with shared provenance", async () => {
+    await fixture("evolution-learning", async workspace => {
+      await manager.rebuildWorkspaceIndex(workspace);
+      await memory.appendWorkspaceEvolution(workspace, {
+        kind: "architecture",
+        summary: "Observed bounded project evolution",
+        details: "Evidence-backed observation",
+        files: ["source.ts"],
+        directories: [],
+        snapshotId: "memory-snapshot",
+        fingerprint: "memory-fingerprint",
+        state: "historical",
+        source: "workspace",
+        observedAt: Date.now(),
+        evidenceCount: 1,
+      });
+      const body = await (await route.GET(request())).json();
+      assert.equal(body.evolution.snapshotId, body.provenance.snapshotId);
+      assert.equal(body.learning.snapshotId, body.provenance.snapshotId);
+      assert.equal(body.evolution.entries[0].summary, "Observed bounded project evolution");
+      assert.equal(body.learning.entries[0].supportingEvidenceIds.length, 1);
+      assert.equal(body.evolution.truncated, false);
+      assert.equal(body.learning.truncated, false);
+    });
   });
 });

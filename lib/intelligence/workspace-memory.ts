@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -43,6 +43,91 @@ export type WorkspaceKnowledgeSource =
   | "agent"
   | "runtime"
   | "workspace";
+
+
+export type WorkspaceEvolutionKind =
+  | "structural"
+  | "architecture"
+  | "dependency"
+  | "diagnostic"
+  | "decision"
+  | "verification";
+
+
+export type WorkspaceEvidenceState =
+  | "current"
+  | "historical"
+  | "stale"
+  | "incomplete"
+  | "contradicted"
+  | "invalidated";
+
+
+export interface WorkspaceEvidenceStrength {
+  supportingObservations: number;
+
+  distinctSnapshots: number;
+
+  contradictionCount: number;
+
+  invalidated: boolean;
+
+  current: boolean;
+
+  stale: boolean;
+
+  label: "low" | "medium" | "high" | "contradicted";
+}
+
+
+export interface WorkspaceEvolutionEntry {
+  id: string;
+
+  kind: WorkspaceEvolutionKind;
+
+  summary: string;
+
+  details?: string;
+
+  files: string[];
+
+  directories: string[];
+
+  snapshotId: string;
+
+  fingerprint: string;
+
+  state: WorkspaceEvidenceState;
+
+  source: WorkspaceKnowledgeSource;
+
+  observedAt: number;
+
+  evidenceCount: number;
+
+  strength: WorkspaceEvidenceStrength;
+}
+
+
+export interface WorkspaceLearningEntry {
+  id: string;
+
+  kind: "pattern" | "convention" | "dependency" | "failure" | "fix" | "constraint";
+
+  summary: string;
+
+  details?: string;
+
+  files: string[];
+
+  state: WorkspaceEvidenceState;
+
+  supportingEvidenceIds: string[];
+
+  observedAt: number;
+
+  strength: WorkspaceEvidenceStrength;
+}
 
 
 export interface WorkspaceKnowledgeEntry {
@@ -126,15 +211,23 @@ export interface WorkspaceMemorySnapshot {
   };
 
   knowledge: WorkspaceSemanticMemorySnapshot;
+
+  evolution: WorkspaceEvolutionEntry[];
+
+  learning: WorkspaceLearningEntry[];
 }
 
 
 interface WorkspaceMemoryState {
-  version: 2;
+  version: 3;
 
   files: Record<string, WorkspaceMemoryFile>;
 
   knowledge: WorkspaceKnowledgeEntry[];
+
+  evolution: WorkspaceEvolutionEntry[];
+
+  learning: WorkspaceLearningEntry[];
 
   updatedAt: number;
 }
@@ -156,6 +249,10 @@ type WorkspaceMemoryEventType =
 const SNAPSHOT_LIMIT = 10;
 
 const KNOWLEDGE_LIMIT_PER_KIND = 50;
+
+const EVOLUTION_LIMIT = 200;
+
+const LEARNING_LIMIT = 100;
 
 const workspaceMemoryUpdates =
   new Map<string, Promise<void>>();
@@ -190,6 +287,67 @@ export async function attachWorkspaceMemory(
 }
 
 
+export function createEvidenceStrength(
+  supportingObservations: number,
+  distinctSnapshots: number,
+  contradictionCount: number,
+  invalidated: boolean,
+  current: boolean,
+  stale: boolean
+): WorkspaceEvidenceStrength {
+  const strengthScore =
+    supportingObservations +
+    distinctSnapshots * 2 -
+    contradictionCount * 3;
+
+  if (invalidated || contradictionCount > 0) {
+    return {
+      supportingObservations,
+      distinctSnapshots,
+      contradictionCount,
+      invalidated: true,
+      current: false,
+      stale: stale || current,
+      label: "contradicted",
+    };
+  }
+
+  if (strengthScore >= 6) {
+    return {
+      supportingObservations,
+      distinctSnapshots,
+      contradictionCount,
+      invalidated: false,
+      current,
+      stale,
+      label: "high",
+    };
+  }
+
+  if (strengthScore >= 3) {
+    return {
+      supportingObservations,
+      distinctSnapshots,
+      contradictionCount,
+      invalidated: false,
+      current,
+      stale,
+      label: "medium",
+    };
+  }
+
+  return {
+    supportingObservations,
+    distinctSnapshots,
+    contradictionCount,
+    invalidated: false,
+    current,
+    stale,
+    label: "low",
+  };
+}
+
+
 export async function loadWorkspaceMemorySnapshot(
   workspace: string
 ): Promise<WorkspaceMemorySnapshot> {
@@ -201,6 +359,260 @@ export async function loadWorkspaceMemorySnapshot(
   return createWorkspaceMemorySnapshot(
     state
   );
+}
+
+
+export async function appendWorkspaceEvolution(
+  workspace: string,
+  input: Omit<WorkspaceEvolutionEntry, "id" | "strength"> & {
+    evidenceCount?: number;
+    observedAt?: number;
+  }
+): Promise<WorkspaceEvolutionEntry> {
+  return updateWorkspaceMemoryState(
+    workspace,
+    state => {
+      const {
+        evidenceCount: requestedEvidenceCount,
+        observedAt: requestedObservedAt,
+        files: inputFiles,
+        directories: inputDirectories,
+        ...entryInput
+      } = input;
+      const evidenceCount = requestedEvidenceCount ?? 1;
+      const observedAt = requestedObservedAt ?? Date.now();
+      const files = [...new Set(inputFiles)].sort();
+      const directories = [...new Set(inputDirectories)].sort();
+      const identity = createStableId([
+        entryInput.kind,
+        normaliseSummary(entryInput.summary),
+        entryInput.snapshotId,
+        JSON.stringify(files),
+        JSON.stringify(directories),
+      ]);
+      const existing = state.evolution.find(
+        entry => entry.id === identity
+      );
+      if (existing) {
+        existing.evidenceCount += evidenceCount;
+        existing.observedAt = Math.max(existing.observedAt, observedAt);
+        existing.files = [...new Set([...existing.files, ...files])].sort();
+        existing.directories = [...new Set([...existing.directories, ...directories])].sort();
+        existing.strength = createEvidenceStrength(
+          existing.evidenceCount,
+          1,
+          existing.state === "contradicted" || existing.state === "invalidated" ? 1 : 0,
+          existing.state === "invalidated",
+          existing.state === "current",
+          existing.state === "stale"
+        );
+        state.updatedAt = observedAt;
+        return existing;
+      }
+      const entry: WorkspaceEvolutionEntry = {
+        id: identity,
+        strength: createEvidenceStrength(
+          evidenceCount,
+          1,
+          0,
+          false,
+          input.state === "current",
+          input.state === "stale"
+        ),
+        evidenceCount,
+        ...entryInput,
+        files,
+        directories,
+        observedAt,
+      };
+
+      state.evolution = [
+        entry,
+        ...state.evolution,
+      ].slice(0, EVOLUTION_LIMIT);
+
+      state.learning = deriveWorkspaceLearningEntries(
+        state.evolution,
+        state.learning
+      );
+
+      state.updatedAt = observedAt;
+      return entry;
+    }
+  );
+}
+
+
+export async function appendWorkspaceLearning(
+  workspace: string,
+  input: Omit<WorkspaceLearningEntry, "id" | "strength"> & {
+    state?: WorkspaceEvidenceState;
+  }
+): Promise<WorkspaceLearningEntry> {
+  return updateWorkspaceMemoryState(
+    workspace,
+    state => {
+      const { state: requestedState, ...entryInput } = input;
+      const stateValue = requestedState ?? "historical";
+      const entry: WorkspaceLearningEntry = {
+        id: createStableId([
+          entryInput.kind,
+          normaliseSummary(entryInput.summary),
+          JSON.stringify([...entryInput.supportingEvidenceIds].sort()),
+        ]),
+        state: stateValue,
+        strength: createEvidenceStrength(
+          input.supportingEvidenceIds.length,
+          new Set(input.supportingEvidenceIds).size,
+          0,
+          false,
+          stateValue === "current",
+          stateValue === "stale"
+        ),
+        ...entryInput,
+      };
+
+      state.learning = [
+        entry,
+        ...state.learning,
+      ].slice(0, LEARNING_LIMIT);
+
+      state.updatedAt = Date.now();
+      return entry;
+    }
+  );
+}
+
+
+export async function deriveWorkspaceLearning(
+  workspace: string
+): Promise<WorkspaceLearningEntry[]> {
+  return updateWorkspaceMemoryState(
+    workspace,
+    state => {
+      state.learning = deriveWorkspaceLearningEntries(
+        state.evolution,
+        state.learning
+      );
+      state.updatedAt = Date.now();
+      return state.learning.slice(0, LEARNING_LIMIT);
+    }
+  );
+}
+
+
+function deriveWorkspaceLearningEntries(
+  evolution: WorkspaceEvolutionEntry[],
+  existing: WorkspaceLearningEntry[]
+): WorkspaceLearningEntry[] {
+  if (evolution.length === 0) {
+    return existing.slice(0, LEARNING_LIMIT);
+  }
+
+  const grouped = new Map<string, {
+    summary: string;
+    details: string;
+    files: Set<string>;
+    supportingEvidenceIds: string[];
+    state: WorkspaceEvidenceState;
+    observedAt: number;
+    kind: WorkspaceLearningEntry["kind"];
+  }>();
+
+  for (const entry of evolution) {
+    const kind: WorkspaceLearningEntry["kind"] =
+      entry.kind === "diagnostic" ? "failure" :
+      entry.kind === "dependency" ? "dependency" :
+      entry.kind === "architecture" || entry.kind === "structural" ? "pattern" :
+      entry.kind === "verification" ? "fix" :
+      "convention";
+
+    const key = `${kind}:${normaliseSummary(entry.summary)}`;
+    const current = grouped.get(key) ?? {
+      summary: entry.summary,
+      details: entry.details ?? "Observed over workspace evolution evidence.",
+      files: new Set<string>(),
+      supportingEvidenceIds: [],
+      state: entry.state,
+      observedAt: entry.observedAt,
+      kind,
+    };
+
+    current.summary = current.summary || entry.summary;
+    current.details = current.details || entry.details || "Observed over workspace evolution evidence.";
+    for (const file of entry.files) current.files.add(file);
+    current.supportingEvidenceIds.push(entry.id);
+    current.observedAt = Math.max(current.observedAt, entry.observedAt);
+
+    const stateOrder: WorkspaceEvidenceState[] = [
+      "current",
+      "historical",
+      "stale",
+      "incomplete",
+      "contradicted",
+      "invalidated",
+    ];
+    const currentPriority = stateOrder.indexOf(current.state);
+    const entryPriority = stateOrder.indexOf(entry.state);
+    if (entryPriority > currentPriority) {
+      current.state = entry.state;
+    }
+
+    grouped.set(key, current);
+  }
+
+  const derived = [...grouped.values()].map(group => {
+    const support = group.supportingEvidenceIds.length;
+    const snapshotCount = new Set(
+      evolution
+        .filter(entry => group.supportingEvidenceIds.includes(entry.id))
+        .map(entry => entry.snapshotId)
+    ).size;
+
+    const contradictionCount = group.supportingEvidenceIds.filter(id => {
+      const entry = evolution.find(item => item.id === id);
+      return entry ? entry.state === "contradicted" || entry.state === "invalidated" : false;
+    }).length;
+
+    const state =
+      contradictionCount > 0 ? "contradicted" :
+      group.state === "current" && support >= 2 ? "current" :
+      group.state === "stale" ? "stale" :
+      group.state === "incomplete" ? "incomplete" :
+      "historical";
+
+    return {
+      id: createStableId([
+        group.kind,
+        normaliseSummary(group.summary),
+        JSON.stringify([...new Set(group.supportingEvidenceIds)].sort()),
+      ]),
+      kind: group.kind,
+      summary: group.summary,
+      details: group.details,
+      files: [...group.files].slice(0, 20),
+      state,
+      supportingEvidenceIds: [...new Set(group.supportingEvidenceIds)].slice(0, 20),
+      observedAt: group.observedAt,
+      strength: createEvidenceStrength(
+        support,
+        snapshotCount,
+        contradictionCount,
+        contradictionCount > 0,
+        state === "current",
+        state === "stale"
+      ),
+    } satisfies WorkspaceLearningEntry;
+  }).sort((a, b) => b.observedAt - a.observedAt).slice(0, LEARNING_LIMIT);
+
+  return derived.length > 0 ? derived : existing.slice(0, LEARNING_LIMIT);
+}
+
+
+function createStableId(parts: string[]): string {
+  return createHash("sha256")
+    .update(parts.join("\u0000"))
+    .digest("hex");
 }
 
 
@@ -823,6 +1235,22 @@ function createWorkspaceMemorySnapshot(
       createSemanticMemorySnapshot(
         state.knowledge
       ),
+
+    evolution:
+      state.evolution
+        .slice(0, EVOLUTION_LIMIT)
+        .sort(
+          (a, b) =>
+            b.observedAt - a.observedAt
+        ),
+
+    learning:
+      state.learning
+        .slice(0, LEARNING_LIMIT)
+        .sort(
+          (a, b) =>
+            b.observedAt - a.observedAt
+        ),
   };
 }
 
@@ -924,11 +1352,15 @@ function sortByScore(
 
 function createEmptyWorkspaceMemoryState(): WorkspaceMemoryState {
   return {
-    version: 2,
+    version: 3,
 
     files: {},
 
     knowledge: [],
+
+    evolution: [],
+
+    learning: [],
 
     updatedAt:
       Date.now(),
@@ -943,7 +1375,7 @@ function migrateWorkspaceMemoryState(
     state as Partial<WorkspaceMemoryState>;
 
   return {
-    version: 2,
+    version: 3,
 
     files:
       candidate.files ?? {},
@@ -951,6 +1383,16 @@ function migrateWorkspaceMemoryState(
     knowledge:
       Array.isArray(candidate.knowledge)
         ? candidate.knowledge.filter(isWorkspaceKnowledgeEntry)
+        : [],
+
+    evolution:
+      Array.isArray(candidate.evolution)
+        ? candidate.evolution.filter(isWorkspaceEvolutionEntry)
+        : [],
+
+    learning:
+      Array.isArray(candidate.learning)
+        ? candidate.learning.filter(isWorkspaceLearningEntry)
         : [],
 
     updatedAt:
@@ -985,6 +1427,48 @@ function isWorkspaceKnowledgeEntry(
     typeof entry.firstObservedAt === "number" &&
     typeof entry.lastObservedAt === "number" &&
     typeof entry.observationCount === "number"
+  );
+}
+
+
+function isWorkspaceEvolutionEntry(
+  value: unknown
+): value is WorkspaceEvolutionEntry {
+  if (!value || typeof value !== "object") return false;
+
+  const entry = value as Partial<WorkspaceEvolutionEntry>;
+  return (
+    typeof entry.id === "string" &&
+    typeof entry.kind === "string" &&
+    typeof entry.summary === "string" &&
+    Array.isArray(entry.files) &&
+    Array.isArray(entry.directories) &&
+    typeof entry.snapshotId === "string" &&
+    typeof entry.fingerprint === "string" &&
+    typeof entry.state === "string" &&
+    isWorkspaceKnowledgeSource(entry.source) &&
+    typeof entry.observedAt === "number" &&
+    typeof entry.evidenceCount === "number" &&
+    !!entry.strength && typeof entry.strength.label === "string"
+  );
+}
+
+
+function isWorkspaceLearningEntry(
+  value: unknown
+): value is WorkspaceLearningEntry {
+  if (!value || typeof value !== "object") return false;
+
+  const entry = value as Partial<WorkspaceLearningEntry>;
+  return (
+    typeof entry.id === "string" &&
+    typeof entry.kind === "string" &&
+    typeof entry.summary === "string" &&
+    Array.isArray(entry.files) &&
+    typeof entry.state === "string" &&
+    Array.isArray(entry.supportingEvidenceIds) &&
+    typeof entry.observedAt === "number" &&
+    !!entry.strength && typeof entry.strength.label === "string"
   );
 }
 

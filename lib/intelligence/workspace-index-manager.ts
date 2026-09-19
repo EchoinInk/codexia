@@ -62,9 +62,14 @@ import {
 } from "@/lib/agent/event-system";
 
 import {
+  appendWorkspaceEvolution,
   attachWorkspaceMemory,
   recordWorkspaceIndexDiff,
 } from "./workspace-memory";
+
+import {
+  snapshotId,
+} from "./change-proposal";
 
 const buildPromises =
   new Map<string, Promise<WorkspaceIndex>>();
@@ -138,6 +143,38 @@ async function refreshWorkspaceIndex(
   await recordWorkspaceIndexDiff(
     workspace,
     diff
+  );
+
+  await appendWorkspaceEvolution(
+    workspace,
+    {
+      kind:
+        diff.changedDirectories.length > 0 ||
+        diff.addedDirectories.length > 0 ||
+        diff.removedDirectories.length > 0
+          ? "structural"
+          : "architecture",
+      summary:
+        `Workspace changed: ${diff.changed.length + diff.added.length} file updates, ${diff.removed.length} removals`,
+      details:
+        "Observed during fingerprint reconciliation; this is evidence, not an instruction to change the workspace.",
+      files: [
+        ...diff.added,
+        ...diff.changed,
+        ...diff.removed,
+      ].sort(),
+      directories: [
+        ...diff.addedDirectories,
+        ...diff.changedDirectories,
+        ...diff.removedDirectories,
+      ].sort(),
+      snapshotId: snapshotId(updated),
+      fingerprint: JSON.stringify(fingerprint),
+      state: "current",
+      source: "workspace",
+      observedAt: Date.now(),
+      evidenceCount: 1,
+    }
   );
 
   setWorkspaceCache(
