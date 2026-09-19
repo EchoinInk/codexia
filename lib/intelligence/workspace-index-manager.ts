@@ -75,6 +75,16 @@ const watcherPromises =
 const dirtyWorkspaceVersions =
   new Map<string, number>();
 
+export interface WorkspaceRefreshState {
+  workspace: string;
+
+  dirty: boolean;
+
+  version: number;
+
+  background: WorkspaceBackgroundIndexStatus | null;
+}
+
 function hasFingerprintChanges(
   diff: FingerprintDiff
 ): boolean {
@@ -543,8 +553,30 @@ export function getWorkspaceIndexBackgroundStatus(
   );
 }
 
+export function getWorkspaceRefreshState(
+  workspace: string
+): WorkspaceRefreshState {
+  return {
+    workspace,
+
+    dirty:
+      dirtyWorkspaceVersions.has(
+        workspace
+      ),
+
+    version:
+      dirtyWorkspaceVersions.get(
+        workspace
+      ) ?? 0,
+
+    background:
+      getWorkspaceBackgroundIndexStatus(
+        workspace
+      ),
+  };
+}
+
 configureWorkspaceEventSystem({
   getWorkspaceIndex,
   markWorkspaceDirty,
 });
-

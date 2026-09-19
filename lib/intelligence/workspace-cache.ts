@@ -5,7 +5,7 @@ import type {
 } from "./index-fingerprint";
 
 
-interface WorkspaceCacheEntry {
+export interface WorkspaceCacheEntry {
 
   index: WorkspaceIndex;
 
