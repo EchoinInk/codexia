@@ -1,8 +1,7 @@
 # Codexia Roadmap
 
-Updated to reflect completion of Phase 6, including Phase 6.4, Phase 7 as the
-current active phase, and the expanded Phase 8 continuously intelligent workspace
-roadmap.
+Updated to reflect completion and release of Phase 7 at `v0.8.0`, and the
+Phase 8 continuously intelligent workspace roadmap.
 
 ## Roadmap Status Philosophy
 
@@ -390,7 +389,11 @@ Status: Complete
 
 ## ✅ Phase 7 — Autonomous Engineering
 
-Status: Completed
+Status: Complete
+
+**Release baseline:** `v0.8.0`  
+**Release commit:** `6793b0d`  
+**Release name:** Phase 7 — Autonomous Engineering
 
 Use Phase 6 navigation, diagnostics, code actions, refactoring contracts, and
 architecture findings as inputs to autonomous engineering reasoning and
@@ -471,16 +474,68 @@ Status: Complete
 - Distinguish verified outcomes from attempted, deferred, failed, or unverified work and identify unresolved risks
 - Require explicit authorisation for scope expansion and retain user control over continuation and completion
 
----
-
 Implementation contracts and limits: see `docs/architecture/autonomous-engineering.md`,
 `docs/contracts/autonomous-engineering.md`, and `docs/operations/autonomous-engineering.md`.
 Existing-file TS/JS/Markdown changes are supported. Migration/refactor stages are explicit;
-missing performance/security providers and unsupported operations escalate. Phase 8 is not implemented.
+missing performance/security providers and unsupported operations escalate.
+
+### Phase 7 Release Validation
+
+Phase 7 was released as `v0.8.0` after final reliability, governance, dependency,
+and clean-install validation.
+
+Release validation:
+
+- Clean dependency installation: PASS
+- Lint: PASS
+- TypeScript: PASS
+- Tests: 97/97 PASS
+- Production build: PASS
+- Git diff validation: PASS
+- Working tree: clean
+- Main branch and remote release baseline verified
+
+Dependency security remediation reduced the release dependency findings while
+preserving the validated application baseline.
+
+One upstream dependency exception remains:
+
+- `next@15.5.25 → postcss@8.4.31`
+- The nested PostCSS dependency is exact within the supported Next.js release.
+- No unsupported dependency override is used.
+- Codexia does not currently expose attacker-controlled CSS to this processing path.
+- The dependency must be reassessed when a supported Next.js release resolves it,
+  or before Codexia introduces untrusted CSS, theme, or build-pipeline processing.
+
+### Deferred Engineering Constraints Carried into Phase 8
+
+The following findings do not reopen Phase 7 but must be addressed before the
+relevant Phase 8 capabilities depend on them:
+
+**B11 — Workspace watcher debounce and change identity**
+
+- Carried into Phase 8.1.
+- Resolve before relying on event-driven live workspace intelligence.
+- Coalescing repeated filesystem notifications must preserve the identities of
+  changed, added, removed, and otherwise relevant files.
+- Debouncing must not turn a known file-change event into an ambiguous generic refresh.
+
+**B10 — Queue restart and attempt-budget handling**
+
+- Carried into Phase 8.4.
+- Resolve before autonomous/background continuous engineering is enabled.
+- Queue restart and recovery must preserve consumed attempt/retry budgets.
+- Restart or resume must not silently reset bounded execution authority.
+- Continuous engineering must inherit existing Runtime and governance limits
+  rather than creating an independent retry lifecycle.
+
+---
 
 ## 🚧 Phase 8 — Continuously Intelligent AI Workspace
 
-Status: In progress
+Status: Ready to begin
+
+**Starting baseline:** `v0.8.0` (`6793b0d`)
 
 Integrate the existing indexing, event, memory, and runtime foundations with
 Phase 6 intelligence and Phase 7 autonomous engineering into a continuously
@@ -492,13 +547,40 @@ points into existing capabilities. Intelligence owns workspace understanding;
 Planner determines what should happen; Executor performs approved actions;
 Workflow coordinates each bounded execution lifecycle; Validator confirms
 correctness; Reporter explains outcomes. Runtime remains above Workflow and
-owns continuation, checkpoints, and interruption across cycles. Platform views,
-schedulers, and integrations must preserve these boundaries and must not
-introduce a second engineering planner, execution path, or verification system.
+owns continuation, checkpoints, and interruption across cycles.
 
-### 🚧 8.1 Live Workspace Intelligence
+Platform views, schedulers, and integrations must preserve these boundaries and
+must not introduce:
 
-Status: In progress
+- a second engineering planner
+- a parallel workspace mutation path
+- a second verification system
+- an integration-specific execution lifecycle
+- presentation state with authority over Runtime or Validator state
+
+### ⏳ 8.1 Live Workspace Intelligence
+
+Status: Ready — not started
+
+Goal:
+
+Turn the existing workspace intelligence foundations into a continuously
+updated, trustworthy, read-only view of the current workspace without creating
+another analysis or engineering lifecycle.
+
+#### Prerequisite — B11 Watcher Hardening
+
+Before live event-driven workspace intelligence is considered reliable:
+
+- Fix watcher debounce/change-identity handling.
+- Preserve changed-file identities while coalescing repeated filesystem events.
+- Preserve added, changed, removed, and relevant rename/replacement information.
+- Ensure coalescing cannot silently convert known file changes into an ambiguous refresh.
+- Keep refresh work bounded through existing queues and resource controls.
+- Add regression coverage for burst changes, repeated events, multiple changed files,
+  removals, and watcher-triggered incremental refresh.
+
+#### Live Workspace Intelligence
 
 - Present a unified workspace view of architecture, dependencies, diagnostics, findings, and engineering activity
 - Consume existing Phase 6 analysis and navigation contracts with links to supporting symbols, files, and source locations
@@ -507,6 +589,18 @@ Status: In progress
 - Coalesce repeated change notifications and bound refresh work through existing queues and resource controls
 - Surface stale, incomplete, unavailable, and failed analysis distinctly without presenting cached evidence as current
 - Keep workspace understanding in Intelligence and expose read-only projections without triggering unapproved engineering work
+
+#### 8.1 Architectural Constraints
+
+- Intelligence remains the authority for workspace understanding.
+- Existing Phase 6 analysis engines are consumed rather than reimplemented.
+- Workspace events trigger refresh/invalidation, not autonomous mutation.
+- Background indexing remains non-blocking.
+- Every presented intelligence snapshot must expose freshness or availability state.
+- Stale evidence must never be presented as current evidence.
+- Live workspace views remain read-only.
+- Any engineering action originating from the workspace view must enter the
+  governed Phase 7 engineering request path.
 
 ### 8.2 Project Evolution and Learning
 
@@ -535,6 +629,20 @@ Status: Future — not started
 ### 8.4 Autonomous Maintenance and Continuous Engineering
 
 Status: Future — not started
+
+#### Prerequisite — B10 Queue Restart and Attempt-Budget Hardening
+
+Before recurring or event-triggered autonomous engineering is enabled:
+
+- Fix queue restart/attempt-budget handling.
+- Preserve consumed retry and attempt budgets across restart, checkpoint recovery, and resume.
+- Ensure restart cannot grant additional execution attempts.
+- Preserve cancellation, timeout, iteration, and resource limits across recovery.
+- Add regression coverage for restart after failure, retry exhaustion, interruption,
+  cancellation, and resumed queued work.
+- Keep Runtime as the authority for continuation and bounded execution.
+
+#### Autonomous Maintenance and Continuous Engineering
 
 - Configure policy-controlled recurring maintenance, documentation, testing, and review work with explicit workspace scope
 - Translate authorised schedules and event triggers into bounded Phase 7 engineering requests through existing task queues
@@ -575,7 +683,18 @@ Status: Future — not started
 ## ⏳ Current Development Focus
 
 Current focus:
-Phase 8 — Continuously Intelligent AI Workspace
+
+**Phase 8.1 — Live Workspace Intelligence**
+
+Status: Ready to begin
+
+Starting baseline:
+
+`v0.8.0` (`6793b0d`)
+
+First implementation prerequisite:
+
+**B11 — watcher debounce/change-identity hardening**
 
 ---
 
@@ -587,14 +706,49 @@ Phase 2  [████████████████████] 100%
 Phase 3  [████████████████████] 100%  
 Phase 4  [████████████████████] 100%  
 Phase 5  [████████████████████] 100%  
-Phase 6  [████████████████████] 100% 
+Phase 6  [████████████████████] 100%  
 Phase 7  [████████████████████] 100%
 
-Phase 8  [░░░░░░░░░░░░░░░░░░░] 0% — Future; not started
+Phase 8  [░░░░░░░░░░░░░░░░░░░] 0% — Ready to begin
 
-- 8.1 In progress
+- 8.1 Ready — not started
 - 8.2 Future — not started
 - 8.3 Future — not started
 - 8.4 Future — not started
 - 8.5 Future — not started
 - 8.6 Future — not started
+
+---
+
+## Phase 8 Implementation Order
+
+1. **8.1 — Live Workspace Intelligence**
+   - Resolve B11
+   - Establish trustworthy event-driven refresh
+   - Add snapshot freshness and availability state
+   - Expose unified read-only workspace intelligence
+
+2. **8.2 — Project Evolution and Learning**
+   - Add durable project-history relationships
+   - Strengthen provenance, correction, retention, and invalidation
+   - Learn only from Validator-confirmed outcomes
+
+3. **8.3 — Engineering Insights and Prioritisation**
+   - Aggregate verified workspace evidence
+   - Track trends, hotspots, recurring failures, and technical debt
+   - Feed explainable priorities into the existing Phase 7 Planner
+
+4. **8.4 — Autonomous Maintenance and Continuous Engineering**
+   - Resolve B10 before autonomous background engineering
+   - Introduce policy-controlled recurring/event-triggered requests
+   - Reuse Phase 7 engineering governance and Runtime continuation
+
+5. **8.5 — Workspace Operations and Control Centre**
+   - Present lifecycle state across workspaces
+   - Expose governed approval and runtime controls
+   - Surface checkpoints, verification, failures, and recovery state
+
+6. **8.6 — Platform and Integration Layer**
+   - Stabilise workspace-scoped APIs
+   - Add provider-independent integration contracts
+   - Preserve local-first isolation and Phase 7 execution boundaries
