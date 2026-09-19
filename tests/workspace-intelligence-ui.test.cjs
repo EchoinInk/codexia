@@ -31,6 +31,13 @@ test("workspace intelligence UI preserves the aggregate status contract", () => 
   assert.match(component, /historical/);
   assert.match(component, /invalidated/);
   assert.match(component, /Neither changes workspace freshness/);
+  assert.match(component, /Engineering priorities/);
+  assert.match(component, /Deterministic advisory attention ordering/);
+  assert.match(component, /do not approve, propose, fix, or execute work/);
+  assert.match(component, /priorityFactors/);
+  assert.match(component, /contradictions/);
+  assert.doesNotMatch(component, /Fix automatically/);
+  assert.doesNotMatch(component, /Approve priority/);
 });
 
 test("workspace intelligence is exposed as a responsive application view", () => {

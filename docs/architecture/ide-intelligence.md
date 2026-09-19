@@ -39,3 +39,27 @@ The extracted `compiler-project.ts` is shared by navigation, diagnostics, refact
 `change-workflow.ts` coordinates fresh validation, the existing Patch Executor, the verification pipeline, and durable conflict-aware rollback. `guarded-files.ts` provides symlink rejection and compare-before-write behavior. HTTP apply/recovery adapters notify the existing index manager after execution. In-process hosts must likewise invalidate or refresh their cached index after applying changes. This is a bounded Workflow extension, not another Runtime.
 
 Architecture analysis extends the existing graph with findings rather than maintaining another graph lifecycle. Reporter owns Markdown formatting. Entry roots and layer rules are explicit inputs; unused/unreachable findings carry limited confidence when external or dynamic use is unknown.
+
+## Engineering insights and prioritisation (Phase 8.3)
+
+Engineering insights are a derived, read-only projection of one
+`WorkspaceIntelligenceSnapshot`, its diagnostics and architecture findings, and
+the bounded evolution/learning evidence attached to that snapshot. Insight
+records retain source IDs, snapshot provenance, affected paths, evidence state,
+limitations, contradiction/invalidation, and recurrence where it is already
+available. They are not persisted separately, so restart cannot create a
+second insight reconciliation lifecycle or leave a stale insight cache.
+
+Priority is a deterministic lexicographic ordering over evidence validity,
+source severity, bounded concrete impact, bounded recurrence, and evidence
+strength, followed by category, state, normalized summary, affected paths, and
+stable ID tie breaks. Contradicted/invalidated evidence is never promoted to a
+normal actionable priority; stale or incomplete evidence remains visible but is
+demoted. Repetition and learned patterns are supporting evidence only and never
+select or authorize a solution.
+
+The aggregate workspace intelligence API exposes bounded insight records and
+limitations. The Workspace Intelligence UI presents them as advisory attention
+ordering only. Insights do not create tasks, proposals, approvals, mutations,
+verification runs, execution, or runtime continuation. Automatic remediation
+and continuous maintenance remain deferred to Phase 8.4.
