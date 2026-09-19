@@ -171,6 +171,9 @@ export function validatePlanContract(
 
 
 function validateTool(step: PlanStep) {
+  if (step.action === "write" || step.action === "verify") {
+    throw new PlanValidationError("Legacy Chat plans are read-only; source changes require governed engineering review");
+  }
   try { validateToolStep(step); }
   catch (error) { throw new PlanValidationError(error instanceof Error ? error.message : String(error)); }
 }

@@ -20,7 +20,8 @@ import {
 
 export async function createContext(
   messages: AgentMessage[],
-  workspace: string
+  workspace: string,
+  contextualFile?: AgentContext["contextualFile"]
 ): Promise<AgentContext> {
   workspace = getWorkspaceRoot(workspace);
   const workspaceIndex = await getWorkspaceIndex(workspace);
@@ -33,6 +34,8 @@ export async function createContext(
     workspace,
 
     intelligence,
+
+    contextualFile,
 
     filesRead: [],
 

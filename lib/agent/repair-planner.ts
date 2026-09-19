@@ -51,38 +51,11 @@ export function createRepairPlan(
         : "Unknown execution failure",
 
 
+    // A retry may repeat or narrow read-only inspection, but it can never
+    // manufacture a placeholder write or verification command.
     steps: [
-
-      {
-
-        description:
-          "Analyse previous failure",
-
-        action:
-          "analyze",
-
-      },
-
-      {
-
-        description:
-          "Apply corrective changes",
-
-        action:
-          "write",
-
-      },
-
-      {
-
-        description:
-          "Verify repaired implementation",
-
-        action:
-          "verify",
-
-      },
-
+      ...plan.steps.filter(step => step.action === "read"),
+      { description: "Analyse previous read-only failure", action: "analyze" },
     ],
 
   };

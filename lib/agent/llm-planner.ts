@@ -117,6 +117,8 @@ Rules:
 - Use list_files before reading unknown paths.
 - Workspace roots must be inspected with list_files.
 - Filesystem tools belong in "tool", never "action".
+- This legacy Chat planner is read-only. Never return write or verify actions.
+- Never return write_file, delete_file, git_commit, placeholder content, or deferred edits.
 
 Available actions:
 ${AGENT_ACTIONS.join(", ")}
@@ -180,6 +182,9 @@ export const llmPlanner: Planner = {
 
                 filesModified:
                   context.filesModified,
+
+                selectedFile:
+                  context.contextualFile?.path,
 
               },
 

@@ -8,6 +8,18 @@ import { createEngineeringReport } from "@/lib/agent/engineering/report";
 export const runtime = "nodejs";
 const runtimes = new Map<string, ReturnType<typeof createEngineeringRuntime>>();
 
+function engineeringErrorResponse(error: unknown): Response {
+  if (error instanceof RequestError) return Response.json({ error: error.message }, { status: error.status });
+  const message = error instanceof Error ? error.message : "";
+  if (/already active|already exists|workspace changed|stale|invalidated|pending proposal missing/i.test(message)) {
+    return Response.json({ error: message }, { status: 409 });
+  }
+  if (/^(invalid |unknown scope file|engineering .* required|measurable acceptance|obligation outside|duplicate engineering|operation outside|current explicit approval)/i.test(message)) {
+    return Response.json({ error: message }, { status: 400 });
+  }
+  return Response.json({ error: "Internal engineering error" }, { status: 500 });
+}
+
 /** Local programmatic surface; deployment authentication remains host-owned. */
 export async function POST(request: Request): Promise<Response> {
   try {
@@ -37,6 +49,6 @@ export async function POST(request: Request): Promise<Response> {
     markWorkspaceDirty(workspace);
     return Response.json(createEngineeringReport(result));
   } catch (error) {
-    return Response.json({ error: error instanceof Error ? error.message : String(error) }, { status: error instanceof RequestError ? error.status : 400 });
+    return engineeringErrorResponse(error);
   }
 }

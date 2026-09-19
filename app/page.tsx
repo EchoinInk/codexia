@@ -3,6 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { EngineeringSessionClient } from "@/lib/engineering/session";
 import { FileBuffer } from "@/lib/editor/file-buffer";
+import { ChatSessionClient } from "@/lib/chat/session";
 
 import { Chat } from "@/components/Chat";
 import { FileTree } from "@/components/FileTree";
@@ -27,6 +28,7 @@ const viewTitles: Record<View, { title: string; description: string }> = {
 
 export default function Page() {
   const [engineering] = useState(() => new EngineeringSessionClient());
+  const [conversation] = useState(() => new ChatSessionClient());
   const engineeringState = useSyncExternalStore(engineering.subscribe, engineering.getSnapshot, engineering.getSnapshot);
   useEffect(() => {
     if (!engineeringState.busy || !engineeringState.runtimeId) return;
@@ -48,7 +50,13 @@ export default function Page() {
 
   const handleOpenFile = (path: string) => {
     setOpenFile(path);
+    conversation.selectFile(path);
     setView("files");
+  };
+
+  const selectFile = (path: string) => {
+    setOpenFile(path);
+    conversation.selectFile(path);
   };
 
   const currentView = viewTitles[view];
@@ -112,7 +120,7 @@ export default function Page() {
               <div className="flex h-full min-w-0">
                 <section className="min-w-0 flex-1 p-2 sm:p-3">
                   <div className="h-full overflow-hidden rounded-[18px] border border-white/90 bg-white/75 shadow-[0_12px_30px_-20px_rgba(49,46,129,0.28)]">
-                    <Chat engineering={engineering} />
+                    <Chat engineering={engineering} conversation={conversation} />
                   </div>
                 </section>
 
@@ -153,7 +161,7 @@ export default function Page() {
                   <FileTree
                     refreshKey={fsKey}
                     activePath={openFile}
-                    onOpen={setOpenFile}
+                    onOpen={selectFile}
                   />
                 </aside>
 

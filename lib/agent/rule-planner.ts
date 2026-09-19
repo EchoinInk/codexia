@@ -21,7 +21,8 @@ import {
 
 
 function createSteps(
-  type: TaskType
+  type: TaskType,
+  context: AgentContext
 ): PlanStep[] {
 
   switch (type) {
@@ -61,16 +62,22 @@ function createSteps(
 
         {
           description:
-            "Inspect relevant files",
+            context.contextualFile
+              ? `Read selected file ${context.contextualFile.path}`
+              : "Inspect relevant files",
 
           action:
             "read",
 
           tool:
-            "list_files",
+            context.contextualFile
+              ? "read_file"
+              : "list_files",
 
           args:
-            {},
+            context.contextualFile
+              ? { path: context.contextualFile.path }
+              : {},
         },
 
         {
@@ -128,50 +135,10 @@ function createSteps(
 
 
     case "modify":
-
     case "create":
-
-      return [
-
-        {
-          description:
-            "Inspect workspace",
-
-          action:
-            "read",
-
-          tool:
-            "list_files",
-
-          args:
-            {},
-        },
-
-        {
-          description:
-            "Analyse required changes",
-
-          action:
-            "analyze",
-        },
-
-        {
-          description:
-            "Apply changes",
-
-          action:
-            "write",
-        },
-
-        {
-          description:
-            "Verify result",
-
-          action:
-            "verify",
-        },
-
-      ];
+      // Mutation requests are admitted by A02 before this planner. Direct
+      // legacy use remains explicitly non-executable.
+      return [{ description: "Source change requires governed engineering", action: "analyze" }];
 
 
     default:
@@ -242,7 +209,8 @@ export const rulePlanner: Planner = {
 
       steps:
         createSteps(
-          task.type
+          task.type,
+          context
         ),
 
       files,

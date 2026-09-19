@@ -19,7 +19,10 @@ export const writeFileTool: Tool = {
   requiresConfirmation: true, capability: "source_write", actions: ["write"],
   validate(args) {
     fileArgs(args);
-    if (typeof args.content !== "string") throw new Error("File content required");
+    if (typeof args.content !== "string" || !args.content.trim()) throw new Error("Nonempty file content required");
+    if (/^(?:todo|tbd|placeholder|write this later|<content>|\[content\])$/i.test(args.content.trim())) {
+      throw new Error("Placeholder file content is not executable");
+    }
   },
   async execute() { throw new Error("Use proposal → Validator → reviewed change Workflow for source edits"); },
 };

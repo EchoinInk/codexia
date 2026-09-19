@@ -94,7 +94,7 @@ export function FileTree({
     try {
       const r = await fetch("/api/fs/list");
       const j = await r.json();
-      if (j.error) setErr(j.error);
+      if (!r.ok) setErr(j.error ?? `Unable to load workspace (${r.status})`);
       else {
         setTree(j.tree);
         setErr(null);

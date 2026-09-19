@@ -54,6 +54,12 @@ export interface AgentContext {
 
   intelligence?: IntelligenceContext;
 
+  /** Explicit read-only file context selected by the user in the visible app. */
+  contextualFile?: {
+    path: string;
+    content: string;
+  };
+
 
   filesRead: string[];
 

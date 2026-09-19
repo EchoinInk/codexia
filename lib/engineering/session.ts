@@ -1,4 +1,4 @@
-import type { ChatResponse, EngineeringReport } from "@/lib/agent/engineering/chat-contract";
+import type { ChatRequestContext, ChatResponse, EngineeringReport } from "@/lib/agent/engineering/chat-contract";
 import type { EngineeringApproval } from "@/lib/agent/engineering/types";
 
 export type EngineeringPhase = "idle" | "starting" | "running" | "awaiting_approval" | "resuming" |
@@ -52,11 +52,11 @@ export class EngineeringSessionClient {
     if (report.taskId !== this.state.runtimeId) throw new Error("Engineering runtime identity mismatch");
     this.publish({ report, phase: this.state.busy ? this.state.phase : reportPhase(report) });
   }
-  async submit(messages: { role: "user" | "assistant"; content: string }[]): Promise<ChatResponse> {
+  async submit(messages: { role: "user" | "assistant"; content: string }[], context: ChatRequestContext = {}): Promise<ChatResponse> {
     if (this.state.routing || this.state.busy) throw new Error("An engineering request is already in progress");
     this.publish({ routing: true });
     try {
-      const response = await this.post<ChatResponse>("/api/chat", { messages });
+      const response = await this.post<ChatResponse>("/api/chat", { messages, context });
       if (response.kind !== "engineering") return response;
       if (this.state.runtimeId && !["completed", "failed", "cancelled", "rolled_back", "invalidated"].includes(this.state.phase) &&
         !(this.state.dismissed && this.state.report?.runtimeStatus === "paused")) {

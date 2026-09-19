@@ -3,53 +3,23 @@
 import {
   useEffect,
   useRef,
-  useState
+  useSyncExternalStore
 } from "react";
 
 import { Markdown } from "./Markdown";
 import { EngineeringReview } from "./EngineeringReview";
 import type { EngineeringSessionClient } from "@/lib/engineering/session";
+import type { ChatSessionClient } from "@/lib/chat/session";
 
-import {
-  ArrowUp,
-  Bot,
-  User,
-  Wrench
-} from "lucide-react";
+import { ArrowUp, Bot, User, X } from "lucide-react";
 
 
-type Msg =
-  | {
-      role: "user" | "assistant";
-      content: string;
-    }
-  | {
-      role: "tool";
-      tool: string;
-      data: unknown;
-    };
-
-
-export function Chat({ engineering }: { engineering: EngineeringSessionClient }) {
-
-  const [
-    messages,
-    setMessages
-  ] = useState<Msg[]>([]);
-
-
-
-  const [
-    input,
-    setInput
-  ] = useState("");
-
-
-
-  const [
-    busy,
-    setBusy
-  ] = useState(false);
+export function Chat({ engineering, conversation }: {
+  engineering: EngineeringSessionClient;
+  conversation: ChatSessionClient;
+}) {
+  const state = useSyncExternalStore(conversation.subscribe, conversation.getSnapshot, conversation.getSnapshot);
+  const { messages, input, busy, selectedFile } = state;
 
 
 
@@ -79,79 +49,7 @@ export function Chat({ engineering }: { engineering: EngineeringSessionClient })
 
 
 
-  const send = async () => {
-  const text = input.trim();
-
-  if (!text || busy) {
-    return;
-  }
-
-  const next: Msg[] = [
-    ...messages,
-    {
-      role: "user",
-      content: text,
-    },
-  ];
-
-  setMessages(next);
-  setInput("");
-  setBusy(true);
-
-  const history = next
-    .filter(
-      (
-        m
-      ): m is Extract<
-        Msg,
-        {
-          role: "user" | "assistant";
-          content: string;
-        }
-      > =>
-        m.role === "user" ||
-        m.role === "assistant"
-    )
-    .map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
-
-  try {
-    const data = await engineering.submit(history);
-
-    setMessages((current) => [
-      ...current,
-      {
-        role: "assistant",
-        content:
-          data.content ??
-          "**Agent returned an empty response.**",
-      },
-    ]);
-  } catch (error: unknown) {
-
-    let message = "Unknown error";
-
-    if (error instanceof Error) {
-      message = error.message;
-    } else {
-      message = String(error);
-    }
-
-    console.error("Chat request failed:", error);
-
-    setMessages((current) => [
-      ...current,
-      {
-        role: "assistant",
-        content: `**Error:** ${message}`,
-      },
-    ]);
-  } finally {
-    setBusy(false);
-  }
-};
+  const send = () => void conversation.send(engineering);
 
 
 
@@ -320,80 +218,14 @@ export function Chat({ engineering }: { engineering: EngineeringSessionClient })
         {
           messages.map(
             (
-              m,
-              i
+              m
             ) => {
-
-
-              if(
-                m.role === "tool"
-              ){
-
-                return (
-
-                  <div
-                    key={i}
-                    className="
-                    flex
-                    gap-3
-                    "
-                  >
-
-                    <div
-                      className="
-                      w-8
-                      h-8
-                      rounded-full
-                      bg-amber-100
-                      text-amber-700
-                      flex
-                      items-center
-                      justify-center
-                      "
-                    >
-
-                      <Wrench size={15}/>
-
-                    </div>
-
-
-
-                    <div
-                      className="
-                      bg-amber-50
-                      border
-                      border-amber-200/60
-                      rounded-xl
-                      px-4
-                      py-2
-                      text-[13px]
-                      text-amber-900
-                      font-mono
-                      "
-                    >
-
-                      <span className="font-semibold">
-                        {m.tool}
-                      </span>
-
-
-                    </div>
-
-
-                  </div>
-
-                );
-
-              }
-
-
-
 
 
               return (
 
                 <div
-                  key={i}
+                  key={m.id}
                   className="
                   flex
                   gap-3
@@ -524,16 +356,11 @@ export function Chat({ engineering }: { engineering: EngineeringSessionClient })
 
           <textarea
 
-            value={
-              input
-            }
+            value={input}
 
 
             onChange={
-              e =>
-                setInput(
-                  e.target.value
-                )
+              e => conversation.setInput(e.target.value)
             }
 
 
@@ -542,9 +369,7 @@ export function Chat({ engineering }: { engineering: EngineeringSessionClient })
             }
 
 
-            placeholder="
-            Ask Codexia to read, write, or refactor code…
-            "
+            placeholder="Ask Codexia to inspect code or propose a reviewed edit…"
 
 
             rows={1}
@@ -596,6 +421,13 @@ export function Chat({ engineering }: { engineering: EngineeringSessionClient })
 
 
         </div>
+
+        {selectedFile && (
+          <div className="mt-2 flex items-center gap-2 px-2 text-xs text-ink-500">
+            <span>Context: <code>{selectedFile}</code></span>
+            <button aria-label="Clear selected file context" onClick={() => conversation.selectFile(undefined)}><X size={12}/></button>
+          </div>
+        )}
 
       </div>
 

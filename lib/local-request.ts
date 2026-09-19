@@ -49,7 +49,17 @@ export function configuredRequestWorkspace(requested?: unknown): string {
 
 export function fileErrorResponse(error: unknown): Response {
   const code = (error as NodeJS.ErrnoException)?.code;
-  const status = error instanceof RequestError ? error.status : error instanceof FileConflictError ? 409
-    : code === "ENOENT" ? 404 : code === "EACCES" || code === "EPERM" ? 403 : 400;
-  return Response.json({ error: error instanceof Error ? error.message : String(error) }, { status });
+  if (error instanceof RequestError) return Response.json({ error: error.message }, { status: error.status });
+  if (error instanceof FileConflictError) return Response.json({ error: error.message }, { status: 409 });
+  if (code === "ENOENT") return Response.json({ error: "File not found" }, { status: 404 });
+  if (code === "EACCES" || code === "EPERM") return Response.json({ error: "Filesystem access denied" }, { status: 403 });
+  const message = error instanceof Error ? error.message : "";
+  if (/escapes workspace/i.test(message)) {
+    return Response.json({ error: "Path is outside the permitted workspace boundary" }, { status: 403 });
+  }
+  if (/invalid workspace path|specific file is required|symlink target rejected|not a file|not a directory/i.test(message) ||
+      code === "EISDIR" || code === "ENOTDIR") {
+    return Response.json({ error: "Invalid filesystem path" }, { status: 400 });
+  }
+  return Response.json({ error: "Internal filesystem error" }, { status: 500 });
 }

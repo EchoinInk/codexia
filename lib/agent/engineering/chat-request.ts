@@ -6,7 +6,7 @@ import type { ChatResponse } from "./chat-contract";
 import type { EngineeringCheck, EngineeringGoal } from "./types";
 
 /** Admission adapter only: the existing EngineeringPlanner still creates proposals. */
-export async function engineeringChatRequest(message: string, workspace: string): Promise<ChatResponse> {
+export async function engineeringChatRequest(message: string, workspace: string, selectedFile?: string): Promise<ChatResponse> {
   const unsupported = (content: string): ChatResponse => ({ kind: "unsupported", content });
   if (/\b(delete|remove\s+(?:the\s+)?file|publish|deploy|push|commit|install|dependencies)\b/i.test(message)) {
     return unsupported("This Chat engineering path supports reviewed edits to existing source files only. Deletion, publication and dependency changes are unavailable.");
@@ -14,7 +14,11 @@ export async function engineeringChatRequest(message: string, workspace: string)
   const index = await createWorkspaceIndex(workspace);
   // Require explicit paths, not model-selected scope or fuzzy substring matches.
   const mentioned = message.match(/[\w@./-]+\.(?:tsx?|jsx?|md)\b/gi) ?? [];
-  const files = [...new Set(mentioned.map(file => file.replace(/^\.\//, "")))];
+  const contextual = /\b(?:this|selected|current)\s+(?:file|module|source)\b/i.test(message);
+  const files = [...new Set([
+    ...mentioned.map(file => file.replace(/^\.\//, "")),
+    ...(mentioned.length === 0 && contextual && selectedFile ? [selectedFile] : []),
+  ])];
   if (!files.length || files.length > 3 || files.some(file => !index.files.some(source => source.path === file && source.sourceText !== undefined))) {
     return unsupported("Name one to three existing workspace-relative TS, JS or Markdown files to edit. Creating new files or inferring a wider scope is not supported here.");
   }
