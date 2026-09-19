@@ -125,3 +125,14 @@ export function analyseTask(context: AgentContext): TaskAnalysis {
     requiresTools: false,
   };
 }
+
+/** Chat admission intent only; never grants tool or mutation authority. */
+export function chatRequestKind(message: string): "engineering" | "read_only" {
+  const mutation = /\b(edit|modify|change|update|fix|repair|refactor|rename|replace|implement|add|create|generate|write|delete|remove|publish|deploy|push|commit|install|migrate|optimize|optimise|convert|make|set|simplify)\b/i;
+  const text = message.trim();
+  if (!mutation.test(text)) return "read_only";
+  const readOnlyLead = /^(?:please\s+)?(?:explain|describe|show|read|inspect|review|summari[sz]e|list|what|why|how|where)\b/i.test(text);
+  const followupCommand = /\b(?:and|then|also)\s+(?:please\s+)?(?:edit|modify|change|update|fix|repair|refactor|replace|implement|add|create|write|delete|remove)\b/i.test(text);
+  if (/\b(?:do not|don't|without)\s+(?:edit|modify|change|write|changing|editing|modifying|writing)\b/i.test(text) || (readOnlyLead && !followupCommand)) return "read_only";
+  return "engineering";
+}

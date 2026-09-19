@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { EngineeringSessionClient } from "@/lib/engineering/session";
 import { FileBuffer } from "@/lib/editor/file-buffer";
 
 import { Chat } from "@/components/Chat";
@@ -25,10 +26,21 @@ const viewTitles: Record<View, { title: string; description: string }> = {
 };
 
 export default function Page() {
+  const [engineering] = useState(() => new EngineeringSessionClient());
+  const engineeringState = useSyncExternalStore(engineering.subscribe, engineering.getSnapshot, engineering.getSnapshot);
+  useEffect(() => {
+    if (!engineeringState.busy || !engineeringState.runtimeId) return;
+    const timer = setInterval(() => void engineering.refresh(), 1500);
+    return () => clearInterval(timer);
+  }, [engineering, engineeringState.busy, engineeringState.runtimeId]);
   const [fileBuffer] = useState(() => new FileBuffer());
   const [view, setView] = useState<View>("chat");
   const [openFile, setOpenFile] = useState<string | undefined>();
   const [fsKey, setFsKey] = useState(0);
+
+  useEffect(() => {
+    if (engineeringState.report && !engineeringState.busy) setFsKey(key => key + 1);
+  }, [engineeringState.report, engineeringState.busy]);
 
   const refreshFs = () => {
     setFsKey((key) => key + 1);
@@ -89,13 +101,18 @@ export default function Page() {
           </div>
         </header>
 
+        {view !== "chat" && engineeringState.runtimeId && (
+          <button className="border-b border-ink-400/10 bg-white/70 px-5 py-2 text-left text-sm" onClick={() => setView("chat")}>
+            Engineering: {engineeringState.dismissed ? "review closed" : engineeringState.phase.replaceAll("_", " ")} — Open review
+          </button>
+        )}
         <div className="min-h-0 flex-1 p-3 sm:p-4 lg:p-5">
           <div className="h-full overflow-hidden rounded-[24px] border border-white/80 bg-white/40 shadow-[0_24px_70px_-32px_rgba(50,56,100,0.35)] backdrop-blur-2xl">
             {view === "chat" && (
               <div className="flex h-full min-w-0">
                 <section className="min-w-0 flex-1 p-2 sm:p-3">
                   <div className="h-full overflow-hidden rounded-[18px] border border-white/90 bg-white/75 shadow-[0_12px_30px_-20px_rgba(49,46,129,0.28)]">
-                    <Chat onWorkspaceChanged={refreshFs} />
+                    <Chat engineering={engineering} />
                   </div>
                 </section>
 

@@ -46,6 +46,9 @@ export function createEngineeringReport(result: RuntimeResult) {
         : task?.reason ?? "Not proven resolved by verified engineering evidence." };
   });
   const report = { taskId: result.state.id, goal: session.goal.title, outcome: verified ? "verified" : result.state.status,
+    runtimeStatus: result.state.status,
+    proposalInvalidated: session.tasks.some(task => !!task.pendingProposal?.invalidatedReason),
+    lastChangeOutcome: [...session.audit].reverse().find(event => ["verified", "rolled_back", "rollback_conflict", "rejected"].includes(event.type))?.type,
     reason: session.escalation ?? result.state.stopReason, acceptance, tasks, findings,
     changes: result.context.filesModified, baseline: session.baseline, verification: session.finalChecks,
     audit: session.audit, advice: session.advice, review: session.review,

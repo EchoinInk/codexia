@@ -7,15 +7,14 @@ import {
 } from "react";
 
 import { Markdown } from "./Markdown";
-import { DiffView } from "./DiffView";
+import { EngineeringReview } from "./EngineeringReview";
+import type { EngineeringSessionClient } from "@/lib/engineering/session";
 
 import {
   ArrowUp,
   Bot,
   User,
-  Wrench,
-  Check,
-  X
+  Wrench
 } from "lucide-react";
 
 
@@ -31,20 +30,7 @@ type Msg =
     };
 
 
-type PendingDiff = {
-  path: string;
-  oldText: string;
-  newText: string;
-};
-
-
-
-export function Chat({
-  onWorkspaceChanged
-}: {
-  onWorkspaceChanged?: () => void;
-}) {
-
+export function Chat({ engineering }: { engineering: EngineeringSessionClient }) {
 
   const [
     messages,
@@ -64,13 +50,6 @@ export function Chat({
     busy,
     setBusy
   ] = useState(false);
-
-
-
-  const [
-    pendingDiff,
-    setPendingDiff
-  ] = useState<PendingDiff | null>(null);
 
 
 
@@ -138,37 +117,8 @@ export function Chat({
       content: m.content,
     }));
 
-  const controller = new AbortController();
-
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, 30000);
-
   try {
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages: history,
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeout);
-
-    if (!res.ok) {
-      const text = await res.text();
-
-      throw new Error(
-        `HTTP ${res.status}\n${text}`
-      );
-    }
-
-    const data = await res.json();
-
-    console.log("Agent response:", data);
+    const data = await engineering.submit(history);
 
     setMessages((current) => [
       ...current,
@@ -180,17 +130,10 @@ export function Chat({
       },
     ]);
   } catch (error: unknown) {
-    clearTimeout(timeout);
 
     let message = "Unknown error";
 
-    if (
-      error instanceof DOMException &&
-      error.name === "AbortError"
-    ) {
-      message =
-        "The request timed out after 30 seconds. The planner is probably stuck.";
-    } else if (error instanceof Error) {
+    if (error instanceof Error) {
       message = error.message;
     } else {
       message = String(error);
@@ -206,7 +149,6 @@ export function Chat({
       },
     ]);
   } finally {
-    clearTimeout(timeout);
     setBusy(false);
   }
 };
@@ -361,7 +303,7 @@ export function Chat({
                 mt-1
                 "
               >
-                Ask me to read, edit, or generate code in your workspace.
+                Ask me to inspect files or propose reviewed edits to named existing files.
               </div>
 
 
@@ -533,6 +475,8 @@ export function Chat({
 
 
 
+        <EngineeringReview session={engineering} />
+
         {
           busy && (
 
@@ -552,79 +496,6 @@ export function Chat({
 
 
       </div>
-
-
-
-
-
-      {
-        pendingDiff && (
-
-          <PendingDiffBar
-
-            diff={
-              pendingDiff
-            }
-
-
-            onApply={
-              async () => {
-
-                const loaded = await fetch(`/api/fs/read?path=${encodeURIComponent(pendingDiff.path)}`, { cache: "no-store" });
-                const current = await loaded.json();
-                if (!loaded.ok || current.error || current.content !== pendingDiff.oldText) {
-                  window.alert("File changed since this diff was created. Request a fresh proposal.");
-                  return;
-                }
-                const applied = await fetch(
-                  "/api/fs/write",
-                  {
-
-                    method:"POST",
-
-                    headers:{
-                      "Content-Type":
-                        "application/json"
-                    },
-
-
-                    body:
-                      JSON.stringify({
-
-                        path:
-                          pendingDiff.path,
-
-                        content:
-                          pendingDiff.newText,
-                        expectedVersion: current.version
-
-                      })
-
-                  }
-                );
-
-
-                const result = await applied.json();
-                if (!applied.ok || result.error) { window.alert(result.error || "Unable to save file"); return; }
-                setPendingDiff(null);
-
-                onWorkspaceChanged?.();
-
-              }
-            }
-
-
-
-            onDiscard={
-              () =>
-                setPendingDiff(null)
-            }
-
-          />
-
-        )
-      }
-
 
 
 
@@ -728,124 +599,6 @@ export function Chat({
 
       </div>
 
-
-
-    </div>
-
-  );
-
-}
-
-
-
-
-
-function PendingDiffBar({
-  diff,
-  onApply,
-  onDiscard
-}: {
-  diff:PendingDiff;
-  onApply:()=>void;
-  onDiscard:()=>void;
-}) {
-
-
-  const [
-    open,
-    setOpen
-  ] =
-    useState(true);
-
-
-
-  return (
-
-    <div
-      className="
-      border-t
-      border-ink-400/10
-      bg-brand-50/40
-      px-6
-      py-4
-      "
-    >
-
-      <div
-        className="
-        flex
-        items-center
-        justify-between
-        "
-      >
-
-        <div
-          className="
-          font-semibold
-          "
-        >
-
-          Proposed edit:
-
-          <span
-            className="
-            font-mono
-            text-brand
-            ml-2
-            "
-          >
-            {diff.path}
-          </span>
-
-        </div>
-
-
-        <div
-          className="
-          flex
-          gap-2
-          "
-        >
-
-          <button
-            onClick={() => setOpen(!open)}
-          >
-            {open ? "Hide" : "Show"}
-          </button>
-
-
-          <button
-            onClick={onDiscard}
-          >
-            <X size={13}/>
-          </button>
-
-
-          <button
-            onClick={onApply}
-          >
-            <Check size={13}/>
-          </button>
-
-
-        </div>
-
-
-      </div>
-
-
-
-
-      {
-        open && (
-
-          <DiffView
-            oldText={diff.oldText}
-            newText={diff.newText}
-          />
-
-        )
-      }
 
 
     </div>

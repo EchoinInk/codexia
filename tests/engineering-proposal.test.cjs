@@ -38,7 +38,11 @@ async function fixture(run) {
     ] }) };
     const options = { reasoner, checks: passed, recordMemory: false };
     await run({ workspace, options, calls: () => calls, g: goal(), store: new FileRuntimeCheckpointStore(workspace) });
-  } finally { await fs.rm(workspace, { recursive: true, force: true }); }
+  } finally {
+    const indexes = load(path.join(root, "lib/intelligence/workspace-index-manager.ts"));
+    indexes.stopAllWorkspaceIndexWatchers(); indexes.resetWorkspaceIndex();
+    await fs.rm(workspace, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  }
 }
 function pending(result) { return result.context.engineering.tasks[0].pendingProposal.proposal; }
 async function journalProposal(result) {

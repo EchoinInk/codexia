@@ -1,3 +1,5 @@
+import { chatRequestKind } from "./task";
+import { validateToolStep } from "@/lib/tools/validation";
 import type {
   AgentResponse,
 } from "./types";
@@ -45,6 +47,10 @@ export async function runAgent(
   message: string,
   workspace: string
 ): Promise<AgentResponse> {
+  // Direct legacy callers cannot turn Chat admission into an alternate writer.
+  if (chatRequestKind(message) === "engineering") {
+    return { content: "Source changes require the governed /api/engineering proposal review path." };
+  }
 
   let context =
     await createContext(
@@ -135,6 +141,16 @@ export async function runAgent(
 
 
   while (true) {
+    // Also enforce read-only capability after planning and every repair attempt.
+    // Verification commands belong to governed engineering, not read-only Chat.
+    try {
+      if (plan.engineering || plan.steps.some(step => !["read", "analyze"].includes(step.action))) {
+        throw new Error("Source changes and verification require governed engineering review");
+      }
+      plan.steps.forEach(validateToolStep);
+    } catch (error) {
+      return { content: `Execution prevented: ${error instanceof Error ? error.message : String(error)}` };
+    }
 
     const workflow =
       await runWorkflow(

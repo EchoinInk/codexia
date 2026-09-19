@@ -120,3 +120,68 @@ fresh issue/expiry timestamps. The response omits pending review authority when
 completed, failed, cancelled, running, consumed, or invalidated. Existing report
 fields and POST operations remain available. No Chat/FileViewer integration is
 included.
+
+## Visible Chat integration (A02)
+
+The visible Chat sends text to the existing `/api/chat` adapter. Admission intent
+is classified on the server, not in the UI. The typed `ChatResponse` discriminant
+is `chat`, `unsupported`, or `engineering`. A governed handoff contains a
+server-issued `taskId`, the bounded `EngineeringGoal` and its `goalDigest`; it
+does not contain a generated patch. Chat's session transport uses these values
+to call the existing `/api/engineering` `start` operation. The existing
+EngineeringPlanner remains the only engineering proposal planner.
+
+This admission path requires one to three explicitly named existing
+workspace-relative TS/JS/Markdown files and at least one configured npm `test`,
+`lint`, or `build` script. It selects those existing registered verification
+operations; it never accepts arbitrary commands or infers a larger file scope.
+New files, deletion, publication, dependency changes, unnamed/broader scope and
+unavailable checks produce an unsupported response. Intent matching is
+conservative and is not an authority boundary: the legacy Chat runner also
+rejects mutating capabilities and verification plans before every workflow
+attempt, including mutations labelled as reads. The existing B03 checks remain
+unchanged. Model text is never interpreted by Chat as a writable patch.
+
+`EngineeringSessionClient` is transport/view state owned by the page above the
+Chat/File/Settings switch. It retains the authoritative runtime ID, latest
+server report and transient request state; it creates no plans, persisted
+runtime, checkpoint or approval store. Status polling occurs only during an
+active request; manual refresh is available. Late status responses cannot
+replace a newer command result. Duplicate approvals and approval of a different
+or dismissed identity are refused locally, with server validation still
+mandatory. Loss of transport is shown as unknown until status reconciles it;
+no automatic start/resume or approval retry occurs.
+
+Initial `start` uses proposal-mode approval with an empty proposalIds array.
+Clicking **Approve this exact proposal** sends `resume` with exactly the A01
+`goalDigest` and single proposal ID. Both approvals use `approvedBy: local-user`
+and fresh five-minute timestamps, never bounded/global approval. The local
+host/user remains the authentication boundary. The exact A01 before/after text
+is passed directly into existing DiffView for presentation; IDs, warnings,
+risk/scope and verification/acceptance requirements accompany the review.
+Reports add `runtimeStatus`, `proposalInvalidated`, and `lastChangeOutcome` so
+the UI does not guess success, invalidation or rollback from prose. Only a
+verified report yields the completed-and-verified display.
+
+**Decline / close review** uses existing `cancel`. Active cancellation requests
+wait for the authoritative result. Paused checkpoints have no active control
+handle, so the API returns `accepted: false`; the UI closes that review locally
+and explicitly says the runtime remains paused, not cancelled. No resume,
+source mutation or automatic replan occurs. Reopen refreshes the same runtime.
+A new request may explicitly replace a dismissed paused review. Old checkpoints
+remain available to the existing programmatic API; no parallel rejection store
+or in-place replanning operation is introduced.
+
+Pending engineering state survives view switching, with an Open review banner
+outside Chat. General Chat history is still component-local (B08 remains out of
+scope). Full page reload/navigation does not restore the session selector; the
+server checkpoint remains durable and accessible by runtime ID. There is no
+new history UI or client persistence layer.
+
+Manual FileViewer editing continues to use the separate explicit filesystem
+Save operation with B09 versions/conflicts and B01/B02 containment. Chat's
+previous dormant direct-diff save branch is removed so it cannot become a
+second autonomous mutation path. The engineering adapter now reuses the local
+request guard, including normalized localhost/127.0.0.1 Host handling needed by
+the visible application, and rejects configured-workspace overrides. Existing
+POST operations and the A01 projection remain compatible.
