@@ -2,6 +2,7 @@ import { configuredRequestWorkspace, RequestError } from "@/lib/local-request";
 import { analyseArchitecture } from "@/lib/intelligence/architecture-analysis";
 import { diagnoseWorkspace } from "@/lib/intelligence/diagnostics";
 import { getWorkspaceIntelligenceSnapshot } from "@/lib/intelligence/workspace-intelligence-snapshot";
+import { deriveEngineeringInsights } from "@/lib/intelligence/engineering-insights";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,6 +12,7 @@ const MAX_DIAGNOSTICS = 500;
 const MAX_FINDINGS = 500;
 const MAX_EVOLUTION = 25;
 const MAX_LEARNING = 25;
+const MAX_INSIGHTS = 50;
 
 export async function GET(request: Request): Promise<Response> {
   try {
@@ -42,8 +44,19 @@ export async function GET(request: Request): Promise<Response> {
       !snapshot.provenance ||
       snapshot.status === "incomplete"
     ) {
+      const insights = deriveEngineeringInsights({ snapshot });
       return Response.json(
-        createResponse(snapshot),
+        {
+          ...createResponse(snapshot),
+          insights: {
+            snapshotId: snapshot.provenance?.snapshotId,
+            model: insights.model,
+            entries: insights.insights,
+            entryCount: insights.insights.length,
+            truncated: false,
+            limitations: insights.limitations,
+          },
+        },
         { status: 200 }
       );
     }
@@ -82,6 +95,13 @@ export async function GET(request: Request): Promise<Response> {
 
     const evolution = (snapshot.evidence.memory?.evolution ?? []).slice(0, MAX_EVOLUTION);
     const learning = (snapshot.evidence.memory?.learning ?? []).slice(0, MAX_LEARNING);
+    const insights = deriveEngineeringInsights({
+      snapshot,
+      diagnostics,
+      architecture,
+      memory: snapshot.evidence.memory,
+    });
+    insights.limitations.push(...analysisErrors.map(error => `Analysis unavailable: ${error}`));
 
     return Response.json({
       ...createResponse(snapshot),
@@ -146,6 +166,15 @@ export async function GET(request: Request): Promise<Response> {
         entries: learning,
         entryCount: snapshot.evidence.memory?.learning?.length ?? 0,
         truncated: (snapshot.evidence.memory?.learning?.length ?? 0) > MAX_LEARNING,
+      },
+
+      insights: {
+        snapshotId,
+        model: insights.model,
+        entries: insights.insights.slice(0, MAX_INSIGHTS),
+        entryCount: insights.insights.length,
+        truncated: insights.insights.length > MAX_INSIGHTS,
+        limitations: insights.limitations,
       },
 
       activity: {

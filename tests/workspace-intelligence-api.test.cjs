@@ -46,6 +46,9 @@ test("aggregate API returns current snapshot-bound intelligence", async () => {
     assert.equal(body.architecture.snapshotId, body.provenance.snapshotId);
     assert.equal(body.diagnostics.snapshotId, body.provenance.snapshotId);
     assert.equal(body.dependencies.snapshotId, body.provenance.snapshotId);
+    assert.equal(body.insights.snapshotId, body.provenance.snapshotId);
+    assert.equal(body.insights.model, "phase-8.3-v1");
+    assert.ok(Array.isArray(body.insights.entries));
     assert.equal(body.activity.snapshotId, body.provenance.snapshotId);
     assert.equal(body.summary.fileCount, 0);
   });
@@ -62,6 +65,7 @@ test("aggregate API preserves stale-but-readable evidence without waiting", asyn
     assert.equal(body.usable, true);
     assert.equal(body.pending, true);
     assert.equal(body.provenance.snapshotId, body.architecture.snapshotId);
+    assert.equal(body.insights.snapshotId, body.provenance.snapshotId);
   });
 });
 
@@ -77,7 +81,10 @@ test("aggregate API preserves unavailable, incomplete, and failed statuses", asy
     }, { files: {}, directories: [] });
     const incomplete = await route.GET(request());
     assert.equal(incomplete.status, 200);
-    assert.equal((await incomplete.json()).status, "incomplete");
+    const incompleteBody = await incomplete.json();
+    assert.equal(incompleteBody.status, "incomplete");
+    assert.deepEqual(incompleteBody.insights.entries, []);
+    assert.ok(incompleteBody.insights.limitations.length > 0);
 
     process.env.WORKSPACE_DIR = workspace;
     background.scheduleWorkspaceBackgroundIndex(workspace, async () => {
@@ -119,6 +126,8 @@ test("aggregate API is read-only and bounds repeated relationship/analysis outpu
     const body = await response.json();
     assert.equal(response.status, 200);
     assert.equal(fs.readFileSync(path.join(workspace, "source.ts"), "utf8"), before);
+    assert.equal(body.insights.snapshotId, body.provenance.snapshotId);
+    assert.ok(body.insights.entries.length <= 50);
     assert.equal(body.dependencies.truncated, false);
     assert.ok(body.diagnostics.diagnosticCount >= body.diagnostics.diagnostics.length);
     assert.ok(body.architecture.findingCount >= body.architecture.findings.length);

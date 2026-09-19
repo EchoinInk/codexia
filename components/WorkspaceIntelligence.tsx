@@ -79,6 +79,14 @@ type WorkspaceIntelligence = {
     entryCount: number;
     truncated: boolean;
   };
+  insights?: {
+    snapshotId: string;
+    model: string;
+    entries: EngineeringInsight[];
+    entryCount: number;
+    truncated: boolean;
+    limitations: string[];
+  };
   activity?: { memory?: unknown };
 };
 
@@ -126,6 +134,24 @@ type LearningEntry = {
   supportingEvidenceIds: string[];
   observedAt: number;
   strength: EvidenceStrength;
+};
+
+type EngineeringInsight = {
+  id: string;
+  category: string;
+  summary: string;
+  rationale: string;
+  affectedFiles: string[];
+  affectedDirectories: string[];
+  affectedSymbols: string[];
+  evidence: { source: string; id: string; label: string; snapshotId?: string; state?: string }[];
+  state: string;
+  severity: string;
+  priority: string;
+  priorityFactors: Record<string, number>;
+  persistence: { observationCount: number; distinctSnapshots: number; repeated: boolean };
+  limitations: string[];
+  contradictions: string[];
 };
 
 const statusCopy: Record<
@@ -367,6 +393,64 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
             </section>
 
             <section className="mt-4 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-2xl border border-violet-200/70 bg-violet-50/40 p-5 shadow-sm lg:col-span-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold text-ink-800">Engineering priorities</h3>
+                    <p className="mt-1 text-xs leading-5 text-ink-500">
+                      Deterministic advisory attention ordering from existing evidence.
+                      Priorities do not approve, propose, fix, or execute work.
+                    </p>
+                  </div>
+                  {snapshot.insights?.truncated && (
+                    <span className="text-[11px] text-ink-400">Showing bounded results</span>
+                  )}
+                </div>
+                {snapshot.insights?.entries.length ? (
+                  <div className="mt-4 space-y-3">
+                    {snapshot.insights.entries.map(insight => (
+                      <article key={insight.id} className="rounded-xl border border-violet-200/70 bg-white/75 p-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-600">
+                            {insight.priority} · {insight.category}
+                          </span>
+                          <span className={clsx("rounded-full px-2 py-1 text-[11px] font-medium capitalize", stateClassName(insight.state as EvidenceState))}>
+                            {insight.state}
+                          </span>
+                          <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] text-slate-600">
+                            {insight.severity}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm font-medium text-ink-800">{insight.summary}</p>
+                        <p className="mt-1 text-xs leading-5 text-ink-500">{insight.rationale}</p>
+                        <p className="mt-2 text-[11px] text-ink-400">
+                          Evidence: {insight.evidence.map(item => `${item.source}:${item.id}`).join(", ")}
+                        </p>
+                        <p className="mt-1 text-[11px] text-ink-400">
+                          Priority factors: validity {insight.priorityFactors.validity} · severity {insight.priorityFactors.sourceSeverity} · impact {insight.priorityFactors.impact} · recurrence {insight.priorityFactors.recurrence} · strength {insight.priorityFactors.strength}
+                        </p>
+                        <p className="mt-1 text-[11px] text-ink-400">
+                          Impact: {[...insight.affectedFiles, ...insight.affectedDirectories].slice(0, 4).join(", ") || "Not identified"}
+                          {insight.persistence.repeated ? ` · repeated across ${insight.persistence.distinctSnapshots} snapshot(s)` : ""}
+                        </p>
+                        {insight.contradictions.length > 0 && (
+                          <p className="mt-1 text-[11px] font-medium text-rose-600">{insight.contradictions.join(" ")}</p>
+                        )}
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-4 text-sm text-ink-500">
+                    {snapshot.insights?.limitations?.[0] ?? "No evidence-backed engineering priority is available."}
+                  </p>
+                )}
+                {snapshot.insights?.limitations?.length ? (
+                  <p className="mt-3 text-[11px] leading-5 text-ink-400">
+                    Limitations: {snapshot.insights.limitations.join(" ")}
+                  </p>
+                ) : null}
+              </div>
+
               <div className="rounded-2xl border border-white/90 bg-white/75 p-5 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="font-semibold text-ink-800">Snapshot provenance</h3>
