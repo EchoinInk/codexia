@@ -1,109 +1,42 @@
-import { safeReadFile, safeWriteFile, safeResolve, listTree } from "../fs-safe";
-
-import fs from "node:fs/promises";
-
+import { safeReadFile, listTree } from "../fs-safe";
 import type { Tool } from "./types";
 
+function fileArgs(args: Record<string, unknown>) {
+  if (typeof args.path !== "string" || !args.path.trim() || args.path.includes("\0")) throw new Error("Nonempty file path required");
+}
+
 export const readFileTool: Tool = {
-  name: "read_file",
-
-  description: "Reads a file from the workspace",
-
-  category: "filesystem",
-
-  requiresConfirmation: false,
-
-  async execute(args: Record<string, unknown>) {
-    const path = typeof args.path === "string" ? args.path : "";
-
-    const abs = safeResolve(path);
-
-    const stat = await fs.stat(abs);
-
-    if (stat.isDirectory()) {
-      throw new Error(
-        `Cannot read directory "${path}". Use list_files instead.`
-      );
-    }
-
-    const content = await safeReadFile(path);
-
-    return {
-      path,
-
-      content,
-    };
+  name: "read_file", description: "Reads a file from the workspace", category: "filesystem",
+  requiresConfirmation: false, capability: "read", actions: ["read"], validate: fileArgs,
+  async execute(args, context) {
+    fileArgs(args);
+    return { path: args.path, content: await safeReadFile(args.path as string, context.workspace) };
   },
 };
 
 export const writeFileTool: Tool = {
-  name: "write_file",
-
-  description: "Writes content to a workspace file",
-
-  category: "filesystem",
-
-  requiresConfirmation: true,
-
-  async execute(args: Record<string, unknown>) {
-    const path = typeof args.path === "string" ? args.path : "";
-
-    const content = typeof args.content === "string" ? args.content : "";
-
-    await safeWriteFile(path, content);
-
-    return {
-      ok: true,
-
-      path,
-    };
+  name: "write_file", description: "Source edits require the reviewed change workflow", category: "filesystem",
+  requiresConfirmation: true, capability: "source_write", actions: ["write"],
+  validate(args) {
+    fileArgs(args);
+    if (typeof args.content !== "string") throw new Error("File content required");
   },
+  async execute() { throw new Error("Use proposal → Validator → reviewed change Workflow for source edits"); },
 };
 
 export const listFilesTool: Tool = {
-  name: "list_files",
-
-  description: "Lists files and directories in the workspace",
-
-  category: "filesystem",
-
-  requiresConfirmation: false,
-
-  async execute(args: Record<string, unknown>) {
-    const path = typeof args.path === "string" ? args.path : "";
-
-    return {
-      path: path || ".",
-
-      files: await listTree(path),
-    };
+  name: "list_files", description: "Lists files and directories in the workspace", category: "filesystem",
+  requiresConfirmation: false, capability: "read", actions: ["read"],
+  validate(args) { if (args.path !== undefined && typeof args.path !== "string") throw new Error("path must be a string"); },
+  async execute(args, context) {
+    this.validate(args);
+    const path = (args.path as string | undefined) ?? "";
+    return { path: path || ".", files: await listTree(path, context.workspace) };
   },
 };
 
 export const deleteFileTool: Tool = {
-  name: "delete_file",
-
-  description: "Deletes a workspace file or directory",
-
-  category: "filesystem",
-
-  requiresConfirmation: true,
-
-  async execute(args: Record<string, unknown>) {
-    const path = typeof args.path === "string" ? args.path : "";
-
-    const abs = safeResolve(path);
-
-    await fs.rm(abs, {
-      recursive: true,
-
-      force: true,
-    });
-
-    return {
-      ok: true,
-
-      path,
-    };
-  },
+  name: "delete_file", description: "Deletion is unavailable to agent plans", category: "filesystem",
+  requiresConfirmation: true, capability: "delete", actions: ["write"], validate: fileArgs,
+  async execute() { throw new Error("Agent deletion has no reviewed authority contract and is unavailable"); },
 };

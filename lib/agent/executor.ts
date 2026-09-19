@@ -28,6 +28,8 @@ import {
 } from "./change-summary";
 
 import { resolveActionTool } from "./action-resolver";
+import { validateToolStep, requiresVerification } from "@/lib/tools/validation";
+import { getWorkspaceRoot } from "@/lib/fs-safe";
 
 export interface ExecutionResult {
   success: boolean;
@@ -49,7 +51,14 @@ export async function executePlan(
   context: AgentContext,
   options: ExecutionOptions = {}
 ): Promise<ExecutionResult> {
-  let updatedContext = context;
+  let updatedContext = { ...context, workspace: getWorkspaceRoot(context.workspace) };
+  // Validate the entire plan before any tool or verification script can run.
+  try { for (const step of plan.steps) validateToolStep(step); }
+  catch (error) {
+    const output = error instanceof Error ? error.message : String(error);
+    updatedContext = addObservation(updatedContext, createObservation(output, "error"));
+    return { success: false, output: `Execution prevented: ${output}`, filesModified: [], context: updatedContext };
+  }
 
   let summary = createChangeSummary();
 
@@ -74,7 +83,7 @@ export async function executePlan(
 
     summary = addAction(summary, step.description);
 
-    const result = await executeStep(step);
+    const result = await executeStep(step, updatedContext.workspace, options);
 
     results.push(result.output);
 
@@ -114,16 +123,11 @@ export async function executePlan(
     }
   }
 
-  const shouldVerify =
-    plan.steps.some(
-      step =>
-        step.action === "write" ||
-        step.action === "verify"
-    );
+  const shouldVerify = requiresVerification(plan.steps);
 
   const verification =
     shouldVerify
-      ? await runVerification(options.signal)
+      ? await runVerification(options.signal, updatedContext.workspace)
       : [];
 
   if (shouldVerify) {
@@ -174,7 +178,7 @@ export async function executePlan(
   };
 }
 
-async function executeStep(step: PlanStep) {
+async function executeStep(step: PlanStep, workspace: string, options: ExecutionOptions) {
   const toolName = step.tool ?? resolveActionTool(step.action);
 
   if (!toolName) {
@@ -196,7 +200,8 @@ async function executeStep(step: PlanStep) {
   }
 
   try {
-    const output = await tool.execute(step.args ?? {});
+    validateToolStep(step);
+    const output = await tool.execute(step.args ?? {}, { workspace, signal: options.signal });
 
     return {
       success: true,

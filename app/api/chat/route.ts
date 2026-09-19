@@ -1,3 +1,4 @@
+import { configuredRequestWorkspace, RequestError } from "@/lib/local-request";
 import { runAgent } from "@/lib/agent/agent";
 
 import type { AgentMessage } from "@/lib/agent/types";
@@ -12,7 +13,7 @@ export async function POST(req: Request) {
 
     console.log("Incoming chat:", messages);
 
-    const workspace = body.workspace ?? process.env.WORKSPACE_DIR ?? "";
+    const workspace = configuredRequestWorkspace(body.workspace);
 
     const result = await runAgent(
       messages[messages.length - 1]?.content ?? "",
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
         content: err instanceof Error ? err.stack ?? err.message : String(err),
       },
       {
-        status: 500,
+        status: err instanceof RequestError ? err.status : 500,
       }
     );
   }

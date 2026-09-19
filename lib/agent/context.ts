@@ -1,3 +1,4 @@
+import { getWorkspaceRoot } from "@/lib/fs-safe";
 import type {
   AgentContext,
   AgentMessage,
@@ -21,6 +22,7 @@ export async function createContext(
   messages: AgentMessage[],
   workspace: string
 ): Promise<AgentContext> {
+  workspace = getWorkspaceRoot(workspace);
   const workspaceIndex = await getWorkspaceIndex(workspace);
 
   const intelligence = createIntelligenceContext(workspaceIndex);

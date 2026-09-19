@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
+import { FileBuffer } from "@/lib/editor/file-buffer";
 import { Shiki } from "./Shiki";
 import { FileIcon, Save, X } from "lucide-react";
 
@@ -15,35 +16,20 @@ function langFromPath(p: string): string {
 }
 
 export function FileViewer({
-  path, onClose, onSaved,
-}: { path: string; onClose: () => void; onSaved?: () => void }) {
-  const [content, setContent] = useState<string>("");
-  const [original, setOriginal] = useState<string>("");
-  const [editing, setEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
-
+  path, onClose, onSaved, buffer,
+}: { path: string; onClose: () => void; onSaved?: () => void; buffer: FileBuffer }) {
+  const state = useSyncExternalStore(buffer.subscribe, buffer.getSnapshot, buffer.getSnapshot);
+  const selected = state.path === path;
+  const loading = !selected || state.loading;
+  const content = selected ? state.content : "";
+  const editing = selected && state.editing;
+  const err = selected ? state.error : undefined;
+  const ready = selected && !loading && state.version !== undefined;
   useEffect(() => {
-    setLoading(true);
-    fetch(`/api/fs/read?path=${encodeURIComponent(path)}`)
-      .then((r) => r.json())
-      .then((j) => {
-        if (j.error) setErr(j.error);
-        else { setContent(j.content); setOriginal(j.content); setErr(null); }
-      })
-      .finally(() => setLoading(false));
-  }, [path]);
-
-  const save = async () => {
-    const r = await fetch("/api/fs/write", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path, content }),
-    });
-    const j = await r.json();
-    if (j.error) setErr(j.error);
-    else { setOriginal(content); setEditing(false); onSaved?.(); }
-  };
+    void buffer.select(path);
+    return buffer.stopLoading;
+  }, [path, buffer]);
+  const save = async () => { if (await buffer.save(path)) onSaved?.(); };
 
   return (
     <div className="bg-white rounded-2xl shadow-card border border-ink-400/10 overflow-hidden h-full flex flex-col">
@@ -55,15 +41,15 @@ export function FileViewer({
         <div className="flex items-center gap-2">
           {editing ? (
             <>
-              <button onClick={save} className="text-xs flex items-center gap-1 bg-brand text-white px-3 py-1.5 rounded-lg hover:bg-brand-600">
+              <button disabled={!buffer.canSave(path)} onClick={save} className="text-xs flex items-center gap-1 bg-brand text-white px-3 py-1.5 rounded-lg hover:bg-brand-600">
                 <Save size={13} /> Save
               </button>
-              <button onClick={() => { setContent(original); setEditing(false); }} className="text-xs text-ink-700 px-3 py-1.5 rounded-lg hover:bg-ink-400/10">
+              <button disabled={state.saving} onClick={() => buffer.discard(path)} className="text-xs text-ink-700 px-3 py-1.5 rounded-lg hover:bg-ink-400/10">
                 Cancel
               </button>
             </>
           ) : (
-            <button onClick={() => setEditing(true)} className="text-xs text-brand bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100">
+            <button disabled={!ready || state.saving} onClick={() => buffer.edit(path)} className="text-xs text-brand bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100">
               Edit
             </button>
           )}
@@ -72,14 +58,16 @@ export function FileViewer({
           </button>
         </div>
       </div>
+      {ready && state.content !== state.original && <p className="px-4 py-1 text-xs text-ink-500">Unsaved edits are kept when switching files or views in this session.</p>}
       <div className="flex-1 overflow-auto">
         {loading && <div className="p-6 text-sm text-ink-500">Loading…</div>}
         {err && <div className="p-6 text-sm text-red-600">{err}</div>}
-        {!loading && !err && (
+        {ready && (
           editing ? (
             <textarea
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              disabled={state.saving}
+              onChange={(e) => buffer.change(path, e.target.value)}
               className="w-full h-full min-h-[400px] p-4 font-mono text-[13px] leading-relaxed bg-[#0b1020] text-white outline-none resize-none"
               spellCheck={false}
             />

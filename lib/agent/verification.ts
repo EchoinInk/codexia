@@ -1,3 +1,4 @@
+import { getWorkspaceRoot } from "@/lib/fs-safe";
 import { exec } from "child_process";
 import { promisify } from "util";
 
@@ -22,6 +23,8 @@ export interface VerificationResult {
 export async function runVerification(signal?: AbortSignal, workspace?: string): Promise<
   VerificationResult[]
 > {
+
+  const root = getWorkspaceRoot(workspace);
 
   const commands = [
     "npx tsc --noEmit",
@@ -56,7 +59,7 @@ export async function runVerification(signal?: AbortSignal, workspace?: string):
     try {
 
       const { stdout, stderr } =
-        await execAsync(command, { signal, cwd: workspace });
+        await execAsync(command, { signal, cwd: root });
 
 
       results.push({

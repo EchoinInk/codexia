@@ -1,3 +1,4 @@
+import { validateToolStep } from "@/lib/tools/validation";
 import type {
   AgentContext,
 } from "./types";
@@ -98,10 +99,11 @@ function createWorkflowState(): WorkflowState {
 
 
 
-function approveWorkflow(
-  state: WorkflowState
+function enterExecution(
+  state: WorkflowState, plan: Plan
 ): WorkflowState {
-
+  let admitted = false;
+  try { plan.steps.forEach(validateToolStep); admitted = true; } catch { /* Executor returns the rejection. */ }
   return {
 
     ...state,
@@ -109,8 +111,9 @@ function approveWorkflow(
     stage:
       "execution",
 
+    // Admission only covers nonmutating tool plans; it grants no write authority.
     approved:
-      true,
+      admitted,
 
   };
 
@@ -227,8 +230,8 @@ export async function runWorkflow(
 
 
   state =
-    approveWorkflow(
-      state
+    enterExecution(
+      state, plan
     );
 
 

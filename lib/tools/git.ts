@@ -1,60 +1,34 @@
 import { execFile } from "node:child_process";
-
 import { promisify } from "node:util";
-
-import type { Tool } from "./types";
+import { getWorkspaceRoot } from "../fs-safe";
+import type { Tool, ToolExecutionContext } from "./types";
 
 const execFileAsync = promisify(execFile);
-
-async function runGit(args: string[]): Promise<string> {
-  const { stdout } = await execFileAsync("git", args);
-
+async function runGit(args: string[], context: ToolExecutionContext): Promise<string> {
+  const { stdout } = await execFileAsync("git", args, { cwd: getWorkspaceRoot(context.workspace), signal: context.signal });
   return stdout.trim();
 }
-
+function noArgs(args: Record<string, unknown>) {
+  if (Object.keys(args).length) throw new Error("This Git operation accepts no arguments");
+}
 export const gitStatusTool: Tool = {
-  name: "git_status",
-
-  description: "Shows current git repository status",
-
-  category: "git",
-
-  requiresConfirmation: false,
-
-  async execute() {
-    return runGit(["status", "--short"]);
-  },
+  name: "git_status", description: "Shows workspace Git status", category: "git",
+  requiresConfirmation: false, capability: "read", actions: ["read"], validate: noArgs,
+  async execute(args, context) { noArgs(args); return runGit(["status", "--short"], context); },
 };
-
 export const gitDiffTool: Tool = {
-  name: "git_diff",
-
-  description: "Shows current git changes",
-
-  category: "git",
-
-  requiresConfirmation: false,
-
-  async execute() {
-    return runGit(["diff"]);
-  },
+  name: "git_diff", description: "Shows workspace Git changes", category: "git",
+  requiresConfirmation: false, capability: "read", actions: ["read"], validate: noArgs,
+  async execute(args, context) { noArgs(args); return runGit(["diff"], context); },
 };
-
 export const gitCommitTool: Tool = {
-  name: "git_commit",
-
-  description: "Creates a git commit",
-
-  category: "git",
-
-  requiresConfirmation: true,
-
-  async execute(args: Record<string, unknown>) {
-    const message =
-      typeof args.message === "string" ? args.message : "Codexia change";
-
-    await runGit(["add", "."]);
-
-    return runGit(["commit", "-m", message]);
+  name: "git_commit", description: "Git publication is unavailable to agent plans", category: "git",
+  requiresConfirmation: true, capability: "publication", actions: ["write"],
+  validate(args) {
+    if (typeof args.message !== "string" || !args.message.trim()) throw new Error("Commit message required");
   },
+  // The existing proposal authority covers source replacement, not staging or
+  // publication. Neither planner-provided files nor confirmation flags grant it.
+  // No files are staged; a future host contract must authorize exact files.
+  async execute() { throw new Error("Git staging/commit requires separate reviewed authority and is unavailable"); },
 };

@@ -1,3 +1,4 @@
+import { getWorkspaceRoot } from "@/lib/fs-safe";
 import { createDefaultTaskQueueHandlers } from "./handlers";
 import { TaskQueue } from "./queue";
 import { FileTaskQueueStore } from "./store";
@@ -18,6 +19,7 @@ export async function createTaskQueue(
   workspace: string,
   options: CreateTaskQueueOptions = {}
 ): Promise<TaskQueue> {
+  workspace = getWorkspaceRoot(workspace);
   const defaults = createDefaultTaskQueueHandlers(workspace);
   const handlers: TaskQueueHandlers = {
     ...defaults,

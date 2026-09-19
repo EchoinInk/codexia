@@ -7,9 +7,7 @@ import {
   AGENT_ACTIONS,
 } from "./contracts/action-types";
 
-import {
-  toolRegistry,
-} from "@/lib/tools/registry";
+import { validateToolStep } from "@/lib/tools/validation";
 
 
 export class PlanValidationError extends Error {
@@ -172,40 +170,10 @@ export function validatePlanContract(
 
 
 
-function validateTool(
-  step: PlanStep
-) {
-
-  if (
-    !step.tool
-  ) {
-
-    return;
-
-  }
-
-
-
-  const tool =
-    toolRegistry.get(
-      step.tool
-    );
-
-
-
-  if (
-    !tool
-  ) {
-
-    throw new PlanValidationError(
-      `Unknown tool: ${step.tool}`
-    );
-
-  }
-
+function validateTool(step: PlanStep) {
+  try { validateToolStep(step); }
+  catch (error) { throw new PlanValidationError(error instanceof Error ? error.message : String(error)); }
 }
-
-
 
 export function validatePlan(
   plan: Plan

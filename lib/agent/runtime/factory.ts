@@ -1,3 +1,4 @@
+import { getWorkspaceRoot } from "@/lib/fs-safe";
 import { createContext } from "../context";
 import { getPlanner } from "../planner-index";
 import { runWorkflow } from "../workflow";
@@ -29,6 +30,7 @@ export function createRuntimeController(
   workspace: string,
   options: CreateRuntimeControllerOptions = {}
 ): RuntimeController {
+  workspace = getWorkspaceRoot(workspace);
   const overrides = options.dependencies;
   const dependencies: RuntimeDependencies = {
     observer: overrides?.observer ?? new DefaultRuntimeObserver(),

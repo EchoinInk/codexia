@@ -1,3 +1,4 @@
+import { getWorkspaceRoot } from "@/lib/fs-safe";
 import {
   toolRegistry,
 } from "@/lib/tools";
@@ -42,7 +43,8 @@ function getGitTool(
 
 
 
-export function createGitProvider(): GitProvider {
+export function createGitProvider(workspace?: string): GitProvider {
+  const context = { workspace: getWorkspaceRoot(workspace) };
 
   return {
 
@@ -56,7 +58,7 @@ export function createGitProvider(): GitProvider {
 
       const result =
         await tool.execute(
-          {}
+          {}, context
         );
 
 
@@ -75,7 +77,7 @@ export function createGitProvider(): GitProvider {
 
       const result =
         await tool.execute(
-          {}
+          {}, context
         );
 
 
@@ -98,7 +100,7 @@ export function createGitProvider(): GitProvider {
         await tool.execute(
           {
             message,
-          }
+          }, context
         );
 
 

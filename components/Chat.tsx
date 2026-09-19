@@ -570,7 +570,13 @@ export function Chat({
             onApply={
               async () => {
 
-                await fetch(
+                const loaded = await fetch(`/api/fs/read?path=${encodeURIComponent(pendingDiff.path)}`, { cache: "no-store" });
+                const current = await loaded.json();
+                if (!loaded.ok || current.error || current.content !== pendingDiff.oldText) {
+                  window.alert("File changed since this diff was created. Request a fresh proposal.");
+                  return;
+                }
+                const applied = await fetch(
                   "/api/fs/write",
                   {
 
@@ -589,7 +595,8 @@ export function Chat({
                           pendingDiff.path,
 
                         content:
-                          pendingDiff.newText
+                          pendingDiff.newText,
+                        expectedVersion: current.version
 
                       })
 
@@ -597,6 +604,8 @@ export function Chat({
                 );
 
 
+                const result = await applied.json();
+                if (!applied.ok || result.error) { window.alert(result.error || "Unable to save file"); return; }
                 setPendingDiff(null);
 
                 onWorkspaceChanged?.();

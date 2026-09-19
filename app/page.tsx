@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FileBuffer } from "@/lib/editor/file-buffer";
 
 import { Chat } from "@/components/Chat";
 import { FileTree } from "@/components/FileTree";
@@ -24,6 +25,7 @@ const viewTitles: Record<View, { title: string; description: string }> = {
 };
 
 export default function Page() {
+  const [fileBuffer] = useState(() => new FileBuffer());
   const [view, setView] = useState<View>("chat");
   const [openFile, setOpenFile] = useState<string | undefined>();
   const [fsKey, setFsKey] = useState(0);
@@ -141,6 +143,7 @@ export default function Page() {
                 <section className="min-w-0 flex-1 overflow-hidden rounded-[18px] border border-white/90 bg-white/75 shadow-[0_12px_30px_-20px_rgba(49,46,129,0.25)]">
                   {openFile ? (
                     <FileViewer
+                      buffer={fileBuffer}
                       path={openFile}
                       onClose={() => setOpenFile(undefined)}
                       onSaved={refreshFs}

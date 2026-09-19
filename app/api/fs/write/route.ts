@@ -1,26 +1,16 @@
-import { NextResponse } from "next/server";
-import fs from "node:fs/promises";
-import path from "node:path";
-import { safeResolve } from "@/lib/fs-safe";
+import { safeWriteFile, fileVersion } from "@/lib/fs-safe";
+import { localMutationBody, configuredRequestWorkspace, requestFilePath, fileErrorResponse, RequestError } from "@/lib/local-request";
 
 export const runtime = "nodejs";
-
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const { path: p, content } = await req.json();
-    if (!p || typeof content !== "string") {
-      return NextResponse.json({ error: "path and content required" }, { status: 400 });
+    const body = await localMutationBody(request);
+    const path = requestFilePath(body.path);
+    if (typeof body.content !== "string" || !(body.expectedVersion === null ||
+      typeof body.expectedVersion === "string" && /^[a-f0-9]{64}$/.test(body.expectedVersion))) {
+      throw new RequestError("content and expectedVersion required (null for a new file)");
     }
-    const abs = safeResolve(p);
-    await fs.mkdir(path.dirname(abs), { recursive: true });
-    await fs.writeFile(abs, content, "utf8");
-    return NextResponse.json({ ok: true, path: p });
-  } catch (error: unknown) {
-  return Response.json({
-    error:
-      error instanceof Error
-        ? error.message
-        : String(error),
-  });
-}
+    await safeWriteFile(path, body.content, configuredRequestWorkspace(body.workspace), body.expectedVersion);
+    return Response.json({ ok: true, path, version: fileVersion(body.content) });
+  } catch (error) { return fileErrorResponse(error); }
 }

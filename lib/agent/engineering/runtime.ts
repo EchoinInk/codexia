@@ -1,3 +1,4 @@
+import { getWorkspaceRoot } from "@/lib/fs-safe";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { RuntimeController } from "../runtime/controller";
@@ -33,7 +34,7 @@ export interface EngineeringRuntimeOptions {
 
 /** Adapter wiring engineering policy into the existing Runtime, not another loop. */
 export function createEngineeringRuntime(workspace: string, options: EngineeringRuntimeOptions = {}) {
-  const root = path.resolve(workspace);
+  const root = getWorkspaceRoot(workspace);
   const store = options.checkpointStore ?? new FileRuntimeCheckpointStore(root);
   const readIndex = options.readIndex ?? (async () => {
     const index = await createWorkspaceIndex(root);
