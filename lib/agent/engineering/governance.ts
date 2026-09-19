@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { isWorkspacePath } from "@/lib/intelligence/compiler-project";
 import { snapshotId } from "@/lib/intelligence/change-proposal";
 import type { ChangeProposal } from "@/lib/intelligence/change-proposal";
-import type { EngineeringApproval, EngineeringGoal, EngineeringTask, EngineeringRisk } from "./types";
+import type { EngineeringApproval, EngineeringGoal, EngineeringTask, EngineeringRisk, EngineeringSession } from "./types";
 import type { WorkspaceIndex } from "@/lib/intelligence/types";
 
 const risk: Record<EngineeringRisk, number> = { low: 0, medium: 1, high: 2 };
@@ -64,14 +64,27 @@ export function validateEngineeringApproval(goal: EngineeringGoal, approval: Eng
     !["proposal", "bounded"].includes(approval.mode) || !Array.isArray(approval.proposalIds) ||
     approval.proposalIds.some(id => typeof id !== "string")) throw new Error("Current explicit approval for the exact goal is required");
 }
+/** Same risk calculation used by authorization and the review projection. */
+export function proposalRisk(task: EngineeringTask, proposal: ChangeProposal): EngineeringRisk {
+  const intrinsic = proposal.origin !== "typescript" ? risk.high
+    : proposal.kind !== "quickfix" || proposal.diff.changes.length > 1 ? risk.medium : risk.low;
+  return (["low", "medium", "high"] as const)[Math.max(risk[task.risk], intrinsic)];
+}
+
+export function invalidatePendingProposals(session: EngineeringSession, reason: string): void {
+  for (const task of session.tasks) if (task.pendingProposal) {
+    task.pendingProposal.invalidatedReason = reason;
+    task.status = "deferred";
+    task.reason = reason;
+  }
+}
+
 export function authorizeProposal(goal: EngineeringGoal, approval: EngineeringApproval, task: EngineeringTask,
   proposal: ChangeProposal, index: WorkspaceIndex): string[] {
   const errors: string[] = [];
   try { validateEngineeringApproval(goal, approval); } catch (error) { errors.push(String(error)); }
   if (proposal.snapshot !== snapshotId(index)) errors.push("Proposal evidence is stale");
-  const intrinsicRisk = proposal.origin !== "typescript" ? risk.high
-    : proposal.kind !== "quickfix" || proposal.diff.changes.length > 1 ? risk.medium : risk.low;
-  if (Math.max(risk[task.risk], intrinsicRisk) > risk[goal.scope.maxRisk]) errors.push("Task risk exceeds approval");
+  if (risk[proposalRisk(task, proposal)] > risk[goal.scope.maxRisk]) errors.push("Task risk exceeds approval");
   if (proposal.diff.changes.length > goal.scope.maxFilesPerBatch) errors.push("Change batch exceeds authorized size");
   for (const change of proposal.diff.changes) {
     if (!goal.scope.files.includes(change.path) || !task.files.includes(change.path)) errors.push(`Scope expansion requires approval: ${change.path}`);

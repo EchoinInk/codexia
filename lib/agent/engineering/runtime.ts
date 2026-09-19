@@ -18,7 +18,7 @@ import type { WorkspaceIndex } from "@/lib/intelligence/types";
 import { collectEngineeringEvidence } from "./evidence";
 import { EngineeringPlanner, decomposeEngineeringGoal } from "./planner";
 import { runEngineeringWorkflow } from "./workflow";
-import { goalDigest, validateEngineeringGoal, validateEngineeringApproval } from "./governance";
+import { goalDigest, validateEngineeringGoal, validateEngineeringApproval, invalidatePendingProposals } from "./governance";
 import { runEngineeringChecks } from "./verification";
 import type { EngineeringApproval, EngineeringCheckRunner, EngineeringFindingProvider, EngineeringGoal, EngineeringReasoner } from "./types";
 
@@ -70,7 +70,8 @@ export function createEngineeringRuntime(workspace: string, options: Engineering
         input.signal.throwIfAborted();
         context.intelligence = createIntelligenceContext(index);
         if (session.expectedSnapshot && snapshotId(index) !== session.expectedSnapshot) {
-          session.escalation = "Workspace changed outside the last verified boundary; explicit revalidation required";
+          session.escalation = "Workspace changed outside the last verified boundary; explicit replanning and review required";
+          invalidatePendingProposals(session, session.escalation);
         }
         if (session.inFlight) session.escalation = "Interrupted change requires journal recovery and explicit revalidation";
         session.evidence = await collectEngineeringEvidence(index, session.goal, options.findingProviders, input.signal);
@@ -186,15 +187,24 @@ export function createEngineeringRuntime(workspace: string, options: Engineering
       return run(goal, controller => controller.start({ id, goal: goal.title, context, metadata: { engineering: true, goalDigest: goalDigest(goal) } }));
     },
     async resume(id: string, approval?: EngineeringApproval): Promise<RuntimeResult> {
+      if (active) throw new Error("Engineering runtime already active");
       if (typeof id !== "string" || !/^[a-zA-Z0-9_-]+$/.test(id)) throw new Error("Invalid runtime task id");
       const checkpoint = await store.loadLatest(id);
       if (!checkpoint?.context.engineering || path.resolve(checkpoint.context.workspace) !== root) throw new Error("Engineering checkpoint not found for workspace");
       const session = checkpoint.context.engineering;
       validateEngineeringGoal(session.goal);
+      if (session.tasks.some(task => task.status === "awaiting_approval" && !task.pendingProposal)) {
+        throw new Error("Pending proposal missing; explicit replanning required");
+      }
       if (approval) {
         validateEngineeringApproval(session.goal, approval);
         // Approval renewal never silently accepts external changes or unresolved writes.
-        if (session.expectedSnapshot !== snapshotId(await readIndex())) throw new Error("Recovery/replanning required before resume");
+        if (session.expectedSnapshot !== snapshotId(await readIndex())) {
+          session.escalation = "Recovery/replanning required before resume: workspace changed since proposal generation";
+          invalidatePendingProposals(session, session.escalation);
+          await store.save(checkpoint);
+          throw new Error(session.escalation);
+        }
         if (session.inFlight) {
           session.audit.push({ at: Date.now(), type: "revalidated", taskId: session.inFlight.taskId,
             detail: "Fresh workspace matches pre-change checkpoint; interrupted marker cleared under renewed approval" });
@@ -207,7 +217,8 @@ export function createEngineeringRuntime(workspace: string, options: Engineering
         }
         session.approval = structuredClone(approval);
         session.escalation = undefined;
-        for (const task of session.tasks) if (task.status === "awaiting_approval") task.status = "pending";
+        // Keep awaiting tasks and their exact proposals intact. The planner
+        // revalidates these checkpointed inputs instead of regenerating them.
         session.audit.push({ at: Date.now(), type: "approval", detail: JSON.stringify(approval) });
         await store.save(checkpoint);
       }

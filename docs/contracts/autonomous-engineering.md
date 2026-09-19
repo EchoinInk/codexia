@@ -56,3 +56,67 @@ The local HTTP surface supplies the configured Ollama reasoner. Host integration
 ## Queue adapter
 
 Enqueue the existing queue with type `engineering`, `maxAttempts: 1`, and payload `{ goal, approval }`. The job's runtime ID is `engineering-<queue-task-id>`. A noncompleted Runtime is reported as a failed queue job with its runtime ID for inspection; it is never silently restarted as a fresh migration. Use explicit checkpoint resume after reviewing its state.
+
+## Exact pending-proposal lifecycle (Phase 7)
+
+Before the existing Runtime checkpoints a planned workflow, the task retains
+`pendingProposal: { proposal: ChangeProposal, invalidatedReason?: string }`.
+`ChangeProposal.id` is the SHA-256 digest of its full canonical proposal body:
+its title, kind, origin, snapshot, exact before/after diff, and warnings. The
+containing checkpoint retains the runtime ID, canonical workspace, task, goal,
+scope/risk, approval, checks, acceptance criteria and budgets. No separate
+proposal store is used.
+
+Approval renewal keeps this proposal intact. Planning on resume selects the
+persisted proposal without invoking a reasoner or rebuilding its diff. The
+existing Validator and engineering authorization recheck its digest, snapshot,
+before content, compiler validity, scope, risk, goal approval and expiry before
+the existing reviewed change workflow executes it. That workflow still owns
+verification, journaling and rollback. A rejected/stale proposal is invalidated;
+renewing approval or restoring old bytes does not regenerate it. Explicit
+replanning currently means starting a new, explicitly approved goal/runtime;
+there is no in-place rejection/replan operation in this batch. Old awaiting
+checkpoints without explicit pending state fail closed and require replanning.
+A consumed attempt may still use the existing bounded repair policy; any new
+proposal in proposal mode needs its own exact approval. Budgets are not reset.
+
+`start`, `status` and `resume` reports add an optional typed `pendingProposal`
+(`EngineeringPendingProposal`). It is present only for a paused runtime with a
+valid, unconsumed task awaiting proposal approval, and has this JSON shape:
+
+```ts
+{
+  runtimeId: string;
+  taskId: string; // engineering task within the runtime
+  proposal: {
+    id: string; title: string; kind: "quickfix" | "rename" | "refactor";
+    origin: string; snapshot: string;
+    diff: { changes: { path: string; before: string; after: string }[] };
+    warnings: string[];
+  };
+  digest: string; // identical to proposal.id; no second digest or authority
+  workspace: string; // canonical configured workspace
+  affectedPaths: string[];
+  risk: { task: EngineeringRisk; required: EngineeringRisk; allowed: EngineeringRisk };
+  scope: EngineeringGoal["scope"];
+  taskFiles: string[];
+  approval: { mode: "proposal" | "bounded"; goalDigest: string; proposalIds: string[] };
+  checks: EngineeringCheck[];
+  acceptance: EngineeringGoal["acceptance"];
+  constraints: string[];
+  obligations: string[];
+  status: "awaiting_approval";
+  reason: string;
+}
+```
+
+The projection copies the checkpointed proposal directly. Status performs no
+model call, diff generation, or authority creation. It describes the saved
+snapshot, not a guarantee that the live workspace remains unchanged. Resume
+performs fresh validation. To approve it, send the existing `resume` operation
+with `taskId: pendingProposal.runtimeId` and an `EngineeringApproval` containing
+that exact `approval.goalDigest` and `proposalIds`, plus the actual approver and
+fresh issue/expiry timestamps. The response omits pending review authority when
+completed, failed, cancelled, running, consumed, or invalidated. Existing report
+fields and POST operations remain available. No Chat/FileViewer integration is
+included.

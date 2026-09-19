@@ -65,39 +65,53 @@ export class EngineeringPlanner implements Planner {
     };
     const task = taskState.task;
     const index = this.index();
-    let proposal: ChangeProposal | undefined;
+    // Checkpointed proposals survive approval renewal and process restart. Never
+    // ask a reasoner to replace work that the user is currently reviewing.
+    if (taskState.pendingProposal?.invalidatedReason ||
+      (taskState.status === "awaiting_approval" && !taskState.pendingProposal)) {
+      return { ...base, engineering: { ...base.engineering!, taskId: task.id,
+        escalation: taskState.pendingProposal?.invalidatedReason ?? "Pending proposal missing; explicit replanning required" } };
+    }
+    let proposal: ChangeProposal | undefined = taskState.pendingProposal?.proposal;
     let conflict: string | undefined;
-    if (task.operation.kind === "rename") {
-      const result = planRename(index, task.operation.file, task.operation.position, task.operation.newName);
-      proposal = result.proposal; conflict = result.conflicts.join("; ");
-    } else if (task.operation.kind === "refactor") {
-      const op = task.operation;
-      const result = planRefactoring(index, op.file, op.range, op.refactor, op.action);
-      proposal = result.proposal; conflict = result.conflicts.join("; ");
-    } else if (task.operation.kind === "patch") {
-      proposal = createChangeProposal(index, task.title, "refactor", "authorized-stage", task.operation.diff);
-    } else if (task.operation.kind === "repair") {
-      const report = await diagnoseWorkspace(index, undefined, this.signal?.());
-      const diagnostics = report.diagnostics.filter(diagnostic => task.files.includes(diagnostic.file));
-      const exact = diagnostics.find(diagnostic => diagnostic.id === (task.operation.kind === "repair" ? task.operation.diagnosticId : undefined));
-      const actions = (exact ? [exact, ...diagnostics.filter(item => item !== exact)] : diagnostics)
-        .flatMap(diagnostic => diagnosticCodeActions(index, diagnostic));
-      proposal = actions.find(action => !taskState.proposals.includes(action.id) &&
-        action.diff.changes.every(change => task.files.includes(change.path)));
-      if (!proposal && this.reasoner) {
-        const diff = await this.reasoner.propose({ task, evidence: session.evidence, index,
-          failures: taskState.verification.length ? taskState.verification : session.baseline, signal: this.signal?.() });
-        if (diff) proposal = createChangeProposal(index, task.title, "quickfix", this.reasoner.id, diff,
-          ["Model-authored changes need behavior verification and authorized risk coverage."]);
+    if (!proposal) {
+      if (task.operation.kind === "rename") {
+        const result = planRename(index, task.operation.file, task.operation.position, task.operation.newName);
+        proposal = result.proposal; conflict = result.conflicts.join("; ");
+      } else if (task.operation.kind === "refactor") {
+        const op = task.operation;
+        const result = planRefactoring(index, op.file, op.range, op.refactor, op.action);
+        proposal = result.proposal; conflict = result.conflicts.join("; ");
+      } else if (task.operation.kind === "patch") {
+        proposal = createChangeProposal(index, task.title, "refactor", "authorized-stage", task.operation.diff);
+      } else if (task.operation.kind === "repair") {
+        const report = await diagnoseWorkspace(index, undefined, this.signal?.());
+        const diagnostics = report.diagnostics.filter(diagnostic => task.files.includes(diagnostic.file));
+        const exact = diagnostics.find(diagnostic => diagnostic.id === (task.operation.kind === "repair" ? task.operation.diagnosticId : undefined));
+        const actions = (exact ? [exact, ...diagnostics.filter(item => item !== exact)] : diagnostics)
+          .flatMap(diagnostic => diagnosticCodeActions(index, diagnostic));
+        proposal = actions.find(action => !taskState.proposals.includes(action.id) &&
+          action.diff.changes.every(change => task.files.includes(change.path)));
+        if (!proposal && this.reasoner) {
+          const diff = await this.reasoner.propose({ task, evidence: session.evidence, index,
+            failures: taskState.verification.length ? taskState.verification : session.baseline, signal: this.signal?.() });
+          if (diff) proposal = createChangeProposal(index, task.title, "quickfix", this.reasoner.id, diff,
+            ["Model-authored changes need behavior verification and authorized risk coverage."]);
+        }
+        if (!proposal) conflict = "No safe supported repair; additional provider or user input required";
       }
-      if (!proposal) conflict = "No safe supported repair; additional provider or user input required";
     }
     if (proposal) {
       const validation = validateChangeProposal(index, proposal);
       const authorization = authorizeProposal(session.goal, session.approval, task, proposal, index);
-      if (!validation.valid) conflict = validation.errors.join("; ");
-      if (authorization.length) conflict = authorization.join("; ");
-      if (taskState.proposals.includes(proposal.id)) conflict = "Repeated proposal made no progress";
+      const errors = [...(conflict ? [conflict] : []), ...validation.errors, ...authorization];
+      if (taskState.proposals.includes(proposal.id)) errors.push("Repeated proposal made no progress");
+      taskState.pendingProposal ??= { proposal: structuredClone(proposal) };
+      // Missing exact approval is resumable. Invalid source, identity, risk or
+      // scope is not: a new explicitly planned goal must replace this proposal.
+      const invalid = errors.filter(error => error !== `Review proposal ${proposal.id} before application`);
+      if (invalid.length) taskState.pendingProposal.invalidatedReason = invalid.join("; ");
+      conflict = errors.join("; ");
     }
     return {
       ...base, files: proposal?.diff.changes.map(change => change.path) ?? task.files,

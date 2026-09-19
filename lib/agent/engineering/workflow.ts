@@ -5,7 +5,7 @@ import { applyReviewedChange } from "../change-workflow";
 import { validateChangeProposal } from "../change-validator";
 import { snapshotId } from "@/lib/intelligence/change-proposal";
 import type { WorkspaceIndex } from "@/lib/intelligence/types";
-import { authorizeProposal } from "./governance";
+import { authorizeProposal, invalidatePendingProposals } from "./governance";
 import { evaluateEngineeringChecks } from "./verification";
 import type { EngineeringCheckRunner } from "./types";
 
@@ -28,7 +28,7 @@ export async function runEngineeringWorkflow(plan: Plan, context: AgentContext, 
   if (data.escalation) {
     session.escalation = data.escalation;
     if (taskState) {
-      taskState.status = data.escalation.includes("Review proposal") ? "awaiting_approval"
+      taskState.status = taskState.pendingProposal && !taskState.pendingProposal.invalidatedReason && data.escalation.includes("Review proposal") ? "awaiting_approval"
         : taskState.attempts > 0 ? "failed" : data.escalation.includes("No safe supported") ? "unsupported" : "deferred";
       taskState.reason = data.escalation;
     }
@@ -37,7 +37,8 @@ export async function runEngineeringWorkflow(plan: Plan, context: AgentContext, 
   options.signal?.throwIfAborted();
   const current = await dependencies.index();
   if (session.expectedSnapshot !== snapshotId(current)) {
-    session.escalation = "Workspace changed after planning; revalidate scope and evidence before resume";
+    session.escalation = "Workspace changed after planning; explicit replanning and review required";
+    invalidatePendingProposals(session, session.escalation);
     return engineeringWorkflowResult(context, false, session.escalation, [], [session.escalation]);
   }
   if (data.finalVerification) {
@@ -70,14 +71,25 @@ export async function runEngineeringWorkflow(plan: Plan, context: AgentContext, 
   let success = false;
   let files: string[] = [];
   if (data.proposal) {
-    const errors = [...authorizeProposal(session.goal, session.approval, taskState.task, data.proposal, current),
+    const pending = taskState.pendingProposal;
+    const errors = [
+      ...(!pending || pending.invalidatedReason || pending.proposal.id !== data.proposal.id
+        ? ["Execution must use the exact valid checkpointed proposal"] : []),
+      ...authorizeProposal(session.goal, session.approval, taskState.task, data.proposal, current),
       ...validateChangeProposal(current, data.proposal).errors];
     if (errors.length) {
       session.escalation = errors.join("; ");
+      invalidatePendingProposals(session, session.escalation);
       return engineeringWorkflowResult(context, false, session.escalation, [], errors);
     }
     taskState.proposals.push(data.proposal.id);
     const result = await applyReviewedChange(context.workspace, data.proposal, data.proposal.id, verify, options.signal);
+    // An attempted reviewed change is consumed. Existing bounded repair policy
+    // may plan a subsequent attempt; it needs its own proposal approval.
+    if (result.status === "rejected") {
+      session.escalation = result.errors.join("; ") || "Proposal rejected; explicit replanning required";
+      invalidatePendingProposals(session, session.escalation);
+    } else taskState.pendingProposal = undefined;
     taskState.journal = result.journal;
     success = result.status === "verified";
     if (success) files = data.proposal.diff.changes.map(change => change.path);

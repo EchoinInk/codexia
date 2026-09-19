@@ -87,6 +87,8 @@ export interface EngineeringTaskState {
   status: "pending" | "verified" | "failed" | "deferred" | "unsupported" | "awaiting_approval";
   attempts: number;
   proposals: string[];
+  /** Durable input to the reviewed workflow; never regenerated on approval resume. */
+  pendingProposal?: { proposal: ChangeProposal; invalidatedReason?: string };
   reason?: string;
   verification: EngineeringCheckResult[];
   journal?: string;
@@ -135,3 +137,24 @@ export interface EngineeringReasoner {
     failures: EngineeringCheckResult[]; signal?: AbortSignal }): Promise<DiffResult | undefined>;
 }
 export type EngineeringCheckRunner = (checks: EngineeringCheck[], workspace: string, signal?: AbortSignal) => Promise<EngineeringCheckResult[]>;
+
+/** Read-only projection of checkpoint state, never client-owned authority. */
+export interface EngineeringPendingProposal {
+  runtimeId: string;
+  taskId: string;
+  proposal: ChangeProposal;
+  /** ChangeProposal.id is its SHA-256 content digest, not a separate identity. */
+  digest: string;
+  workspace: string;
+  affectedPaths: string[];
+  risk: { task: EngineeringRisk; required: EngineeringRisk; allowed: EngineeringRisk };
+  scope: EngineeringGoal["scope"];
+  taskFiles: string[];
+  approval: { mode: EngineeringApproval["mode"]; goalDigest: string; proposalIds: string[] };
+  checks: EngineeringCheck[];
+  acceptance: EngineeringGoal["acceptance"];
+  constraints: string[];
+  obligations: string[];
+  status: "awaiting_approval";
+  reason: string;
+}

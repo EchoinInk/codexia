@@ -1,4 +1,26 @@
 import type { RuntimeResult } from "../runtime/types";
+import type { EngineeringPendingProposal } from "./types";
+import { goalDigest, proposalRisk } from "./governance";
+
+/** Project the authoritative pending proposal; never plan or reconstruct a diff. */
+function pendingProposal(result: RuntimeResult): EngineeringPendingProposal | undefined {
+  const session = result.context.engineering!;
+  if (result.state.status !== "paused" || session.complete || session.inFlight) return undefined;
+  const state = session.tasks.find(task => task.status === "awaiting_approval" &&
+    task.pendingProposal && !task.pendingProposal.invalidatedReason);
+  if (!state?.pendingProposal) return undefined;
+  const proposal = state.pendingProposal.proposal;
+  return structuredClone({
+    runtimeId: result.state.id, taskId: state.task.id, proposal, digest: proposal.id,
+    workspace: result.context.workspace, affectedPaths: proposal.diff.changes.map(change => change.path),
+    risk: { task: state.task.risk, required: proposalRisk(state.task, proposal), allowed: session.goal.scope.maxRisk },
+    scope: session.goal.scope, taskFiles: state.task.files,
+    approval: { mode: session.approval.mode, goalDigest: goalDigest(session.goal), proposalIds: [proposal.id] },
+    checks: session.goal.checks, acceptance: session.goal.acceptance,
+    constraints: session.goal.constraints, obligations: state.task.obligations,
+    status: "awaiting_approval", reason: session.escalation ?? state.reason ?? "Review exact proposal before application",
+  });
+}
 
 /** Reporter owns outcome interpretation; no execution or analysis occurs here. */
 export function createEngineeringReport(result: RuntimeResult) {
@@ -28,6 +50,7 @@ export function createEngineeringReport(result: RuntimeResult) {
     changes: result.context.filesModified, baseline: session.baseline, verification: session.finalChecks,
     audit: session.audit, advice: session.advice, review: session.review,
     checkpointId: result.checkpoint?.id,
+    pendingProposal: pendingProposal(result),
     limitations: ["Snapshot analysis excludes unindexed external consumers and unsaved buffers.",
       "Verified means the declared checks passed; it does not prove the absence of all defects.",
       ...(session.evidence?.providerErrors ?? [])] };
