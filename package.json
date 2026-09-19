@@ -13,7 +13,7 @@
     "clsx": "^2.1.1",
     "diff": "^7.0.0",
     "lucide-react": "^0.460.0",
-    "next": "^15.5.20",
+    "next": "^15.5.25",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-markdown": "^9.0.1",
@@ -28,8 +28,21 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.5.20",
-    "postcss": "^8.4.49",
+    "postcss": "^8.5.23",
     "tailwindcss": "^3.4.15",
     "typescript": "^5.6.3"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": {
+        "brace-expansion": "5.0.9"
+      }
+    },
+    "baseline-browser-mapping": "2.11.0",
+    "brace-expansion": "1.1.18",
+    "browserslist": "4.28.7",
+    "js-yaml": "4.3.2",
+    "nanoid": "3.3.18",
+    "sharp": "0.35.4"
   }
 }
