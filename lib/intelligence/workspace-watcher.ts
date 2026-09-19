@@ -15,14 +15,20 @@ export type WorkspaceWatchEventType =
   "rename" |
   "change";
 
-export interface WorkspaceWatchEvent {
-  workspace: string;
-
-  path: string;
+export interface WorkspaceWatchChange {
+  path?: string;
 
   type: WorkspaceWatchEventType;
 
+  ambiguous: boolean;
+
   occurredAt: number;
+}
+
+export interface WorkspaceWatchEvent {
+  workspace: string;
+
+  changes: WorkspaceWatchChange[];
 }
 
 export interface WorkspaceWatcherStatus {
@@ -54,6 +60,8 @@ interface WorkspaceWatcher {
   refreshTimer?: NodeJS.Timeout;
 
   invalidationTimer?: NodeJS.Timeout;
+
+  pendingChanges: Map<string, WorkspaceWatchChange>;
 }
 
 const watchers =
@@ -90,6 +98,8 @@ export async function startWorkspaceWatcher(
 
     startedAt:
       Date.now(),
+
+    pendingChanges: new Map(),
   };
 
   watchers.set(
@@ -129,6 +139,8 @@ export function stopWorkspaceWatcher(
       watcher.invalidationTimer
     );
   }
+
+  watcher.pendingChanges.clear();
 
   for (const fsWatcher of watcher.watchers.values()) {
     fsWatcher.close();
@@ -352,15 +364,44 @@ function handleWatchEvent(
           directory,
           filename.toString()
         )
-      : directory;
+      : undefined;
 
   if (
-    shouldIgnorePath(
-      relativePath
-    )
+    relativePath &&
+    shouldIgnorePath(relativePath)
   ) {
     return;
   }
+
+  const change: WorkspaceWatchChange = {
+    path: relativePath,
+
+    type:
+      type === "rename"
+        ? "rename"
+        : "change",
+
+    ambiguous:
+      relativePath === undefined,
+
+    occurredAt:
+      watcher.lastEventAt ?? Date.now(),
+  };
+
+  const key =
+    relativePath
+      ? `path:${relativePath}`
+      : `ambiguous:${change.type}`;
+
+  const previous =
+    watcher.pendingChanges.get(key);
+
+  watcher.pendingChanges.set(
+    key,
+    previous
+      ? mergeWatchChanges(previous, change)
+      : change
+  );
 
   if (watcher.invalidationTimer) {
     clearTimeout(
@@ -371,20 +412,22 @@ function handleWatchEvent(
   watcher.invalidationTimer =
     setTimeout(
       () => {
+        const changes =
+          coalesceWorkspaceWatchChanges(
+            [...watcher.pendingChanges.values()]
+          );
+
+        watcher.pendingChanges.clear();
+
+        if (!changes.length) {
+          return;
+        }
+
         watcher.onChange({
           workspace:
             watcher.workspace,
 
-          path:
-            relativePath,
-
-          type:
-            type === "rename"
-              ? "rename"
-              : "change",
-
-          occurredAt:
-            watcher.lastEventAt ?? Date.now(),
+          changes,
         });
       },
       WATCH_DEBOUNCE_MS
@@ -397,6 +440,79 @@ function handleWatchEvent(
       watcher
     );
   }
+
+}
+
+export function coalesceWorkspaceWatchChanges(
+  changes: WorkspaceWatchChange[]
+): WorkspaceWatchChange[] {
+  const retained = new Map<string, WorkspaceWatchChange>();
+
+  for (const change of changes) {
+    const key =
+      change.path
+        ? `path:${change.path}`
+        : `ambiguous:${change.type}`;
+    const previous = retained.get(key);
+
+    retained.set(
+      key,
+      previous
+        ? mergeWatchChanges(previous, change)
+        : change
+    );
+  }
+
+  return [...retained.values()].sort(compareWatchChanges);
+}
+
+function mergeWatchChanges(
+  previous: WorkspaceWatchChange,
+  next: WorkspaceWatchChange
+): WorkspaceWatchChange {
+  return {
+    path:
+      previous.path ?? next.path,
+
+    type:
+      watchTypeStrength(next.type) > watchTypeStrength(previous.type)
+        ? next.type
+        : previous.type,
+
+    ambiguous:
+      previous.ambiguous && next.ambiguous,
+
+    occurredAt:
+      Math.max(
+        previous.occurredAt,
+        next.occurredAt
+      ),
+  };
+}
+
+function watchTypeStrength(
+  type: WorkspaceWatchEventType
+): number {
+  return type === "rename" ? 2 : 1;
+}
+
+function compareWatchChanges(
+  left: WorkspaceWatchChange,
+  right: WorkspaceWatchChange
+): number {
+  if (!left.path && !right.path) {
+    return left.type.localeCompare(right.type);
+  }
+
+  if (!left.path) {
+    return -1;
+  }
+
+  if (!right.path) {
+    return 1;
+  }
+
+  return left.path.localeCompare(right.path);
 }
 
 function shouldIgnorePath(

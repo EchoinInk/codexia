@@ -10,6 +10,7 @@ import { FileTree } from "@/components/FileTree";
 import { FileViewer } from "@/components/FileViewer";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { Sidebar, View } from "@/components/Sidebar";
+import { WorkspaceIntelligence } from "@/components/WorkspaceIntelligence";
 
 const viewTitles: Record<View, { title: string; description: string }> = {
   chat: {
@@ -19,6 +20,10 @@ const viewTitles: Record<View, { title: string; description: string }> = {
   files: {
     title: "Workspace Files",
     description: "Browse and edit files in your active project.",
+  },
+  intelligence: {
+    title: "Workspace Intelligence",
+    description: "Inspect current, stale, incomplete, unavailable, and failed evidence.",
   },
   settings: {
     title: "Settings",
@@ -215,6 +220,10 @@ export default function Page() {
                 </section>
               </div>
             )}
+
+            <div className={view === "intelligence" ? "h-full" : "hidden"}>
+              <WorkspaceIntelligence active={view === "intelligence"} />
+            </div>
           </div>
         </div>
       </main>

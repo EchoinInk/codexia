@@ -1,12 +1,20 @@
 import type { ImpactAnalysis } from "@/lib/intelligence/impact-analysis";
 import type { WorkspaceWatchEventType } from "@/lib/intelligence/workspace-watcher";
 
-/** File-system change accepted by the Phase 5.3 event runtime. */
+export interface WorkspaceFileChangeInput {
+  path?: string;
+  type: WorkspaceWatchEventType;
+  ambiguous?: boolean;
+  occurredAt: number;
+}
+
+/** Coalesced file-system changes accepted by the event runtime. */
 export interface WorkspaceFileChangedInput {
   workspace: string;
-  path: string;
-  type: WorkspaceWatchEventType;
-  occurredAt: number;
+  changes?: WorkspaceFileChangeInput[];
+  path?: string;
+  type?: WorkspaceWatchEventType;
+  occurredAt?: number;
 }
 
 /** Stable event-system configuration. */
@@ -34,7 +42,7 @@ export interface WorkspaceEventSystemStatus {
 interface WorkspaceEventBase {
   id: string;
   workspace: string;
-  path: string;
+  changes: WorkspaceFileChangeInput[];
   sourceOccurredAt: number;
   timestamp: number;
 }
@@ -42,7 +50,6 @@ interface WorkspaceEventBase {
 /** Raw file-system change promoted into the agent event runtime. */
 export interface WorkspaceFileChangedEvent extends WorkspaceEventBase {
   type: "file_changed";
-  watchType: WorkspaceWatchEventType;
 }
 
 /** Notification that the event runtime accepted a change for agent processing. */

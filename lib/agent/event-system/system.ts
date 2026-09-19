@@ -12,6 +12,7 @@ import type {
   WorkspaceEventSystemConfiguration,
   WorkspaceEventSystemDependencies,
   WorkspaceEventSystemStatus,
+  WorkspaceFileChangeInput,
   WorkspaceFileChangedEvent,
   WorkspaceFileChangedInput,
 } from "./types";
@@ -55,13 +56,13 @@ export class WorkspaceEventSystem {
 
   /** Accepts a file change immediately and serialises reasoning per workspace. */
   notifyFileChanged(input: WorkspaceFileChangedInput): WorkspaceFileChangedEvent {
+    const changes = normaliseChanges(input);
     const event: WorkspaceFileChangedEvent = {
       id: randomUUID(),
       type: "file_changed",
       workspace: input.workspace,
-      path: input.path,
-      watchType: input.type,
-      sourceOccurredAt: input.occurredAt,
+      changes,
+      sourceOccurredAt: earliestOccurrence(changes),
       timestamp: Date.now(),
     };
 
@@ -136,9 +137,9 @@ export class WorkspaceEventSystem {
         id: randomUUID(),
         type: "agent_notified",
         workspace: source.workspace,
-        path: source.path,
+        changes: source.changes,
         sourceEventId: source.id,
-        sourceOccurredAt: source.sourceOccurredAt,
+        sourceOccurredAt: earliestOccurrence(source.changes),
         timestamp: Date.now(),
       });
 
@@ -146,29 +147,34 @@ export class WorkspaceEventSystem {
 
       const workspaceIndex = await dependencies.getWorkspaceIndex(source.workspace);
       const intelligence = createIntelligenceContext(workspaceIndex);
-      const impact = intelligence.analyseImpact([source.path]);
+      const paths = source.changes.flatMap(change =>
+        change.path ? [change.path] : []
+      );
+      const impact = intelligence.analyseImpact(paths);
 
       this.record({
         id: randomUUID(),
         type: "impact_analysed",
         workspace: source.workspace,
-        path: source.path,
+        changes: source.changes,
         sourceEventId: source.id,
-        sourceOccurredAt: source.sourceOccurredAt,
+        sourceOccurredAt: earliestOccurrence(source.changes),
         timestamp: Date.now(),
         impact,
       });
 
-      await recordWorkspaceFileChange(source.workspace, source.path);
+      for (const path of paths) {
+        await recordWorkspaceFileChange(source.workspace, path);
+      }
 
       const completedAt = Date.now();
       this.record({
         id: randomUUID(),
         type: "memory_updated",
         workspace: source.workspace,
-        path: source.path,
+        changes: source.changes,
         sourceEventId: source.id,
-        sourceOccurredAt: source.sourceOccurredAt,
+        sourceOccurredAt: earliestOccurrence(source.changes),
         timestamp: completedAt,
       });
 
@@ -187,19 +193,20 @@ export class WorkspaceEventSystem {
         id: randomUUID(),
         type: "event_failed",
         workspace: source.workspace,
-        path: source.path,
+        changes: source.changes,
         sourceEventId: source.id,
-        sourceOccurredAt: source.sourceOccurredAt,
+        sourceOccurredAt: earliestOccurrence(source.changes),
         timestamp: failedAt,
         error: message,
       });
 
       console.warn(
-        `Unable to process workspace event for "${source.path}": ${message}`
+        `Unable to process workspace event for "${source.workspace}": ${message}`
       );
     } finally {
       state.metrics.pending = Math.max(0, state.metrics.pending - 1);
     }
+
   }
 
   private getState(workspace: string): WorkspaceEventState {
@@ -229,6 +236,42 @@ export class WorkspaceEventSystem {
 
     this.events.emit(cloneEvent(event));
   }
+}
+
+function normaliseChanges(
+  input: WorkspaceFileChangedInput
+): WorkspaceFileChangeInput[] {
+  const changes =
+    input.changes ??
+    (
+      input.type &&
+      input.occurredAt !== undefined
+        ? [{
+            path: input.path,
+            type: input.type,
+            occurredAt: input.occurredAt,
+            ambiguous: input.path === undefined,
+          }]
+        : []
+    );
+
+  if (!changes.length) {
+    throw new Error("Workspace file change batch must not be empty");
+  }
+
+  return [...changes].sort((left, right) =>
+    (left.path ?? "").localeCompare(right.path ?? "") ||
+    left.type.localeCompare(right.type) ||
+    left.occurredAt - right.occurredAt
+  );
+}
+
+function earliestOccurrence(
+  changes: WorkspaceFileChangeInput[]
+): number {
+  return Math.min(
+    ...changes.map(change => change.occurredAt)
+  );
 }
 
 function cloneEvent<T extends WorkspaceAgentEvent>(event: T): T {

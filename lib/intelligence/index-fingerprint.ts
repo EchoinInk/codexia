@@ -231,7 +231,7 @@ export function compareFingerprints(
       currentDirectoryList
     );
 
-  for (const directory of currentDirectoryList) {
+  for (const directory of [...currentDirectoryList].sort()) {
     if (
       !previousDirectories.has(
         directory
@@ -261,6 +261,43 @@ export function compareFingerprints(
     }
   }
 
+  const changedFilePaths =
+    [
+      ...changed,
+      ...added,
+      ...removed,
+    ];
+
+  const affectedDirectories =
+    new Set<string>();
+
+  for (const file of changedFilePaths) {
+    let directory = pathDirectory(file);
+
+    while (directory) {
+      affectedDirectories.add(directory);
+      directory = pathDirectory(directory);
+    }
+  }
+
+  for (const directory of affectedDirectories) {
+    if (
+      previousDirectories.has(directory) &&
+      currentDirectories.has(directory)
+    ) {
+      changedDirectories.push(directory);
+    }
+  }
+
+  changed.sort();
+  added.sort();
+  removed.sort();
+  unchanged.sort();
+  changedDirectories.sort();
+  addedDirectories.sort();
+  removedDirectories.sort();
+  unchangedDirectories.sort();
+
   return {
     changed,
 
@@ -278,6 +315,15 @@ export function compareFingerprints(
 
     unchangedDirectories,
   };
+}
+
+function pathDirectory(
+  file: string
+): string {
+  const separator = file.lastIndexOf("/");
+  return separator > 0
+    ? file.slice(0, separator)
+    : "";
 }
 
 async function createFilesystemFileFingerprint(
