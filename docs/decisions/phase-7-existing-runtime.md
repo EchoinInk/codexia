@@ -1,6 +1,6 @@
 # Decision: Phase 7 adapts the existing Runtime
 
-Status: Implemented; user acceptance pending.
+Status: Complete — released in `v0.8.0`.
 
 The authoritative `codexia-sept.phase7.baseline.zip` contains an expanded six-milestone Phase 7 roadmap and the Phase 6.4 implementation. Its status labels were contradictory. The user's confirmation that lint/build passed and explicit request to implement Phase 7 supersede the stale focus/status labels. This change reconciles those labels; it does not treat attached documentation as new authorization for Phase 8.
 

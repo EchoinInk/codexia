@@ -1,8 +1,9 @@
 # Codexia Roadmap
 
-Updated from the verified `v0.8.5` release baseline
-(`5b6df9c568bcd781c11166c4b7285b592c196272`). Phase 8.5 is complete and was
-released in `v0.8.5`; Phase 8.6 is implemented with user acceptance pending.
+Updated from the verified `v0.8.6` release baseline
+(`efb93588111202f034dba879f93d59d154245c4e`). Phase 8.5 was released in
+`v0.8.5`; Phase 8.6 was released in `v0.8.6`; the numbered Phase 8 roadmap is
+complete and closed.
 
 ## Roadmap Status Philosophy
 
@@ -532,11 +533,15 @@ relevant Phase 8 capabilities depend on them:
 
 ---
 
-## 🚧 Phase 8 — Continuously Intelligent AI Workspace
+## ✅ Phase 8 — Continuously Intelligent AI Workspace
 
-Status: Ready to begin
+Status: Complete — released through `v0.8.6`
 
 **Starting baseline:** `v0.8.0` (`6793b0d`)
+
+**Final release:** `v0.8.6`
+
+**Final validated commit:** `efb93588111202f034dba879f93d59d154245c4e`
 
 Integrate the existing indexing, event, memory, and runtime foundations with
 Phase 6 intelligence and Phase 7 autonomous engineering into a continuously
@@ -559,9 +564,9 @@ must not introduce:
 - an integration-specific execution lifecycle
 - presentation state with authority over Runtime or Validator state
 
-### ⏳ 8.1 Live Workspace Intelligence
+### ✅ 8.1 Live Workspace Intelligence
 
-Status: Ready — not started
+Status: Complete — released in `v0.8.1`
 
 Goal:
 
@@ -605,7 +610,7 @@ Before live event-driven workspace intelligence is considered reliable:
 
 ### 8.2 Project Evolution and Learning
 
-Status: Future — not started
+Status: Complete — released in `v0.8.2`
 
 - Track project history across workspace revisions, architecture changes, findings, decisions, and engineering outcomes
 - Link decisions and findings to source evidence, affected workspace versions, plans, approvals, and verification results
@@ -617,7 +622,7 @@ Status: Future — not started
 
 ### 8.3 Engineering Insights and Prioritisation
 
-Status: Future — not started
+Status: Complete — released in `v0.8.3`
 
 - Aggregate architecture, dependency, diagnostic, activity, and verified outcome evidence into engineering insight views
 - Track trends, change hotspots, dependency risk, recurring failures, technical debt, and unresolved diagnostics over time
@@ -629,7 +634,7 @@ Status: Future — not started
 
 ### 8.4 Autonomous Maintenance and Continuous Engineering
 
-Status: Implemented — user acceptance pending
+Status: Complete — released in `v0.8.4`
 
 #### Prerequisite — B10 Queue Restart and Attempt-Budget Hardening
 
@@ -668,7 +673,7 @@ Status: Complete — released in `v0.8.5`
 
 ### 8.6 Platform and Integration Layer
 
-Status: Implemented — user acceptance pending
+Status: Complete — released in `v0.8.6`
 
 - Define provider-independent interfaces for IDE clients, tools, model providers, and workspace platform APIs
 - Extend existing model abstractions to support OpenAI, local models, and future providers without coupling Runtime to a provider
@@ -681,23 +686,35 @@ Status: Implemented — user acceptance pending
 
 ---
 
-## ⏳ Current Development Focus
+## ✅ Current Release State
 
-Current focus:
+Current milestone:
 
 **Phase 8.6 — Platform and Integration Layer**
 
-Status: Implemented — user acceptance pending
+Status: Complete — released in `v0.8.6`
 
-Starting baseline:
+Final validated release:
 
-`v0.8.5` (`5b6df9c568bcd781c11166c4b7285b592c196272`)
+`v0.8.6` (`efb93588111202f034dba879f93d59d154245c4e`)
+
+Validation:
+
+- Lint passed
+- TypeScript check passed
+- Tests passed: 160/160
+- Production build passed
+- Post-build TypeScript check passed
+- `git diff --check` passed
 
 Authority boundary:
 
 Provider-independent requests reuse Phase 7 governance and reporting, Phase 8.4
 B10 attempt budgets, and Phase 8.5 lifecycle projections. Integration
 capabilities never grant those authorities.
+
+Phase 8 is closed. No Phase 9 is defined; possible follow-on work is maintained
+without phase commitment in `docs/roadmap/future-capabilities.md`.
 
 ---
 
@@ -712,18 +729,18 @@ Phase 5  [████████████████████] 100%
 Phase 6  [████████████████████] 100%  
 Phase 7  [████████████████████] 100%
 
-Phase 8  [████████████████████] 100% — 8.6 implemented; acceptance pending
+Phase 8  [████████████████████] 100% — complete; released through `v0.8.6`
 
-- 8.1 Complete
-- 8.2 Complete
-- 8.3 Complete
-- 8.4 Complete
+- 8.1 Complete — released in `v0.8.1`
+- 8.2 Complete — released in `v0.8.2`
+- 8.3 Complete — released in `v0.8.3`
+- 8.4 Complete — released in `v0.8.4`
 - 8.5 Complete — released in `v0.8.5`
-- 8.6 Implemented — user acceptance pending
+- 8.6 Complete — released in `v0.8.6`
 
 ---
 
-## Phase 8 Implementation Order
+## Phase 8 Implementation Record
 
 1. **8.1 — Live Workspace Intelligence**
    - Resolve B11

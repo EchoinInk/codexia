@@ -3,6 +3,10 @@ A local, privacy‑first AI coding agent that behaves like a real engineer — p
 
 Codexia runs locally by default, understands your project structure, and edits files safely using explicit, diff‑first operations. External model providers are available only through explicitly configured, bounded adapters. No hidden rewrites. No surprises.
 
+Current release: **v0.8.6** — Phase 8.6 Platform and Integration Layer. The
+numbered Phase 8 roadmap is complete, with 160/160 tests passing at the validated
+release commit `efb93588111202f034dba879f93d59d154245c4e`.
+
 ---
 
 ## ✨ Features
@@ -125,12 +129,18 @@ This lets you evolve Codexia into the exact coding partner you want.
 
 ## 📣 Roadmap
 
-- Local image generation  
-- Multi‑project memory  
-- Workspace visualizer  
-- Plugin system  
-- Offline model switching  
-- Custom tool registry  
+Phases 8.1 through 8.6 are complete. The released platform now includes live
+workspace intelligence, project evolution memory, engineering insights,
+policy-controlled continuous engineering, workspace operations, and the
+versioned platform integration boundary.
+
+No Phase 9 has been defined. Future possibilities are tracked separately in
+[`docs/roadmap/future-capabilities.md`](docs/roadmap/future-capabilities.md),
+including transport-specific IDE protocols, deployment authentication, provider
+credential acquisition, remote configuration, a plugin ecosystem, workspace
+federation, and broader UI work. See [`CHANGELOG.md`](CHANGELOG.md) for release
+history and [`docs/roadmap/phases.md`](docs/roadmap/phases.md) for milestone
+details.
 
 ---
 
