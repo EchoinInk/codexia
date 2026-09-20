@@ -1,7 +1,8 @@
 # Codexia Roadmap
 
-Updated to reflect completion and release of Phase 7 at `v0.8.0`, and the
-Phase 8 continuously intelligent workspace roadmap.
+Updated from the verified `v0.8.5` release baseline
+(`5b6df9c568bcd781c11166c4b7285b592c196272`). Phase 8.5 is complete and was
+released in `v0.8.5`; Phase 8.6 is implemented with user acceptance pending.
 
 ## Roadmap Status Philosophy
 
@@ -655,7 +656,7 @@ Before recurring or event-triggered autonomous engineering is enabled:
 
 ### 8.5 Workspace Operations and Control Centre
 
-Status: Future — not started
+Status: Complete — released in `v0.8.5`
 
 - Provide a unified view of queued, active, paused, completed, failed, and cancelled work across authorised workspaces
 - Show task dependencies, progress, budgets, checkpoints, pending approvals, and verification evidence from existing lifecycle state
@@ -667,7 +668,7 @@ Status: Future — not started
 
 ### 8.6 Platform and Integration Layer
 
-Status: Future — not started
+Status: Implemented — user acceptance pending
 
 - Define provider-independent interfaces for IDE clients, tools, model providers, and workspace platform APIs
 - Extend existing model abstractions to support OpenAI, local models, and future providers without coupling Runtime to a provider
@@ -684,17 +685,19 @@ Status: Future — not started
 
 Current focus:
 
-**Phase 8.4 — Autonomous Maintenance and Continuous Engineering**
+**Phase 8.6 — Platform and Integration Layer**
 
 Status: Implemented — user acceptance pending
 
 Starting baseline:
 
-`v0.8.3` (`e7efc6022931c0f78792d90489fc15ac02da7620`)
+`v0.8.5` (`5b6df9c568bcd781c11166c4b7285b592c196272`)
 
-First implementation prerequisite:
+Authority boundary:
 
-**B10 — queue restart/attempt-budget hardening (resolved)**
+Provider-independent requests reuse Phase 7 governance and reporting, Phase 8.4
+B10 attempt budgets, and Phase 8.5 lifecycle projections. Integration
+capabilities never grant those authorities.
 
 ---
 
@@ -709,14 +712,14 @@ Phase 5  [████████████████████] 100%
 Phase 6  [████████████████████] 100%  
 Phase 7  [████████████████████] 100%
 
-Phase 8  [█████████████░░░░░░░] 67% — 8.4 implemented; acceptance pending
+Phase 8  [████████████████████] 100% — 8.6 implemented; acceptance pending
 
 - 8.1 Complete
 - 8.2 Complete
 - 8.3 Complete
-- 8.4 Implemented — user acceptance pending
-- 8.5 Future — not started
-- 8.6 Future — not started
+- 8.4 Complete
+- 8.5 Complete — released in `v0.8.5`
+- 8.6 Implemented — user acceptance pending
 
 ---
 
