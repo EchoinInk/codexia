@@ -1,7 +1,7 @@
 # Codexia  
 A local, privacy‑first AI coding agent that behaves like a real engineer — predictable, project‑aware, and fully under your control.
 
-Codexia runs entirely on your machine, understands your project structure, and edits files safely using explicit, diff‑first operations. No cloud calls. No hidden rewrites. No surprises.
+Codexia runs locally by default, understands your project structure, and edits files safely using explicit, diff‑first operations. External model providers are available only through explicitly configured, bounded adapters. No hidden rewrites. No surprises.
 
 ---
 
@@ -101,10 +101,10 @@ npm start        # Run production build
 
 Codexia is fully local:
 
-- No external API calls  
+- No external API calls by default
 - No telemetry  
-- No cloud inference  
-- Your code never leaves your machine
+- Local inference unless an external provider and bounded sharing policy are explicitly configured
+- Source, prompts, diagnostics, reports, and evidence stay private unless explicitly allowed
 
 ---
 
