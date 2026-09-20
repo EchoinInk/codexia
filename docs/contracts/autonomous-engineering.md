@@ -80,6 +80,12 @@ checkpoints without explicit pending state fail closed and require replanning.
 A consumed attempt may still use the existing bounded repair policy; any new
 proposal in proposal mode needs its own exact approval. Budgets are not reset.
 
+Phase 8.4 closes the remaining pre-execution crash window: the selected task's
+repair attempt is consumed before the Runtime saves its pre-Workflow checkpoint.
+Resume validates persisted attempt counters and fails closed on missing,
+negative, non-integer, or over-limit state. Approval renewal, pause/resume,
+proposal reuse, in-flight recovery, and queue re-entry cannot reduce that count.
+
 `start`, `status` and `resume` reports add an optional typed `pendingProposal`
 (`EngineeringPendingProposal`). It is present only for a paused runtime with a
 valid, unconsumed task awaiting proposal approval, and has this JSON shape:

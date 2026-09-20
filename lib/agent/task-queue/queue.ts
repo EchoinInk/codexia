@@ -69,19 +69,25 @@ export class TaskQueue {
       return;
     }
 
-    const snapshot = await this.store.load();
-    if (snapshot?.version === 1) {
+    const loaded = await this.store.load();
+    const snapshot = loaded ? normaliseSnapshot(loaded) : undefined;
+    if (snapshot) {
       for (const persisted of snapshot.tasks) {
-        const task =
-          persisted.status === "running"
-            ? {
-                ...persisted,
-                status: "queued" as const,
-                startedAt: undefined,
-                completedAt: undefined,
-                updatedAt: Date.now(),
-              }
-            : persisted;
+        const interrupted = persisted.status === "running";
+        const exhausted = persisted.attemptBudget.consumed >= persisted.attemptBudget.limit;
+        const task = interrupted
+          ? {
+              ...persisted,
+              status: (exhausted ? "failed" : "queued") as "failed" | "queued",
+              startedAt: undefined,
+              completedAt: exhausted ? Date.now() : undefined,
+              updatedAt: Date.now(),
+              error: exhausted ? {
+                name: "AttemptBudgetExhausted",
+                message: "Interrupted task exhausted its durable attempt budget before restart",
+              } : persisted.error,
+            }
+          : persisted;
         this.tasks.set(task.id, task);
       }
       this.recalculateMetrics(snapshot.metrics.retries);
@@ -117,6 +123,10 @@ export class TaskQueue {
         input.maxAttempts,
         this.configuration.defaultMaxAttempts
       ),
+      attemptBudget: {
+        limit: normaliseAttempts(input.maxAttempts, this.configuration.defaultMaxAttempts),
+        consumed: 0,
+      },
       queuedAt: now,
       updatedAt: now,
     };
@@ -225,11 +235,15 @@ export class TaskQueue {
 
   private nextQueuedTask(): TaskQueueTask | undefined {
     return [...this.tasks.values()]
-      .filter(task => task.status === "queued")
+      .filter(task => task.status === "queued" && !this.active.has(task.id))
       .sort(compareTasks)[0];
   }
 
   private async runTask(task: TaskQueueTask): Promise<void> {
+    if (this.active.has(task.id) || task.attemptBudget.consumed >= task.attemptBudget.limit) {
+      if (!this.active.has(task.id)) await this.failExhausted(task);
+      return;
+    }
     const controller = new AbortController();
     this.active.set(task.id, { controller });
 
@@ -237,19 +251,31 @@ export class TaskQueue {
     let running: TaskQueueTask = {
       ...task,
       status: "running",
-      attempt: task.attempt + 1,
+      attempt: task.attemptBudget.consumed + 1,
+      attemptBudget: {
+        ...task.attemptBudget,
+        consumed: task.attemptBudget.consumed + 1,
+        lastConsumedAt: now,
+      },
       startedAt: now,
       completedAt: undefined,
       updatedAt: now,
       output: undefined,
       error: undefined,
     };
+    // Persist the consumed claim before publishing "running" or dispatching
+    // the handler. The active map is the in-process claim lock while the
+    // atomic store write is pending.
+    await this.persist(running);
     this.tasks.set(task.id, running);
     this.recalculateMetrics();
-    await this.persist();
     this.events.emit({ type: "task_started", task: clone(running), timestamp: now });
 
     try {
+      if (controller.signal.aborted) {
+        await this.finishCancelled(running);
+        return;
+      }
       const handler = this.handlers[running.type];
       const output = await handler(running, {
         workspace: this.workspace,
@@ -284,7 +310,7 @@ export class TaskQueue {
       }
 
       const taskError = serialiseError(error);
-      if (running.attempt < running.maxAttempts) {
+      if (running.attemptBudget.consumed < running.attemptBudget.limit) {
         const retryAt = Date.now();
         running = {
           ...running,
@@ -352,6 +378,16 @@ export class TaskQueue {
     });
   }
 
+  private async failExhausted(task: TaskQueueTask): Promise<void> {
+    const failedAt = Date.now();
+    const failed: TaskQueueTask = { ...task, status: "failed", updatedAt: failedAt,
+      completedAt: failedAt, error: { name: "AttemptBudgetExhausted", message: "Durable attempt budget exhausted" } };
+    this.tasks.set(task.id, failed);
+    this.recalculateMetrics();
+    await this.persist();
+    this.events.emit({ type: "task_failed", task: clone(failed), timestamp: failedAt });
+  }
+
   private recalculateMetrics(retries = this.metrics.retries): void {
     const metrics: TaskQueueMetrics = {
       ...INITIAL_METRICS,
@@ -365,14 +401,17 @@ export class TaskQueue {
     this.metrics = metrics;
   }
 
-  private async persist(): Promise<void> {
-    const snapshot: TaskQueueSnapshot = {
-      version: 1,
-      tasks: [...this.tasks.values()].map(clone),
-      metrics: { ...this.metrics },
-    };
-
-    const save = this.persistChain.then(() => this.store.save(snapshot));
+  private async persist(replacement?: TaskQueueTask): Promise<void> {
+    const save = this.persistChain.then(() => {
+      const tasks = [...this.tasks.values()].map(task =>
+        clone(replacement?.id === task.id ? replacement : task)
+      );
+      const metrics = replacement
+        ? metricsFor(tasks, this.metrics.retries)
+        : { ...this.metrics };
+      const snapshot: TaskQueueSnapshot = { version: 2, tasks, metrics };
+      return this.store.save(snapshot);
+    });
     this.persistChain = save.catch(() => undefined);
     await save;
   }
@@ -388,6 +427,34 @@ export class TaskQueue {
     this.drainEmitted = true;
     this.events.emit({ type: "queue_drained", timestamp: Date.now() });
   }
+}
+
+function metricsFor(tasks: TaskQueueTask[], retries: number): TaskQueueMetrics {
+  const metrics: TaskQueueMetrics = { ...INITIAL_METRICS, retries };
+  for (const task of tasks) metrics[task.status] += 1;
+  return metrics;
+}
+
+function normaliseSnapshot(snapshot: Awaited<ReturnType<TaskQueueStore["load"]>>): TaskQueueSnapshot {
+  if (!snapshot || (snapshot.version !== 1 && snapshot.version !== 2) || !Array.isArray(snapshot.tasks)) {
+    throw new Error("Corrupt task queue snapshot: unsupported or incomplete state");
+  }
+  const tasks = snapshot.tasks.map(raw => {
+    if (!raw || !Number.isInteger(raw.attempt) || raw.attempt < 0 ||
+      !Number.isInteger(raw.maxAttempts) || raw.maxAttempts < 1 || raw.attempt > raw.maxAttempts) {
+      throw new Error("Corrupt task queue snapshot: attempt budget evidence is incomplete");
+    }
+    const evidence = "attemptBudget" in raw ? raw.attemptBudget : {
+      limit: raw.maxAttempts, consumed: raw.attempt,
+    };
+    if (!evidence || !Number.isInteger(evidence.limit) || !Number.isInteger(evidence.consumed) ||
+      evidence.limit !== raw.maxAttempts || evidence.consumed !== raw.attempt ||
+      evidence.consumed < 0 || evidence.consumed > evidence.limit) {
+      throw new Error("Corrupt task queue snapshot: non-monotonic attempt budget evidence");
+    }
+    return { ...raw, attemptBudget: { ...evidence } } as TaskQueueTask;
+  });
+  return { version: 2, tasks, metrics: { ...snapshot.metrics } };
 }
 
 function compareTasks(left: TaskQueueTask, right: TaskQueueTask): number {

@@ -105,7 +105,19 @@ export function createEngineeringRuntime(workspace: string, options: Engineering
       prepareWorkflow: async (plan, context) => {
         const session = context.engineering!;
         const data = plan.engineering!;
-        if (data.proposal && !data.escalation) session.inFlight = { taskId: data.taskId!, proposalId: data.proposal.id };
+        if (data.taskId && !data.escalation && !data.finalVerification) {
+          const task = session.tasks.find(candidate => candidate.task.id === data.taskId);
+          if (!task) throw new Error("Engineering task missing while consuming repair budget");
+          if (task.attempts >= session.goal.budgets.maxRepairAttempts) {
+            throw new Error("Repair budget exhausted before execution");
+          }
+          // B10: consume authority before the Runtime's durable pre-execution
+          // checkpoint. A crash after this point can never recreate the attempt.
+          task.attempts += 1;
+          if (data.proposal) session.inFlight = { taskId: data.taskId, proposalId: data.proposal.id };
+          session.audit.push({ at: Date.now(), type: "attempt_consumed", taskId: data.taskId,
+            proposalId: data.proposal?.id, detail: `${task.attempts}/${session.goal.budgets.maxRepairAttempts}` });
+        }
         session.audit.push({ at: Date.now(), type: "plan", taskId: data.taskId, proposalId: data.proposal?.id,
           snapshot: session.evidence?.snapshot, provider: data.proposal?.origin ?? "engineering-planner",
           detail: JSON.stringify({ constraints: data.constraints, evidence: data.evidenceIds, escalation: data.escalation }) });
@@ -193,6 +205,7 @@ export function createEngineeringRuntime(workspace: string, options: Engineering
       if (!checkpoint?.context.engineering || path.resolve(checkpoint.context.workspace) !== root) throw new Error("Engineering checkpoint not found for workspace");
       const session = checkpoint.context.engineering;
       validateEngineeringGoal(session.goal);
+      validatePersistedAttemptBudgets(session);
       if (session.tasks.some(task => task.status === "awaiting_approval" && !task.pendingProposal)) {
         throw new Error("Pending proposal missing; explicit replanning required");
       }
@@ -229,4 +242,14 @@ export function createEngineeringRuntime(workspace: string, options: Engineering
     subscribe(listener: RuntimeEventListener) { listeners.add(listener); return () => { listeners.delete(listener); }; },
     checkpoint: (id: string) => store.loadLatest(id),
   };
+}
+
+function validatePersistedAttemptBudgets(session: AgentContext["engineering"]): void {
+  if (!session || !Array.isArray(session.tasks)) throw new Error("Persisted engineering budget state is incomplete");
+  for (const state of session.tasks) {
+    if (!Number.isInteger(state.attempts) || state.attempts < 0 ||
+      state.attempts > session.goal.budgets.maxRepairAttempts) {
+      throw new Error("Persisted engineering repair budget is corrupt; recovery fails closed");
+    }
+  }
 }

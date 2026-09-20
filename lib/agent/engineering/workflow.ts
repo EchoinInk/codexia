@@ -60,7 +60,6 @@ export async function runEngineeringWorkflow(plan: Plan, context: AgentContext, 
   const required = new Set([...(taskState.task.checkIds ?? session.goal.checks.map(check => check.id)), ...session.goal.compatibilityChecks]);
   const checks = session.goal.checks.filter(check => required.has(check.id));
   if (!checks.length) throw new Error("A change batch must have verification requirements");
-  taskState.attempts++;
   let checkErrors: string[] = [];
   const verify = async () => {
     taskState.verification = await dependencies.checks(checks, context.workspace, options.signal);

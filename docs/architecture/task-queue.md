@@ -70,6 +70,8 @@ Writes use atomic file replacement.
 
 If Codexia restarts while a task is running, that task is recovered as queued work and may continue within its remaining attempt budget.
 
+Phase 8.4 queue schema 2 makes that remaining budget explicit and monotonic. A started attempt is consumed before handler dispatch. Recovery validates the persisted limit and consumed count; complete legacy counters migrate, while missing/corrupt evidence fails closed. Interrupted work is re-queued only when a persisted attempt remains. Work that consumed its final attempt is recovered as failed, never as fresh queued authority.
+
 ## Cancellation
 
 Queued tasks can be cancelled before execution.

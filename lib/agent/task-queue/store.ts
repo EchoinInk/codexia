@@ -2,13 +2,13 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { TaskQueueSnapshot, TaskQueueStore } from "./types";
+import type { LegacyTaskQueueSnapshot, TaskQueueSnapshot, TaskQueueStore } from "./types";
 
 /** In-process store useful for tests and embedded queue instances. */
 export class InMemoryTaskQueueStore implements TaskQueueStore {
   private snapshot?: TaskQueueSnapshot;
 
-  async load(): Promise<TaskQueueSnapshot | undefined> {
+  async load(): Promise<TaskQueueSnapshot | LegacyTaskQueueSnapshot | undefined> {
     return this.snapshot ? structuredClone(this.snapshot) : undefined;
   }
 
@@ -25,10 +25,10 @@ export class FileTaskQueueStore implements TaskQueueStore {
     this.filePath = path.resolve(workspace, file);
   }
 
-  async load(): Promise<TaskQueueSnapshot | undefined> {
+  async load(): Promise<TaskQueueSnapshot | LegacyTaskQueueSnapshot | undefined> {
     try {
       const content = await readFile(this.filePath, "utf8");
-      return JSON.parse(content) as TaskQueueSnapshot;
+      return JSON.parse(content) as TaskQueueSnapshot | LegacyTaskQueueSnapshot;
     } catch (error) {
       if (isMissingFile(error)) {
         return undefined;

@@ -15,6 +15,7 @@ import {
   XCircle,
 } from "lucide-react";
 import clsx from "clsx";
+import { ContinuousEngineering } from "./ContinuousEngineering";
 
 type IntelligenceStatus =
   | "current"
@@ -338,6 +339,7 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
 
         {snapshot && copy && (
           <>
+            <ContinuousEngineering active={active} />
             <section className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
               <div className={clsx("rounded-2xl p-5 ring-1", copy.className)}>
                 <div className="flex items-start gap-3">

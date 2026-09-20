@@ -50,6 +50,12 @@ export interface TaskQueueTask {
   metadata?: Record<string, unknown>;
   attempt: number;
   maxAttempts: number;
+  /** Durable monotonic attempt evidence. A started attempt is consumed before dispatch. */
+  attemptBudget: {
+    limit: number;
+    consumed: number;
+    lastConsumedAt?: number;
+  };
   queuedAt: number;
   updatedAt: number;
   startedAt?: number;
@@ -104,13 +110,20 @@ export type TaskQueueHandlers = Record<TaskQueueTaskType, TaskQueueHandler>;
 
 /** Persisted queue state used to recover pending work after restart. */
 export interface TaskQueueSnapshot {
-  version: 1;
+  version: 2;
   tasks: TaskQueueTask[];
+  metrics: TaskQueueMetrics;
+}
+
+/** Phase 5 snapshots can be migrated only when their counters are complete. */
+export interface LegacyTaskQueueSnapshot {
+  version: 1;
+  tasks: Array<Omit<TaskQueueTask, "attemptBudget">>;
   metrics: TaskQueueMetrics;
 }
 
 /** Persistence boundary for queued work. */
 export interface TaskQueueStore {
-  load(): Promise<TaskQueueSnapshot | undefined>;
+  load(): Promise<TaskQueueSnapshot | LegacyTaskQueueSnapshot | undefined>;
   save(snapshot: TaskQueueSnapshot): Promise<void>;
 }
