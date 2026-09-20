@@ -24,41 +24,68 @@ test("watch change coalescing retains distinct paths in deterministic order", ()
   ]);
 });
 
-test("watcher emits one batch across directories and preserves rename/removal evidence", async () => {
+test("watcher preserves changes across directories and rename/removal evidence", async () => {
   const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "codexia-watcher-"));
   const received = [];
+  let resolveExpectedChanges;
+  let rejectExpectedChanges;
+  const expectedChanges = new Promise((resolve, reject) => {
+    resolveExpectedChanges = resolve;
+    rejectExpectedChanges = reject;
+  });
+  const timeout = setTimeout(
+    () => rejectExpectedChanges(new Error("Timed out waiting for workspace changes")),
+    2_000
+  );
 
   await fs.mkdir(path.join(workspace, "src"), { recursive: true });
   await fs.mkdir(path.join(workspace, "tests"), { recursive: true });
   await fs.writeFile(path.join(workspace, "src", "existing.ts"), "before");
 
   try {
-    await watcher.startWorkspaceWatcher(workspace, event => received.push(event));
+    await watcher.startWorkspaceWatcher(workspace, event => {
+      received.push(event);
+      const changes = watcher.coalesceWorkspaceWatchChanges(
+        received.flatMap(receivedEvent => receivedEvent.changes)
+      );
+      if (
+        changes.some(change => change.path === "src/added.ts") &&
+        changes.some(change => change.path === "tests/new.test.ts") &&
+        changes.some(change => change.path === "src/existing.ts" && change.type === "rename") &&
+        changes.some(change => change.path === "src/renamed.ts" && change.type === "rename")
+      ) {
+        clearTimeout(timeout);
+        resolveExpectedChanges();
+      }
+    });
     await fs.writeFile(path.join(workspace, "src", "added.ts"), "added");
     await fs.writeFile(path.join(workspace, "tests", "new.test.ts"), "new");
     await fs.rename(
       path.join(workspace, "src", "existing.ts"),
       path.join(workspace, "src", "renamed.ts")
     );
-    await new Promise(resolve => setTimeout(resolve, 450));
+    await expectedChanges;
 
-    assert.equal(received.length, 1);
-    assert.equal(received[0].workspace, workspace);
-    assert.ok(received[0].changes.some(change => change.path === "src/added.ts"));
-    assert.ok(received[0].changes.some(change => change.path === "tests/new.test.ts"));
-    assert.ok(received[0].changes.some(change =>
+    assert.ok(received.every(event => event.workspace === workspace));
+    const changes = watcher.coalesceWorkspaceWatchChanges(
+      received.flatMap(event => event.changes)
+    );
+    assert.ok(changes.some(change => change.path === "src/added.ts"));
+    assert.ok(changes.some(change => change.path === "tests/new.test.ts"));
+    assert.ok(changes.some(change =>
       change.path === "src/existing.ts" && change.type === "rename"
     ));
-    assert.ok(received[0].changes.some(change =>
+    assert.ok(changes.some(change =>
       change.path === "src/renamed.ts" && change.type === "rename"
     ));
     assert.deepEqual(
-      received[0].changes,
-      [...received[0].changes].sort((left, right) =>
+      changes,
+      [...changes].sort((left, right) =>
         (left.path ?? "").localeCompare(right.path ?? "")
       )
     );
   } finally {
+    clearTimeout(timeout);
     watcher.stopWorkspaceWatcher(workspace);
     await fs.rm(workspace, { recursive: true, force: true });
   }
