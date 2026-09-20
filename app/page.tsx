@@ -11,6 +11,7 @@ import { FileViewer } from "@/components/FileViewer";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { Sidebar, View } from "@/components/Sidebar";
 import { WorkspaceIntelligence } from "@/components/WorkspaceIntelligence";
+import { WorkspaceOperations } from "@/components/WorkspaceOperations";
 
 const viewTitles: Record<View, { title: string; description: string }> = {
   chat: {
@@ -24,6 +25,10 @@ const viewTitles: Record<View, { title: string; description: string }> = {
   intelligence: {
     title: "Workspace Intelligence",
     description: "Inspect current, stale, incomplete, unavailable, and failed evidence.",
+  },
+  operations: {
+    title: "Control Centre",
+    description: "Coordinate lifecycle, recovery, evidence, and resources across authorized workspaces.",
   },
   settings: {
     title: "Settings",
@@ -223,6 +228,9 @@ export default function Page() {
 
             <div className={view === "intelligence" ? "h-full" : "hidden"}>
               <WorkspaceIntelligence active={view === "intelligence"} />
+            </div>
+            <div className={view === "operations" ? "h-full" : "hidden"}>
+              <WorkspaceOperations active={view === "operations"} />
             </div>
           </div>
         </div>
