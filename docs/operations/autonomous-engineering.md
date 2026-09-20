@@ -66,6 +66,12 @@ After a crash, inspect `.codexia/runtime/checkpoints/` and `.codexia/changes/`. 
 
 Checkpoints/journals contain source and local verification output. Keep them within the workspace's access boundary. There is no distributed lock across separate application processes; do not run overlapping engineering jobs against one workspace from independent hosts.
 
+## Continuous maintenance
+
+Use the Workspace Intelligence panel to enable the fixed low-risk maintenance policy. The controller evaluates current evidence once, admits at most one task, and continues from queue terminal events. Pause stops further admission while allowing an already-running bounded Runtime operation to reach its normal safe boundary. Cancel aborts the current queue task and disables the controller. Inspect eligibility decisions, stop reason, last outcome, and consumed/limit counters before resuming.
+
+Do not edit `.codexia/runtime/task-queue.json` or `continuous-engineering.json`. Invalid or incomplete budget/control state fails closed. A failed or exhausted operation requires a new explicitly authorized goal; restart, approval renewal, or queue re-entry is not a budget reset.
+
 ## Performance/security integrations
 
 Register an `EngineeringFindingProvider` with evidence provenance and a check runner that returns actual measurements/security-check results. Use the same named check and metric at baseline and after changes. The default built-in runner covers typecheck/tests/lint/build; it deliberately fails unsupported benchmark/security checks. Failure to load a scanner is not evidence that code is secure.

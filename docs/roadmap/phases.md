@@ -520,9 +520,9 @@ relevant Phase 8 capabilities depend on them:
   changed, added, removed, and otherwise relevant files.
 - Debouncing must not turn a known file-change event into an ambiguous generic refresh.
 
-**B10 — Queue restart and attempt-budget handling**
+**B10 — Queue restart and attempt-budget handling — COMPLETE (Phase 8.4)**
 
-- Carried into Phase 8.4.
+- Resolved in Phase 8.4 with durable monotonic queue and engineering repair-attempt consumption.
 - Resolve before autonomous/background continuous engineering is enabled.
 - Queue restart and recovery must preserve consumed attempt/retry budgets.
 - Restart or resume must not silently reset bounded execution authority.
@@ -628,7 +628,7 @@ Status: Future — not started
 
 ### 8.4 Autonomous Maintenance and Continuous Engineering
 
-Status: Future — not started
+Status: Implemented — user acceptance pending
 
 #### Prerequisite — B10 Queue Restart and Attempt-Budget Hardening
 
@@ -684,17 +684,17 @@ Status: Future — not started
 
 Current focus:
 
-**Phase 8.1 — Live Workspace Intelligence**
+**Phase 8.4 — Autonomous Maintenance and Continuous Engineering**
 
-Status: Ready to begin
+Status: Implemented — user acceptance pending
 
 Starting baseline:
 
-`v0.8.0` (`6793b0d`)
+`v0.8.3` (`e7efc6022931c0f78792d90489fc15ac02da7620`)
 
 First implementation prerequisite:
 
-**B11 — watcher debounce/change-identity hardening**
+**B10 — queue restart/attempt-budget hardening (resolved)**
 
 ---
 
@@ -709,12 +709,12 @@ Phase 5  [████████████████████] 100%
 Phase 6  [████████████████████] 100%  
 Phase 7  [████████████████████] 100%
 
-Phase 8  [░░░░░░░░░░░░░░░░░░░] 0% — Ready to begin
+Phase 8  [█████████████░░░░░░░] 67% — 8.4 implemented; acceptance pending
 
-- 8.1 Ready — not started
-- 8.2 Future — not started
-- 8.3 Future — not started
-- 8.4 Future — not started
+- 8.1 Complete
+- 8.2 Complete
+- 8.3 Complete
+- 8.4 Implemented — user acceptance pending
 - 8.5 Future — not started
 - 8.6 Future — not started
 
