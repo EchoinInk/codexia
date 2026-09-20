@@ -5,11 +5,12 @@ import {
   Settings,
   Sparkles,
   Activity,
+  PanelsTopLeft,
   type LucideIcon,
 } from "lucide-react";
 import clsx from "clsx";
 
-export type View = "chat" | "files" | "intelligence" | "settings";
+export type View = "chat" | "files" | "intelligence" | "operations" | "settings";
 
 export function Sidebar({
   view,
@@ -32,6 +33,7 @@ export function Sidebar({
         { id: "chat", icon: MessageSquare, label: "Chat" },
         { id: "files", icon: Folder, label: "Files" },
         { id: "intelligence", icon: Activity, label: "Intelligence" },
+        { id: "operations", icon: PanelsTopLeft, label: "Control Centre" },
       ],
     },
     {
