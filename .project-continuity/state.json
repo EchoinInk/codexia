@@ -1,0 +1,245 @@
+{
+  "edges": [
+    {
+      "created_at": "2026-09-21T06:17:08.655259Z",
+      "from": "project:codexia",
+      "to": "phase:8",
+      "type": "contains"
+    },
+    {
+      "created_at": "2026-09-21T06:17:08.696581Z",
+      "from": "phase:8",
+      "to": "milestone:8.6",
+      "type": "contains"
+    },
+    {
+      "created_at": "2026-09-21T06:17:08.742533Z",
+      "from": "phase:8",
+      "to": "decision:runtime-authority",
+      "type": "decided_by"
+    },
+    {
+      "created_at": "2026-09-21T06:17:08.789273Z",
+      "from": "milestone:8.6",
+      "to": "decision:platform-boundary",
+      "type": "decided_by"
+    },
+    {
+      "created_at": "2026-09-21T06:17:08.835344Z",
+      "from": "phase:8",
+      "to": "commit:efb9358",
+      "type": "verified_by"
+    },
+    {
+      "created_at": "2026-09-21T06:17:08.886743Z",
+      "from": "project:codexia",
+      "to": "commit:d218b5c",
+      "type": "changes"
+    },
+    {
+      "created_at": "2026-09-21T06:17:08.932084Z",
+      "from": "test:current-suite",
+      "to": "finding:watcher-test-timeout",
+      "type": "relates_to"
+    },
+    {
+      "created_at": "2026-09-21T06:17:08.976470Z",
+      "from": "finding:watcher-test-timeout",
+      "to": "source:roadmap",
+      "type": "conflicts_with"
+    },
+    {
+      "created_at": "2026-09-21T06:17:56.923431Z",
+      "from": "phase:8",
+      "to": "test:typescript",
+      "type": "verified_by"
+    },
+    {
+      "created_at": "2026-09-21T06:17:56.970002Z",
+      "from": "phase:8",
+      "to": "test:production-build",
+      "type": "verified_by"
+    },
+    {
+      "created_at": "2026-09-21T06:17:57.015128Z",
+      "from": "test:workspace-watcher",
+      "to": "finding:watcher-test-timeout",
+      "type": "relates_to"
+    }
+  ],
+  "meta": {
+    "created_at": "2026-09-21T06:15:49.414775Z",
+    "schema_version": "1.0",
+    "updated_at": "2026-09-21T06:17:57.015240Z"
+  },
+  "nodes": {
+    "commit:d218b5c": {
+      "branch": "main",
+      "id": "commit:d218b5c",
+      "sha": "d218b5c",
+      "subject": "docs: close Phase 8 and update v0.8.6 release documentation",
+      "title": "Current main documentation closure commit",
+      "truth": "observed",
+      "type": "commit",
+      "updated_at": "2026-09-21T06:17:08.525742Z"
+    },
+    "commit:efb9358": {
+      "id": "commit:efb9358",
+      "sha": "efb93588111202f034dba879f93d59d154245c4e",
+      "subject": "test: synchronize workspace watcher assertions",
+      "tag": "v0.8.6",
+      "title": "v0.8.6 validated implementation commit",
+      "truth": "observed",
+      "type": "commit",
+      "updated_at": "2026-09-21T06:17:08.476042Z"
+    },
+    "decision:platform-boundary": {
+      "id": "decision:platform-boundary",
+      "invariants": [
+        "Contract 1.0 only",
+        "Workspace-scoped and local-first",
+        "No direct filesystem or Executor adapter",
+        "Integration requests do not grant approval, mutation, verification, retry-budget, Reporter, lifecycle, or queue authority"
+      ],
+      "source": "docs/architecture/platform-integration.md",
+      "status": "accepted",
+      "title": "Platform integration is an adapter boundary",
+      "truth": "declared",
+      "type": "decision",
+      "updated_at": "2026-09-21T06:17:08.433276Z"
+    },
+    "decision:runtime-authority": {
+      "id": "decision:runtime-authority",
+      "invariants": [
+        "Intelligence owns workspace understanding",
+        "Planner authors executable plans",
+        "Workflow and Executor remain the workspace action path",
+        "Validator confirms correctness",
+        "Runtime owns continuation",
+        "Reporter owns outcomes"
+      ],
+      "source": "docs/decisions/phase-7-existing-runtime.md",
+      "status": "accepted",
+      "title": "Existing runtime authority boundary",
+      "truth": "declared",
+      "type": "decision",
+      "updated_at": "2026-09-21T06:17:08.389874Z"
+    },
+    "finding:watcher-test-timeout": {
+      "affected": "tests/workspace-watcher.test.cjs",
+      "classification": "evidence-gap",
+      "detail": "The full suite and isolated watcher suite both record 2-second timeouts in the cross-directory rename/removal test. Current full run: 159/160 pass; isolated run: 2/3 pass. This conflicts with the release declaration of 160/160 passing at efb9358.",
+      "id": "finding:watcher-test-timeout",
+      "severity": "medium",
+      "status": "partial",
+      "title": "Current watcher test does not reproduce release pass",
+      "truth": "observed",
+      "type": "finding",
+      "updated_at": "2026-09-21T06:17:56.878131Z"
+    },
+    "milestone:8.6": {
+      "id": "milestone:8.6",
+      "release": "v0.8.6",
+      "source": "docs/roadmap/phases.md",
+      "status": "complete",
+      "title": "Phase 8.6 \u2014 Platform and Integration Layer",
+      "truth": "declared",
+      "type": "milestone",
+      "updated_at": "2026-09-21T06:17:08.347393Z"
+    },
+    "phase:8": {
+      "id": "phase:8",
+      "release": "v0.8.6",
+      "source": "docs/roadmap/phases.md",
+      "status": "complete",
+      "title": "Phase 8 \u2014 Continuously Intelligent AI Workspace",
+      "truth": "declared",
+      "type": "phase",
+      "updated_at": "2026-09-21T06:17:08.304252Z",
+      "validated_commit": "efb93588111202f034dba879f93d59d154245c4e"
+    },
+    "project:codexia": {
+      "id": "project:codexia",
+      "repository_roots": [
+        "."
+      ],
+      "title": "codexia",
+      "truth": "observed",
+      "type": "project"
+    },
+    "source:changelog": {
+      "id": "source:changelog",
+      "path": "CHANGELOG.md",
+      "release": "v0.8.6",
+      "title": "v0.8.6 changelog",
+      "truth": "declared",
+      "type": "source",
+      "updated_at": "2026-09-21T06:17:08.261732Z"
+    },
+    "source:readme": {
+      "claimed_tests": "160/160",
+      "id": "source:readme",
+      "path": "README.md",
+      "release": "v0.8.6",
+      "title": "README release declaration",
+      "truth": "declared",
+      "type": "source",
+      "updated_at": "2026-09-21T06:17:08.220729Z"
+    },
+    "source:roadmap": {
+      "id": "source:roadmap",
+      "path": "docs/roadmap/phases.md",
+      "release": "v0.8.6",
+      "title": "Phase roadmap (v0.8.6)",
+      "truth": "declared",
+      "type": "source",
+      "updated_at": "2026-09-21T06:17:08.178441Z",
+      "validated_commit": "efb93588111202f034dba879f93d59d154245c4e"
+    },
+    "test:current-suite": {
+      "actual": "159 passed, 1 failed",
+      "command": "npm test -- --test-reporter=spec",
+      "failed_test": "watcher preserves changes across directories and rename/removal evidence",
+      "failure": "Timed out waiting for workspace changes",
+      "id": "test:current-suite",
+      "timestamp": "2026-09-21",
+      "title": "Current npm test suite",
+      "truth": "observed",
+      "type": "test",
+      "updated_at": "2026-09-21T06:17:08.569700Z"
+    },
+    "test:production-build": {
+      "actual": "pass",
+      "command": "npm run build",
+      "id": "test:production-build",
+      "timestamp": "2026-09-21",
+      "title": "Current production build",
+      "truth": "observed",
+      "type": "test",
+      "updated_at": "2026-09-21T06:17:56.785296Z"
+    },
+    "test:typescript": {
+      "actual": "pass",
+      "command": "npx tsc --noEmit",
+      "id": "test:typescript",
+      "timestamp": "2026-09-21",
+      "title": "Current TypeScript check",
+      "truth": "observed",
+      "type": "test",
+      "updated_at": "2026-09-21T06:17:56.737852Z"
+    },
+    "test:workspace-watcher": {
+      "actual": "2 passed, 1 failed",
+      "command": "node --test tests/workspace-watcher.test.cjs",
+      "failed_test": "watcher preserves changes across directories and rename/removal evidence",
+      "failure": "Timed out waiting for workspace changes",
+      "id": "test:workspace-watcher",
+      "timestamp": "2026-09-21",
+      "title": "Current isolated workspace watcher tests",
+      "truth": "observed",
+      "type": "test",
+      "updated_at": "2026-09-21T06:17:56.830984Z"
+    }
+  },
+  "project": "project:codexia"
+}
