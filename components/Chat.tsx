@@ -81,7 +81,7 @@ export function Chat({ engineering, conversation }: {
 
     <div
       className="
-      bg-white
+      bg-surface-elevated
       rounded-2xl
       shadow-card
       border
@@ -346,7 +346,7 @@ export function Chat({ engineering, conversation }: {
           flex
           items-end
           gap-2
-          bg-[#f4f7fe]
+          bg-orbit
           rounded-2xl
           p-2
           border
@@ -407,7 +407,7 @@ export function Chat({ engineering, conversation }: {
             h-9
             rounded-xl
             bg-brand
-            text-white
+            text-starlight
             flex
             items-center
             justify-center

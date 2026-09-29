@@ -123,7 +123,7 @@ export function FileTree({
         </button>
       </div>
       <div className="flex-1 overflow-y-auto p-2">
-        {err && <div className="text-xs text-red-600 p-2">{err}</div>}
+        {err && <div className="text-xs text-status-danger p-2">{err}</div>}
         {!err && tree.length === 0 && !loading && (
           <div className="text-xs text-ink-500 p-2">Empty workspace.</div>
         )}

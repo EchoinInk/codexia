@@ -72,15 +72,14 @@ export default function Page() {
   const currentView = viewTitles[view];
 
   return (
-    <div className="relative flex h-screen min-h-0 overflow-hidden bg-[#f5f6fc] text-ink-900">
+    <div className="relative flex h-screen min-h-0 overflow-hidden bg-app-gradient text-ink-900">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 overflow-hidden"
       >
-        <div className="absolute -left-40 -top-48 h-[34rem] w-[34rem] rounded-full bg-violet-300/20 blur-[110px]" />
-        <div className="absolute -right-40 top-20 h-[30rem] w-[30rem] rounded-full bg-sky-300/20 blur-[110px]" />
-        <div className="absolute bottom-[-18rem] left-1/3 h-[34rem] w-[34rem] rounded-full bg-pink-200/20 blur-[120px]" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] bg-[size:32px_32px] opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" />
+        <div className="absolute -left-40 -top-48 h-[34rem] w-[34rem] rounded-full bg-brand/10 blur-[110px]" />
+        <div className="absolute -right-40 top-20 h-[30rem] w-[30rem] rounded-full bg-intelligence/10 blur-[110px]" />
+        <div className="absolute inset-0 bg-grid opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" />
       </div>
 
       <div className="relative z-10 shrink-0">
@@ -88,10 +87,10 @@ export default function Page() {
       </div>
 
       <main className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-[72px] shrink-0 items-center justify-between border-b border-white/70 bg-white/45 px-5 backdrop-blur-xl sm:px-7">
+        <header className="flex h-toolbar shrink-0 items-center justify-between border-b border-subtle bg-deep-orbit/70 px-5 backdrop-blur-xl sm:px-7">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_0_4px_rgba(52,211,153,0.12)]" />
+              <span className="h-2 w-2 rounded-full bg-status-success shadow-[0_0_0_4px_rgba(66,214,164,0.12)]" />
 
               <p className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-400">
                 Codexia Control Centre
@@ -110,8 +109,8 @@ export default function Page() {
           </div>
 
           <div className="ml-4 hidden items-center gap-2 sm:flex">
-            <div className="flex items-center gap-2 rounded-full border border-white/80 bg-white/70 px-3 py-1.5 shadow-sm backdrop-blur-md">
-              <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+            <div className="flex items-center gap-2 rounded-full border border-subtle bg-surface-elevated/70 px-3 py-1.5 shadow-sm backdrop-blur-md">
+              <span className="h-1.5 w-1.5 rounded-full bg-status-active" />
               <span className="text-xs font-medium text-ink-600">
                 Workspace active
               </span>
@@ -120,22 +119,22 @@ export default function Page() {
         </header>
 
         {view !== "chat" && engineeringState.runtimeId && (
-          <button className="border-b border-ink-400/10 bg-white/70 px-5 py-2 text-left text-sm" onClick={() => setView("chat")}>
+          <button className="border-b border-ink-400/10 bg-surface-elevated/70 px-5 py-2 text-left text-sm" onClick={() => setView("chat")}>
             Engineering: {engineeringState.dismissed ? "review closed" : engineeringState.phase.replaceAll("_", " ")} — Open review
           </button>
         )}
         <div className="min-h-0 flex-1 p-3 sm:p-4 lg:p-5">
-          <div className="h-full overflow-hidden rounded-[24px] border border-white/80 bg-white/40 shadow-[0_24px_70px_-32px_rgba(50,56,100,0.35)] backdrop-blur-2xl">
+          <div className="h-full overflow-hidden rounded-shell border border-subtle bg-surface-glass shadow-panel backdrop-blur-2xl">
             {view === "chat" && (
               <div className="flex h-full min-w-0">
                 <section className="min-w-0 flex-1 p-2 sm:p-3">
-                  <div className="h-full overflow-hidden rounded-[18px] border border-white/90 bg-white/75 shadow-[0_12px_30px_-20px_rgba(49,46,129,0.28)]">
+                  <div className="h-full overflow-hidden rounded-[18px] border border-subtle bg-surface-elevated/75 shadow-[0_12px_30px_-20px_rgba(49,46,129,0.28)]">
                     <Chat engineering={engineering} conversation={conversation} />
                   </div>
                 </section>
 
-                <aside className="hidden w-72 shrink-0 border-l border-white/80 bg-white/30 p-3 xl:flex 2xl:w-80">
-                  <div className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[18px] border border-white/90 bg-white/75 shadow-[0_12px_30px_-20px_rgba(49,46,129,0.25)]">
+                <aside className="hidden w-72 shrink-0 border-l border-subtle bg-surface-elevated/30 p-3 xl:flex 2xl:w-80">
+                  <div className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[18px] border border-subtle bg-surface-elevated/75 shadow-[0_12px_30px_-20px_rgba(49,46,129,0.25)]">
                     <div className="flex shrink-0 items-center justify-between border-b border-ink-400/10 px-4 py-3">
                       <div>
                         <p className="text-sm font-semibold text-ink-800">
@@ -149,7 +148,7 @@ export default function Page() {
                       <div className="flex gap-1">
                         <span className="h-2 w-2 rounded-full bg-pink-300" />
                         <span className="h-2 w-2 rounded-full bg-violet-300" />
-                        <span className="h-2 w-2 rounded-full bg-sky-300" />
+                        <span className="h-2 w-2 rounded-full bg-intelligence" />
                       </div>
                     </div>
 
@@ -167,7 +166,7 @@ export default function Page() {
 
             {view === "files" && (
               <div className="flex h-full min-w-0 gap-3 p-3">
-                <aside className="hidden w-72 shrink-0 overflow-hidden rounded-[18px] border border-white/90 bg-white/75 shadow-[0_12px_30px_-20px_rgba(49,46,129,0.25)] md:flex 2xl:w-80">
+                <aside className="hidden w-72 shrink-0 overflow-hidden rounded-[18px] border border-subtle bg-surface-elevated/75 shadow-[0_12px_30px_-20px_rgba(49,46,129,0.25)] md:flex 2xl:w-80">
                   <FileTree
                     refreshKey={fsKey}
                     activePath={openFile}
@@ -175,7 +174,7 @@ export default function Page() {
                   />
                 </aside>
 
-                <section className="min-w-0 flex-1 overflow-hidden rounded-[18px] border border-white/90 bg-white/75 shadow-[0_12px_30px_-20px_rgba(49,46,129,0.25)]">
+                <section className="min-w-0 flex-1 overflow-hidden rounded-[18px] border border-subtle bg-surface-elevated/75 shadow-[0_12px_30px_-20px_rgba(49,46,129,0.25)]">
                   {openFile ? (
                     <FileViewer
                       buffer={fileBuffer}
@@ -186,7 +185,7 @@ export default function Page() {
                   ) : (
                     <div className="flex h-full items-center justify-center p-8">
                       <div className="max-w-sm text-center">
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-200/70 bg-gradient-to-br from-violet-100 to-sky-50 shadow-sm">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-active bg-intelligence-gradient shadow-intelligence">
                           <svg
                             aria-hidden="true"
                             viewBox="0 0 24 24"
@@ -220,7 +219,7 @@ export default function Page() {
 
             {view === "settings" && (
               <div className="h-full p-3">
-                <section className="h-full overflow-hidden rounded-[18px] border border-white/90 bg-white/75 shadow-[0_12px_30px_-20px_rgba(49,46,129,0.25)]">
+                <section className="h-full overflow-hidden rounded-[18px] border border-subtle bg-surface-elevated/75 shadow-[0_12px_30px_-20px_rgba(49,46,129,0.25)]">
                   <SettingsPanel />
                 </section>
               </div>

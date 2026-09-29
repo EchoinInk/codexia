@@ -2,7 +2,7 @@
 
 export function SettingsPanel() {
   return (
-    <div className="bg-white rounded-2xl shadow-card border border-ink-400/10 p-8 h-full overflow-auto">
+    <div className="bg-surface-elevated rounded-2xl shadow-card border border-ink-400/10 p-8 h-full overflow-auto">
       <h2 className="text-xl font-bold text-ink-900">Settings</h2>
       <p className="text-sm text-ink-500 mt-1">
         Configuration is read from <code className="font-mono text-brand">.env.local</code> at server start.
@@ -26,7 +26,7 @@ function Field({ label, desc, example }: { label: string; desc: string; example:
     <div>
       <div className="text-xs uppercase tracking-wider font-semibold text-ink-400">{label}</div>
       <div className="text-sm text-ink-700 mt-1">{desc}</div>
-      <div className="mt-1.5 font-mono text-[13px] bg-[#f4f7fe] border border-ink-400/10 rounded-lg px-3 py-2 text-ink-900">
+      <div className="mt-1.5 font-mono text-[13px] bg-orbit border border-ink-400/10 rounded-lg px-3 py-2 text-ink-900">
         {example}
       </div>
     </div>

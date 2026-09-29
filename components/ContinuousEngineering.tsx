@@ -34,15 +34,15 @@ export function ContinuousEngineering({ active }: { active: boolean }) {
       setState(body); setError(undefined);
     } catch (cause) { setError(String(cause)); } finally { setBusy(false); }
   }
-  return <section className="mt-4 rounded-2xl border border-emerald-200/70 bg-emerald-50/40 p-5 shadow-sm" aria-label="Continuous engineering controls">
+  return <section className="mt-4 rounded-2xl border border-status-success/35 bg-status-success/10 p-5 shadow-sm" aria-label="Continuous engineering controls">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h3 className="font-semibold text-ink-800">Continuous engineering</h3>
         <p className="mt-1 text-xs leading-5 text-ink-500">Bounded low-risk maintenance through the existing queue, Runtime, approval, verification, and rollback lifecycle.</p>
       </div>
-      <span className="rounded-full bg-white px-2 py-1 text-xs font-medium capitalize text-ink-700">{state?.status ?? "loading"}</span>
+      <span className="rounded-full bg-surface-elevated px-2 py-1 text-xs font-medium capitalize text-ink-700">{state?.status ?? "loading"}</span>
     </div>
-    {error && <p role="alert" className="mt-3 text-sm text-rose-700">{error}</p>}
+    {error && <p role="alert" className="mt-3 text-sm text-status-danger">{error}</p>}
     {state?.stopReason && <p className="mt-3 text-sm text-ink-600">Stop/defer reason: {state.stopReason}</p>}
     {state?.currentTaskId && <p className="mt-2 break-all text-xs text-ink-500">Current task: {state.currentTaskId}</p>}
     {state?.lastOutcome && <p className="mt-2 text-xs text-ink-500">Last outcome: {state.lastOutcome.status} — {state.lastOutcome.reason}</p>}
@@ -55,7 +55,7 @@ export function ContinuousEngineering({ active }: { active: boolean }) {
       <button disabled={busy} onClick={() => void load().catch(cause => setError(String(cause)))}>Refresh state</button>
     </div>
     {state?.queue.length ? <div className="mt-4 space-y-2">
-      {state.queue.slice(-5).map(task => <div key={task.id} className="rounded-xl border border-white bg-white/70 p-3 text-xs text-ink-600">
+      {state.queue.slice(-5).map(task => <div key={task.id} className="rounded-xl border border-subtle bg-surface-elevated/70 p-3 text-xs text-ink-600">
         <p className="break-all font-medium">{task.id}</p>
         <p className="mt-1 capitalize">{task.status} · attempt budget {task.attemptBudget.consumed}/{task.attemptBudget.limit}</p>
         {(task.output?.summary || task.error?.message) && <p className="mt-1">{task.output?.summary ?? task.error?.message}</p>}

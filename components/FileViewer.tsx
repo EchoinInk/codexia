@@ -32,7 +32,7 @@ export function FileViewer({
   const save = async () => { if (await buffer.save(path)) onSaved?.(); };
 
   return (
-    <div className="bg-white rounded-2xl shadow-card border border-ink-400/10 overflow-hidden h-full flex flex-col">
+    <div className="bg-surface-elevated rounded-2xl shadow-card border border-ink-400/10 overflow-hidden h-full flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 border-b border-ink-400/10">
         <div className="flex items-center gap-2 text-ink-900 font-medium text-sm">
           <FileIcon size={15} className="text-brand" />
@@ -41,7 +41,7 @@ export function FileViewer({
         <div className="flex items-center gap-2">
           {editing ? (
             <>
-              <button disabled={!buffer.canSave(path)} onClick={save} className="text-xs flex items-center gap-1 bg-brand text-white px-3 py-1.5 rounded-lg hover:bg-brand-600">
+              <button disabled={!buffer.canSave(path)} onClick={save} className="text-xs flex items-center gap-1 bg-brand text-starlight px-3 py-1.5 rounded-lg hover:bg-brand-600">
                 <Save size={13} /> Save
               </button>
               <button disabled={state.saving} onClick={() => buffer.discard(path)} className="text-xs text-ink-700 px-3 py-1.5 rounded-lg hover:bg-ink-400/10">
@@ -61,14 +61,14 @@ export function FileViewer({
       {ready && state.content !== state.original && <p className="px-4 py-1 text-xs text-ink-500">Unsaved edits are kept when switching files or views in this session.</p>}
       <div className="flex-1 overflow-auto">
         {loading && <div className="p-6 text-sm text-ink-500">Loading…</div>}
-        {err && <div className="p-6 text-sm text-red-600">{err}</div>}
+        {err && <div className="p-6 text-sm text-status-danger">{err}</div>}
         {ready && (
           editing ? (
             <textarea
               value={content}
               disabled={state.saving}
               onChange={(e) => buffer.change(path, e.target.value)}
-              className="w-full h-full min-h-[400px] p-4 font-mono text-[13px] leading-relaxed bg-[#0b1020] text-white outline-none resize-none"
+              className="w-full h-full min-h-[400px] p-4 font-mono text-[13px] leading-relaxed bg-deep-orbit text-starlight outline-none resize-none"
               spellCheck={false}
             />
           ) : (

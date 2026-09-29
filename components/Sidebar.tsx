@@ -9,6 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import clsx from "clsx";
+import { CodexiaLogo } from "@/components/design-system/BrandAsset";
 
 export type View = "chat" | "files" | "intelligence" | "operations" | "settings";
 
@@ -43,16 +44,11 @@ export function Sidebar({
   ];
 
   return (
-    <aside className="w-64 shrink-0 bg-white border-r border-ink-400/15 flex flex-col">
-      <div className="px-6 py-6 flex items-center gap-2">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand to-brand-700 flex items-center justify-center text-white shadow-soft">
-          <Sparkles size={18} />
-        </div>
-        <div>
-          <div className="text-ink-900 font-bold text-lg leading-none">
-            Codexia
-          </div>
-          <div className="text-[11px] text-ink-500 mt-0.5">Local AI coding</div>
+    <aside className="w-64 shrink-0 bg-deep-orbit border-r border-subtle flex flex-col">
+      <div className="px-6 py-6">
+        <CodexiaLogo className="h-auto w-32" priority />
+        <div className="mt-2 flex items-center gap-1.5 text-[11px] text-ink-500">
+          <Sparkles size={12} className="text-intelligence" /> Local AI coding
         </div>
       </div>
 
@@ -72,8 +68,8 @@ export function Sidebar({
                   className={clsx(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition",
                     active
-                      ? "bg-brand-50 text-brand"
-                      : "text-ink-700 hover:bg-ink-400/5"
+                      ? "bg-brand-100 text-brand-300 shadow-glow-sm"
+                      : "text-ink-700 hover:bg-ink-400/10"
                   )}
                 >
                   <Icon

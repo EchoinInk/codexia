@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   XCircle,
 } from "lucide-react";
+import { evidenceStatusClassName } from "@/lib/design-system/status";
 import clsx from "clsx";
 import { ContinuousEngineering } from "./ContinuousEngineering";
 
@@ -162,27 +163,27 @@ const statusCopy: Record<
   current: {
     label: "Current",
     description: "Intelligence matches the latest reconciled workspace state.",
-    className: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    className: evidenceStatusClassName("current", true),
   },
   stale: {
     label: "Stale",
     description: "A usable snapshot is available while newer workspace work is pending.",
-    className: "bg-amber-50 text-amber-700 ring-amber-200",
+    className: evidenceStatusClassName("stale", true),
   },
   incomplete: {
     label: "Incomplete",
     description: "A snapshot exists, but its evidence is not complete enough for a full view.",
-    className: "bg-sky-50 text-sky-700 ring-sky-200",
+    className: evidenceStatusClassName("incomplete", true),
   },
   unavailable: {
     label: "Unavailable",
     description: "No usable workspace intelligence snapshot is available yet.",
-    className: "bg-slate-100 text-slate-600 ring-slate-200",
+    className: evidenceStatusClassName("unavailable", true),
   },
   failed: {
     label: "Failed",
     description: "The latest refresh failed; failed output is not presented as current.",
-    className: "bg-rose-50 text-rose-700 ring-rose-200",
+    className: evidenceStatusClassName("failed", true),
   },
 };
 
@@ -221,7 +222,7 @@ function Metric({
   detail?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/90 bg-white/75 p-4 shadow-[0_10px_28px_-22px_rgba(49,46,129,0.35)]">
+    <div className="rounded-2xl border border-subtle bg-surface-elevated/75 p-4 shadow-[0_10px_28px_-22px_rgba(49,46,129,0.35)]">
       <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400">
         {label}
       </p>
@@ -238,11 +239,7 @@ function stateLabel(state: EvidenceState) {
 }
 
 function stateClassName(state: EvidenceState) {
-  if (state === "current") return "bg-emerald-50 text-emerald-700";
-  if (state === "stale") return "bg-amber-50 text-amber-700";
-  if (state === "contradicted" || state === "invalidated") return "bg-rose-50 text-rose-700";
-  if (state === "incomplete") return "bg-sky-50 text-sky-700";
-  return "bg-slate-100 text-slate-600";
+  return evidenceStatusClassName(state);
 }
 
 function StrengthBadge({ strength }: { strength: EvidenceStrength }) {
@@ -320,7 +317,7 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
               setLoading(true);
               void loadSnapshot();
             }}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/90 bg-white/80 px-3 py-2 text-sm font-medium text-ink-700 shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-violet-300"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-subtle bg-surface-elevated/80 px-3 py-2 text-sm font-medium text-ink-700 shadow-sm transition hover:bg-surface-elevated focus:outline-none focus:ring-2 focus:ring-violet-300"
           >
             <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
             Refresh
@@ -328,7 +325,7 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
         </div>
 
         {error && (
-          <div className="mt-4 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="mt-4 flex items-start gap-3 rounded-2xl border border-status-danger/35 bg-status-danger/10 p-4 text-sm text-status-danger">
             <ServerCrash size={18} className="mt-0.5 shrink-0" />
             <div>
               <p className="font-semibold">Unable to read workspace intelligence</p>
@@ -348,7 +345,7 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-semibold">{copy.label}</h3>
                       {snapshot.pending && (
-                        <span className="rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-medium">
+                        <span className="rounded-full bg-surface-elevated/70 px-2 py-0.5 text-[11px] font-medium">
                           Refresh pending
                         </span>
                       )}
@@ -362,7 +359,7 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
                   </div>
                 </div>
               </div>
-              <div className="rounded-2xl border border-white/90 bg-white/75 p-4 shadow-sm">
+              <div className="rounded-2xl border border-subtle bg-surface-elevated/75 p-4 shadow-sm">
                 <div className="flex items-center gap-2 text-sm font-semibold text-ink-800">
                   <ShieldCheck size={17} className="text-violet-500" />
                   Refresh state
@@ -411,7 +408,7 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
                 {snapshot.insights?.entries.length ? (
                   <div className="mt-4 space-y-3">
                     {snapshot.insights.entries.map(insight => (
-                      <article key={insight.id} className="rounded-xl border border-violet-200/70 bg-white/75 p-3">
+                      <article key={insight.id} className="rounded-xl border border-violet-200/70 bg-surface-elevated/75 p-3">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-600">
                             {insight.priority} · {insight.category}
@@ -419,7 +416,7 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
                           <span className={clsx("rounded-full px-2 py-1 text-[11px] font-medium capitalize", stateClassName(insight.state as EvidenceState))}>
                             {insight.state}
                           </span>
-                          <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] text-slate-600">
+                          <span className="rounded-full bg-status-neutral/15 px-2 py-1 text-[11px] text-moonlight">
                             {insight.severity}
                           </span>
                         </div>
@@ -436,7 +433,7 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
                           {insight.persistence.repeated ? ` · repeated across ${insight.persistence.distinctSnapshots} snapshot(s)` : ""}
                         </p>
                         {insight.contradictions.length > 0 && (
-                          <p className="mt-1 text-[11px] font-medium text-rose-600">{insight.contradictions.join(" ")}</p>
+                          <p className="mt-1 text-[11px] font-medium text-status-danger">{insight.contradictions.join(" ")}</p>
                         )}
                       </article>
                     ))}
@@ -453,7 +450,7 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
                 ) : null}
               </div>
 
-              <div className="rounded-2xl border border-white/90 bg-white/75 p-5 shadow-sm">
+              <div className="rounded-2xl border border-subtle bg-surface-elevated/75 p-5 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="font-semibold text-ink-800">Snapshot provenance</h3>
                   <span className="rounded-full bg-violet-50 px-2 py-1 text-[11px] font-medium text-violet-700">
@@ -484,7 +481,7 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
                 )}
               </div>
 
-              <div className="rounded-2xl border border-white/90 bg-white/75 p-5 shadow-sm">
+              <div className="rounded-2xl border border-subtle bg-surface-elevated/75 p-5 shadow-sm">
                 <div className="flex items-center gap-2">
                   <Activity size={17} className="text-violet-500" />
                   <h3 className="font-semibold text-ink-800">Workspace activity</h3>
@@ -503,7 +500,7 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
             </section>
 
             <section className="mt-4 grid gap-4 lg:grid-cols-2">
-              <div className="rounded-2xl border border-white/90 bg-white/75 p-5 shadow-sm">
+              <div className="rounded-2xl border border-subtle bg-surface-elevated/75 p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <GitBranch size={17} className="text-violet-500" />
@@ -521,7 +518,7 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
                 {snapshot.evolution?.entries.length ? (
                   <div className="mt-4 space-y-3">
                     {snapshot.evolution.entries.map(entry => (
-                      <article key={entry.id} className="rounded-xl border border-ink-400/10 bg-white/70 p-3">
+                      <article key={entry.id} className="rounded-xl border border-ink-400/10 bg-surface-elevated/70 p-3">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-400">
                             {entry.kind}
@@ -553,7 +550,7 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
                 )}
               </div>
 
-              <div className="rounded-2xl border border-white/90 bg-white/75 p-5 shadow-sm">
+              <div className="rounded-2xl border border-subtle bg-surface-elevated/75 p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <Brain size={17} className="text-violet-500" />
@@ -571,7 +568,7 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
                 {snapshot.learning?.entries.length ? (
                   <div className="mt-4 space-y-3">
                     {snapshot.learning.entries.map(entry => (
-                      <article key={entry.id} className="rounded-xl border border-ink-400/10 bg-white/70 p-3">
+                      <article key={entry.id} className="rounded-xl border border-ink-400/10 bg-surface-elevated/70 p-3">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-400">
                             {entry.kind}
@@ -615,7 +612,7 @@ export function WorkspaceIntelligence({ active }: { active: boolean }) {
         )}
 
         {!snapshot && loading && (
-          <div className="mt-5 rounded-2xl border border-white/90 bg-white/75 p-8 text-center text-sm text-ink-500">
+          <div className="mt-5 rounded-2xl border border-subtle bg-surface-elevated/75 p-8 text-center text-sm text-ink-500">
             Reading the workspace snapshot…
           </div>
         )}
