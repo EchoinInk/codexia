@@ -9,32 +9,11 @@ import { Chat } from "@/components/Chat";
 import { FileTree } from "@/components/FileTree";
 import { FileViewer } from "@/components/FileViewer";
 import { SettingsPanel } from "@/components/SettingsPanel";
-import { Sidebar, View } from "@/components/Sidebar";
 import { WorkspaceIntelligence } from "@/components/WorkspaceIntelligence";
 import { WorkspaceOperations } from "@/components/WorkspaceOperations";
-
-const viewTitles: Record<View, { title: string; description: string }> = {
-  chat: {
-    title: "Codier Workspace",
-    description: "Plan, build, and refine your project with Codier.",
-  },
-  files: {
-    title: "Workspace Files",
-    description: "Browse and edit files in your active project.",
-  },
-  intelligence: {
-    title: "Workspace Intelligence",
-    description: "Inspect current, stale, incomplete, unavailable, and failed evidence.",
-  },
-  operations: {
-    title: "Control Centre",
-    description: "Coordinate lifecycle, recovery, evidence, and resources across authorized workspaces.",
-  },
-  settings: {
-    title: "Settings",
-    description: "Configure Codexia and your development environment.",
-  },
-};
+import { ApplicationShell } from "@/components/application-shell/ApplicationShell";
+import { ShellPanel } from "@/components/application-shell/ShellPanel";
+import { shellViewFromSearch, type ShellView } from "@/lib/application-shell/navigation";
 
 export default function Page() {
   const [engineering] = useState(() => new EngineeringSessionClient());
@@ -46,13 +25,24 @@ export default function Page() {
     return () => clearInterval(timer);
   }, [engineering, engineeringState.busy, engineeringState.runtimeId]);
   const [fileBuffer] = useState(() => new FileBuffer());
-  const [view, setView] = useState<View>("chat");
+  const [view, setView] = useState<ShellView>("chat");
+  const [workspace, setWorkspace] = useState<string>();
   const [openFile, setOpenFile] = useState<string | undefined>();
   const [fsKey, setFsKey] = useState(0);
 
   useEffect(() => {
     if (engineeringState.report && !engineeringState.busy) setFsKey(key => key + 1);
   }, [engineeringState.report, engineeringState.busy]);
+
+  useEffect(() => {
+    setView(shellViewFromSearch(window.location.search));
+    const controller = new AbortController();
+    void fetch("/api/workspaces", { cache: "no-store", signal: controller.signal })
+      .then(response => response.ok ? response.json() : undefined)
+      .then(body => setWorkspace(body?.workspaces?.[0]?.workspace))
+      .catch(error => { if (error?.name !== "AbortError") setWorkspace(undefined); });
+    return () => controller.abort();
+  }, []);
 
   const refreshFs = () => {
     setFsKey((key) => key + 1);
@@ -62,6 +52,9 @@ export default function Page() {
     setOpenFile(path);
     conversation.selectFile(path);
     setView("files");
+    const url = new URL(window.location.href);
+    url.searchParams.set("view", "files");
+    window.history.pushState({ view: "files" }, "", `${url.pathname}${url.search}${url.hash}`);
   };
 
   const selectFile = (path: string) => {
@@ -69,62 +62,24 @@ export default function Page() {
     conversation.selectFile(path);
   };
 
-  const currentView = viewTitles[view];
-
   return (
-    <div className="relative flex h-screen min-h-0 overflow-hidden bg-app-gradient text-ink-900">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        <div className="absolute -left-40 -top-48 h-[34rem] w-[34rem] rounded-full bg-brand/10 blur-[110px]" />
-        <div className="absolute -right-40 top-20 h-[30rem] w-[30rem] rounded-full bg-intelligence/10 blur-[110px]" />
-        <div className="absolute inset-0 bg-grid opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" />
-      </div>
-
-      <div className="relative z-10 shrink-0">
-        <Sidebar view={view} setView={setView} />
-      </div>
-
-      <main className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-toolbar shrink-0 items-center justify-between border-b border-subtle bg-deep-orbit/70 px-5 backdrop-blur-xl sm:px-7">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-status-success shadow-[0_0_0_4px_rgba(66,214,164,0.12)]" />
-
-              <p className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-400">
-                Codexia Control Centre
-              </p>
-            </div>
-
-            <div className="mt-1 flex min-w-0 items-baseline gap-3">
-              <h1 className="truncate text-lg font-semibold tracking-[-0.025em] text-ink-900">
-                {currentView.title}
-              </h1>
-
-              <p className="hidden truncate text-sm text-ink-500 lg:block">
-                {currentView.description}
-              </p>
-            </div>
-          </div>
-
-          <div className="ml-4 hidden items-center gap-2 sm:flex">
-            <div className="flex items-center gap-2 rounded-full border border-subtle bg-surface-elevated/70 px-3 py-1.5 shadow-sm backdrop-blur-md">
-              <span className="h-1.5 w-1.5 rounded-full bg-status-active" />
-              <span className="text-xs font-medium text-ink-600">
-                Workspace active
-              </span>
-            </div>
-          </div>
-        </header>
-
-        {view !== "chat" && engineeringState.runtimeId && (
-          <button className="border-b border-ink-400/10 bg-surface-elevated/70 px-5 py-2 text-left text-sm" onClick={() => setView("chat")}>
+    <ApplicationShell
+      view={view}
+      onNavigate={setView}
+      workspace={workspace}
+      runtimeStatus={engineeringState.busy ? engineeringState.phase.replaceAll("_", " ") : "Local runtime ready"}
+      notice={view !== "chat" && engineeringState.runtimeId ? (
+          <button className="border-b border-ink-400/10 bg-surface-elevated/70 px-5 py-2 text-left text-sm" onClick={() => {
+            setView("chat");
+            const url = new URL(window.location.href);
+            url.searchParams.delete("view");
+            window.history.pushState({ view: "chat" }, "", `${url.pathname}${url.search}${url.hash}`);
+          }}>
             Engineering: {engineeringState.dismissed ? "review closed" : engineeringState.phase.replaceAll("_", " ")} — Open review
           </button>
-        )}
-        <div className="min-h-0 flex-1 p-3 sm:p-4 lg:p-5">
-          <div className="h-full overflow-hidden rounded-shell border border-subtle bg-surface-glass shadow-panel backdrop-blur-2xl">
+      ) : undefined}
+    >
+          <ShellPanel className="h-full">
             {view === "chat" && (
               <div className="flex h-full min-w-0">
                 <section className="min-w-0 flex-1 p-2 sm:p-3">
@@ -231,9 +186,7 @@ export default function Page() {
             <div className={view === "operations" ? "h-full" : "hidden"}>
               <WorkspaceOperations active={view === "operations"} />
             </div>
-          </div>
-        </div>
-      </main>
-    </div>
+          </ShellPanel>
+    </ApplicationShell>
   );
 }
