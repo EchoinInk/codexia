@@ -3,6 +3,9 @@ import { createContinuousEngineeringService } from "@/lib/agent/maintenance/serv
 import { FileNotificationPreferencesStore } from "@/lib/workspace-operations/store";
 import { createWorkspaceOperationsService } from "@/lib/workspace-operations/service";
 import type { WorkspaceAction, WorkspaceLifecycleSnapshot } from "@/lib/workspace-operations/types";
+import { getWorkspaceIntelligenceSnapshot } from "@/lib/intelligence/workspace-intelligence-snapshot";
+import { getWorkspaceEventHistory, getWorkspaceEventSystemStatus } from "@/lib/agent/event-system";
+import { buildControlCentreProjection } from "@/lib/control-centre/projection";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +25,9 @@ async function service(workspace: string) {
           title: task.type,
           status: task.status,
           budget: { limit: task.attemptBudget.limit, consumed: task.attemptBudget.consumed },
+          updatedAt: task.updatedAt,
+          error: task.error?.message,
+          recoveryAvailable: task.status === "failed" && task.attemptBudget.consumed < task.attemptBudget.limit,
           // Queue records do not carry Runtime checkpoints, Validator results,
           // dependency graphs, or measured progress. Keep those fields absent
           // instead of treating queue timestamps/output as authoritative evidence.
@@ -31,10 +37,13 @@ async function service(workspace: string) {
         const status = running ? "active" : queued ? "queued" : state.status === "failed" ? "failed"
           : state.status === "paused" ? "paused" : state.status === "disabled" ? "paused"
           : state.lastOutcome?.status === "cancelled" ? "cancelled" : state.lastOutcome?.status === "completed" ? "completed" : "paused";
-        return { workspace, status, runtimeId: state.currentTaskId,
+        return { workspace, label: "Configured workspace", status, runtimeId: state.currentTaskId,
           tasks, resource: { running, queued },
           evidence: state.snapshotId ? [{ id: state.snapshotId, kind: "workspace-intelligence", status: "current" }] : [],
-          audit: state.lastOutcome ? [{ at: state.lastOutcome.at, type: "queue-outcome", detail: state.lastOutcome.reason }] : [] };
+          audit: state.lastOutcome ? [{ at: state.lastOutcome.at, type: "queue-outcome", detail: state.lastOutcome.reason }] : [],
+          outcome: state.lastOutcome ? { status: state.lastOutcome.status, reason: state.lastOutcome.reason, at: state.lastOutcome.at } : undefined,
+          capabilities: { pause: state.status === "running", resume: state.enabled && state.status === "paused",
+            cancel: state.enabled || !!state.currentTaskId, retry: state.status === "failed", approve: false } };
       },
       dispatch: async (action, runtimeId, approvalId) => {
         if (runtimeId && runtimeId !== (await continuous.status()).currentTaskId) return { acknowledged: false, detail: "Runtime task is no longer current" };
@@ -63,7 +72,26 @@ export async function GET(request: Request): Promise<Response> {
   try {
     const workspace = configuredRequestWorkspace(new URL(request.url).searchParams.get("workspace") ?? undefined);
     const operations = await service(workspace);
-    return Response.json({ workspaces: await operations.projection(), notifications: await operations.notificationPreferences() });
+    const workspaces = await operations.projection();
+    const controlCentres = await Promise.all(workspaces.map(async lifecycle => {
+      let intelligence;
+      try {
+        const snapshot = await getWorkspaceIntelligenceSnapshot(lifecycle.workspace);
+        intelligence = { status: snapshot.status, usable: snapshot.usable, generatedAt: snapshot.provenance?.generatedAt,
+          snapshotId: snapshot.provenance?.snapshotId, fileCount: snapshot.evidence?.files.length,
+          findingCount: snapshot.evidence?.memory?.learning?.length, failure: snapshot.failure?.message };
+      } catch (cause) {
+        intelligence = { status: "failed" as const, usable: false, failure: cause instanceof Error ? cause.message : String(cause) };
+      }
+      const eventStatus = getWorkspaceEventSystemStatus(lifecycle.workspace);
+      const activity = getWorkspaceEventHistory(lifecycle.workspace).map(event => ({ id: event.id, type: event.type,
+        detail: event.type === "event_failed" ? event.error : `${event.changes.length} workspace change(s)`, at: event.timestamp,
+        failed: event.type === "event_failed" }));
+      return buildControlCentreProjection({ lifecycle, intelligence, activity, observedAt: Date.now(),
+        eventRuntime: { pending: eventStatus.metrics.pending, failed: eventStatus.metrics.failed,
+          lastProcessedAt: eventStatus.lastProcessedAt, lastError: eventStatus.lastError } });
+    }));
+    return Response.json({ workspaces, controlCentres, notifications: await operations.notificationPreferences() });
   } catch (error) { return response(error); }
 }
 

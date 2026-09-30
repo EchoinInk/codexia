@@ -71,3 +71,9 @@ pre.shiki code { font-family: ui-monospace, "JetBrains Mono", Menlo, monospace; 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { @apply rounded-lg bg-cosmic-slate; }
 ::-webkit-scrollbar-thumb:hover { @apply bg-stellar-slate; }
+
+@layer components {
+  .control-button {
+    @apply inline-flex min-h-9 items-center gap-2 rounded-button border border-subtle bg-surface-subtle px-3 py-2 text-xs font-semibold text-ink-600 transition hover:border-active hover:text-starlight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-wait disabled:opacity-50;
+  }
+}

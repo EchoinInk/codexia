@@ -11,6 +11,9 @@ export interface WorkspaceTaskProjection {
   checkpoint?: string;
   pendingApproval?: boolean;
   verification?: Array<{ id: string; success: boolean; output?: string }>;
+  updatedAt?: number;
+  error?: string;
+  recoveryAvailable?: boolean;
 }
 
 export interface WorkspaceLifecycleSnapshot {
@@ -27,6 +30,7 @@ export interface WorkspaceLifecycleSnapshot {
   audit?: Array<{ at: number; type: string; detail: string }>;
   outcome?: { status: string; reason?: string; at: number };
   control?: { requested?: { action: WorkspaceAction; at: number }; acknowledged?: { action: WorkspaceAction; at: number } };
+  capabilities?: { pause: boolean; resume: boolean; cancel: boolean; retry: boolean; approve: boolean };
 }
 
 export interface AuthorizedWorkspaceSource {

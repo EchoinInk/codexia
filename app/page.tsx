@@ -184,7 +184,12 @@ export default function Page() {
               <WorkspaceIntelligence active={view === "intelligence"} />
             </div>
             <div className={view === "operations" ? "h-full" : "hidden"}>
-              <WorkspaceOperations active={view === "operations"} />
+              <WorkspaceOperations active={view === "operations"} workspace={workspace} engineering={engineering} engineeringState={engineeringState} onOpenMission={() => {
+                setView("chat");
+                const url = new URL(window.location.href);
+                url.searchParams.delete("view");
+                window.history.pushState({ view: "chat" }, "", `${url.pathname}${url.search}${url.hash}`);
+              }} />
             </div>
           </ShellPanel>
     </ApplicationShell>
